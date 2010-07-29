@@ -2,6 +2,7 @@
 
 Permaculturenews is an installation of "Managing News" with some feeds already added.
 
+Dev site installed here: http://permaculturenews.info
 
 git clone here: http://github.com/fndtn357/Permaculturenews.git
 
