@@ -1,10 +1,11 @@
-7/29/2010: Check out James Git version of Managing News
+7/29/2010: Check out James Git version of Managing News "PermacultureNews"
+
+Permaculturenews is an installation of "Managing News" with some feeds already added.
+
 
 git clone here: http://github.com/fndtn357/Permaculturenews.git
 
 To check out 'Permaculturenews'
-
-Permaculturenews is an installation of "Managing News" with some feeds already added.
 
 1. Navigate into this folder.
 
