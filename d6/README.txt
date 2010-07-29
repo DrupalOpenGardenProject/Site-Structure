@@ -19,6 +19,16 @@ sites/default/settings.php
 sites/default/files
 .gitignore
 
+4. Remove the 'sites' folder.
+
+5. Make a symbolic link from the github sites folder to where sites should go
+
+from the top level of the github directory
+
+format
+ln -s (make a symbolic link)  files_location  location_alias_should_show_up
+
+ln -s sites d6/drupal/sites
 
 
 
