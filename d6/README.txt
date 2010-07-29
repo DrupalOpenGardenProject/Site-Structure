@@ -26,9 +26,9 @@ sites/default/files
 from the top level of the github directory
 
 format
-ln -s (make a symbolic link)  files_location  location_alias_should_show_up
+ln -s (make a symbolic link)  files_location_relative_to_target  location_alias_should_show_up
 
-ln -s sites d6/drupal/sites
+ln -s ../../sites d6/drupal/sites
 
 
 
