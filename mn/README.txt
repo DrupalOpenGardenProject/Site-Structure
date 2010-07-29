@@ -6,7 +6,7 @@ Dev site installed here: http://permaculturenews.info
 
 git clone here: http://github.com/fndtn357/Permaculturenews.git
 
-To check out 'Permaculturenews'
+To clone 'Permaculturenews' using git (obtain a copy of the source code files)
 
 1. Navigate into this folder.
 
