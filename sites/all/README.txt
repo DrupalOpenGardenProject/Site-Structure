@@ -1,0 +1,1 @@
+Shared modules, base themes, libraries and features go in this folder.

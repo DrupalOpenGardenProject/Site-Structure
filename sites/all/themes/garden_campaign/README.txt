@@ -1,0 +1,1 @@
+This is a base theme for the garden project's social media campaign experiments.
