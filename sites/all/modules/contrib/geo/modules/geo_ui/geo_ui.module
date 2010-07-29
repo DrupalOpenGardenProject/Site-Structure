@@ -1,0 +1,32 @@
+<?php
+// $Id: geo_ui.module,v 1.1 2009/12/01 21:49:48 vauxia Exp $
+
+/**
+ * @file
+ * Administration UI for geo data, such as finding and adding new sources.
+ *
+ * @package geo
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+function geo_ui_menu() {
+  module_load_include('menu.inc', 'geo_ui', 'includes/geo_ui');
+  return geo_ui_menu_menu();
+}
+
+/**
+ * Implementation of hook_perm()
+ */
+function geo_ui_perm() {
+  return array('administer geospatial data');
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function geo_ui_theme() {
+  module_load_include('theme.inc', 'geo_ui', 'theme/geo_ui');
+  return geo_ui_theme_theme();
+}

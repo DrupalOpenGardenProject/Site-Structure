@@ -1,0 +1,13 @@
+; $Id: geo_ui.info,v 1.1 2009/12/01 21:49:48 vauxia Exp $
+name = Geo UI
+description = An interface for working with geospatial data.
+package = Geo
+dependencies[] = geo
+core = 6.x
+
+; Information added by drupal.org packaging script on 2010-01-14
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "geo"
+datestamp = "1263427689"
+

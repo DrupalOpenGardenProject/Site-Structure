@@ -1,0 +1,115 @@
+<?php // $Id: geo.install,v 1.15 2009/12/02 19:51:05 vauxia Exp $
+
+function geo_schema() {
+
+  $schema = array(
+    'geo' => array(
+      'fields' => array(
+        'gid' => array(
+          'type' => 'serial',
+          'not null' => TRUE,
+        ),
+        'name' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'title' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'handler' => array(
+          'type' => 'varchar',
+          'not null' => TRUE,
+          'length' => 32,
+        ),
+        'table_name' => array(
+          'type' => 'varchar',
+          'length' => 255,
+        ),
+        'column_name' => array(
+          'type' => 'varchar',
+          'length' => 255,
+        ),
+        'geo_type' => array(
+          'type' => 'int',
+          'not null' => TRUE,
+        ),
+        'srid' => array(
+          'type' => 'int',
+          'not null' => TRUE,
+          'default' => -1,
+        ),
+        'indexed' => array(
+          'type' => 'int',
+          'size' => 'tiny',
+          'not null' => FALSE,
+          'default' => 0,
+        ),
+        'data' => array(
+          'type' => 'text',
+          'serialize' => TRUE,
+        ),
+      ),
+      'primary key' => array('gid'),
+    ),
+  );
+
+  // The table already exists. Query it to locate any additional tables.
+  if (db_table_exists('geo')) {
+    $res = db_query("SELECT * FROM {geo} WHERE table_name IS NOT NULL");
+    while ($row = db_fetch_array($res)) {
+      $geo = geo_load($row);
+      if (method_exists($geo, 'schema') && $item = $geo->schema()) {
+        $schema = array_merge($schema, $item);
+      }
+    }
+  }
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function geo_install() {
+  drupal_install_schema('geo');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function geo_uninstall() {
+  drupal_uninstall_schema('geo');
+}
+
+/**
+ * Install the newly-created schema.
+ */
+function geo_update_1() {
+  drupal_install_schema('geo');
+  return array();
+}
+
+/**
+ * Drop the geo_dimension column if it exists.
+ */
+function geo_update_2() {
+  $ret = array();
+  if (db_column_exists('geo', 'geo_dimension')) {
+    db_drop_field($ret, 'geo', 'geo_dimension');
+  }
+  return $ret;
+}
+
+/**
+ * Catalog any fields that may have been created by a geo field module.
+ */
+function geo_update_3() {
+  module_load_include('crud.inc', 'content', 'includes/content');
+  foreach (geo_fields() as $field) {
+    // Call geo_content_fieldapi() directly.
+    geo_content_fieldapi('update instance', $field['field']);
+  }
+  return array();
+}

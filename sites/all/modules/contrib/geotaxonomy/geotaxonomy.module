@@ -1,0 +1,659 @@
+<?php
+// $Id: geotaxonomy.module,v 1.2.2.5.2.3 2010/06/24 14:04:46 tmcw Exp $
+/**
+ * @file
+ * Function definitions for geotaxonomy module.
+ */
+
+/**
+ * Implementation of specific hook_form_alter().
+ * Adds option of geo storage to vocab edit page.
+ */
+function geotaxonomy_form_taxonomy_form_vocabulary_alter(&$form, &$form_state) {
+  $form['settings']['geotaxonomy_status'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Store geo data for this vocabulary'),
+    '#default_value' => !empty($form['vid']) ?
+      variable_get("geotaxonomy_" . $form['vid']['#value'], 0)
+      : FALSE,
+    '#description' => t('Allows latitude and longitude data to be stored with terms of this taxonomy.'),
+  );
+  $form['#submit'][]   = 'geotaxonomy_form_vocabulary_submit';
+}
+
+/**
+ * Additional submit handler for vocabulary form to accomodate geo setting.
+ */
+function geotaxonomy_form_vocabulary_submit($form, &$form_state) {
+  $vid = $form_state['values']['vid'];
+  variable_set("geotaxonomy_$vid", $form_state['values']['geotaxonomy_status']);
+}
+
+/**
+ * Implementation of specific hook_form_alter().
+ * Allows entry of geo data on term edit page.
+ */
+function geotaxonomy_form_taxonomy_form_term_alter(&$form, &$form_state) {
+  $vid = $form['vid']['#value'];
+  if (!variable_get("geotaxonomy_".$vid, 0)) {
+    return;
+  }
+  $form['submit']['#weight'] = isset($form['submit']['#weight']) ? $form['submit']['#weight'] + 1 : 1;
+  $form['delete']['#weight'] = isset($form['delete']['#weight']) ? $form['submit']['#weight'] + 1 : 1;
+
+  $latlon = geotaxonomy_get_term($form['tid']['#value']);
+  $form['geotaxonomy'] = array(
+    '#type' => 'fieldset',
+    '#title' => t("Geotaxonomy data"),
+    '#collapsible' => 1,
+  );
+  $form['geotaxonomy']['lat'] = array (
+    '#type'   => 'textfield',
+    '#title'         => t('Latitude'),
+    '#default_value' => $latlon['lat'],
+  );
+  $form['geotaxonomy']['lon'] = array (
+    '#type'   => 'textfield',
+    '#title'         => t('Longitude'),
+    '#default_value' => $latlon['lon'],
+  );
+
+  $form['geotaxonomy']['bound_top'] = array (
+    '#type'   => 'textfield',
+    '#title'         => t('Top boundary'),
+    '#default_value' => $latlon['bound_top'],
+  );
+  $form['geotaxonomy']['bound_right'] = array (
+    '#type'   => 'textfield',
+    '#title'         => t('Right boundary'),
+    '#default_value' => $latlon['bound_right'],
+  );
+
+  $form['geotaxonomy']['bound_bottom'] = array (
+    '#type'   => 'textfield',
+    '#title'         => t('Bottom boundary'),
+    '#default_value' => $latlon['bound_bottom'],
+  );
+  $form['geotaxonomy']['bound_left'] = array (
+    '#type'   => 'textfield',
+    '#title'         => t('Left boundary'),
+    '#default_value' => $latlon['bound_left'],
+  );
+
+  // Helper map for lat/lon if OpenLayers UI is available.
+  if (module_exists('openlayers_ui')) {
+    drupal_add_js(drupal_get_path('module', 'geotaxonomy') .'/js/geotaxonomy.admin.js', 'module');
+
+    $default_preset = openlayers_preset_load(variable_get('openlayers_default_preset', 'default'));
+    $defaults = $default_preset->data;
+
+    $form['geotaxonomy']['helpmap'] = array(
+      '#value' => '<div class="form-item geotaxonomy-latlon-helpmap" style="display:block">'. geotaxonomy_form_latlon_map($defaults) .'</div>'
+    );
+    $form['geotaxonomy']['helpmap_desc'] = array(
+      '#value' => t('Click the map to set a point for this location. Shift-click and drag to set bounds. Pan and zoom with arrows and the zoom bar.')
+    );
+  }
+}
+
+/**
+ * Create LatLon Helper Map.
+ */
+function geotaxonomy_form_latlon_map($defaults = array()) {
+  // Pass variables etc. to javascript
+  // Set up our map to help set lat and lon
+  // This map will always be projected as 4326 and use just the default map preset
+  $preset = openlayers_preset_load('geotaxonomy_map');
+  $map = $preset->data;
+  return openlayers_render_map($map);
+}
+
+
+/**
+ * Implementation of hook_node_views().
+ */
+function geotaxonomy_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'geotaxonomy') .'/views',
+  );
+}
+
+/**
+ * Little API helper function to retrieve geo data for a given term.
+ */
+function geotaxonomy_get_term($tid) {
+  return db_fetch_array(db_query("SELECT lat, lon, bound_top, bound_right, bound_bottom, bound_left FROM {term_geo} WHERE tid = %d", $tid));
+}
+
+/**
+ * Implementation of hook_taxonomy().
+ */
+function geotaxonomy_taxonomy($op = NULL, $type = NULL, $term = NULL){
+  if($type =='term' && $term && variable_get("geotaxonomy_".$term['vid'], 0)) {
+    switch ($op) {
+      case 'delete':
+        db_query("DELETE FROM {term_geo} WHERE tid = %d", $term['tid']);
+        break;
+      case 'update':
+        db_query("DELETE FROM {term_geo} WHERE tid = %d", $term['tid']);
+      case 'insert':
+        drupal_write_record('term_geo', $term);
+        break;
+    }
+  }
+}
+
+/**
+ * Rebuild term hierarchy table from information in geo_terms.
+ */
+function geotaxonomy_rebuild_hierarchy($vid) {
+
+  // First pull all terms from this vocabulary.
+  // @todo: rather rebuild with multiple queries?
+  $result = db_query('SELECT td.tid, td.name, tg.parent_name, tg.external_id, tg.parent_external_id FROM {term_data} td JOIN {term_geo} tg ON td.tid = tg.tid WHERE td.vid = %d', $vid);
+  $terms_by_name = $terms_by_external = array();
+  while ($term = db_fetch_object($result)) {
+    $terms_by_name[$term->name] = $term;
+    $terms_by_external[$term->external_id] = $term;
+  }
+
+  // Then iterate over terms and try to find a parent.
+  // Prefer parent external id over parent name.
+  foreach ($terms_by_name as $term) {
+    if (!empty($term->parent_external_id)) {
+      $parent_tid = empty($terms_by_external[$term->parent_external_id]->tid) ? 0 : $terms_by_external[$term->parent_external_id]->tid;
+      db_query('UPDATE {term_hierarchy} SET parent = %d WHERE tid = %d', $parent_tid, $term->tid);
+    }
+    if (!empty($term->parent_name)) {
+      $parent_tid = empty($terms_by_name[$term->parent_name]->tid) ? 0 : $terms_by_name[$term->parent_name]->tid;
+      db_query('UPDATE {term_hierarchy} SET parent = %d WHERE tid = %d', $parent_tid, $term->tid);
+    }
+  }
+}
+
+/**
+ * Implementation of hook_feeds_term_processor_targets_alter().
+ *
+ * Expose possible mapping targets for taxonomy terms. If a user picks these
+ * targets, FeedsTermProcessor will stick their values on $term['lat'],
+ * $term['lon'] and so forth.
+ */
+function geotaxonomy_feeds_term_processor_targets_alter(&$targets, $vid) {
+  if (variable_get('geotaxonomy_'. $vid, FALSE)) {
+    $targets['lat'] = array(
+      'name' => t('Latitude'),
+      'description' => t('Latitude of the geo term.'),
+    );
+    $targets['lon'] = array(
+      'name' => t('Longitude'),
+      'description' => t('Longitude of the geo term.'),
+    );
+    $targets['bound_top'] = array(
+      'name' => t('Top boundary'),
+      'description' => t('Top boundary latitude to be used when displaying this term on a map.'),
+    );
+    $targets['bound_right'] = array(
+      'name' => t('Right boundary'),
+      'description' => t('Right boundary longitude to be used when displaying this term on a map.'),
+    );
+    $targets['bound_bottom'] = array(
+      'name' => t('Bottom boundary'),
+      'description' => t('Bottom boundary latitude to be used when displaying this term on a map.'),
+    );
+    $targets['bound_left'] = array(
+      'name' => t('Left boundary'),
+      'description' => t('Left boundary longitude to be used when displaying this term on a map.'),
+    );
+    $targets['geometry'] = array(
+      'name' => t('Geometry'),
+      'description' => t('WKT Geometry'),
+    );
+    $targets['parent_name'] = array(
+      'name' => t('Parent term name'),
+      'description' => t('The name of this term\'s parent term. Used to compute hierarchies of geo terms.'),
+    );
+    $targets['external_id'] = array(
+      'name' => t('External ID'),
+      'description' => t('An external id of this term. Can be useful when dealing with ambigous geo terms (e. g. Paris, Illinois vs. Paris, France).'),
+    );
+    $targets['parent_external_id'] = array(
+      'name' => t('Parent external ID'),
+      'description' => t('The external ID of this term\'s parent term. Used to compute hierarchies of geo terms.'),
+    );
+  }
+}
+
+/**
+ * Implementation of hook_feeds_after_import().
+ *
+ * Rebuild term hierarchy after import.
+ */
+function geotaxonomy_feeds_after_import($importer, $source) {
+  if ($importer->processor instanceOf FeedsTermProcessor && $importer->processor->config['vocabulary']) {
+    if (variable_get('geotaxonomy_'. $importer->processor->config['vocabulary'], FALSE)) {
+
+      geotaxonomy_rebuild_hierarchy($importer->processor->config['vocabulary']);
+      drupal_set_message(t('Rebuilt term hierarchy.'));
+    }
+  }
+}
+
+/**
+ * FEEDAPI INTEGRATION
+ * Allows flexible geo and other term importation.
+ *
+ * @todo: use geotaxonomy_rebuild_hierarchy().
+ */
+
+/**
+ * Implementation of hook_feedapi_settings_form().
+ * If a module provides parsers and processors it MUST evaluate the $type variable
+ * to return different forms for parsers and processors.
+ * There might be a better term for parsers and processors than $type.
+ */
+function geotaxonomy_feedapi_settings_form($type) {
+  $form = array();
+  switch ($type) {
+    case 'processors':
+      $vocabularies = taxonomy_get_vocabularies();
+      $v_types = array();
+      foreach ($vocabularies as $vocabulary) {
+        $v_types[$vocabulary->vid] = $vocabulary->name;
+      }
+      $default_v = current(array_keys($v_types));
+
+      $form['vocabulary'] = array(
+        '#type' => 'select',
+        '#title' => t('Vocabulary of stored terms'),
+        '#default_value' => $default_v,
+        '#options' => $v_types,
+        '#description' => t('Choose the vocabulary for terms created by this feed. Feedapi term assumes complete freedom in this vocab, meaning it will delete all the vocabs terms when purging and will also update any terms with matching names.'),
+      );
+      break;
+  }
+  return $form;
+}
+
+/**
+ * Implementation of hook_feedapi_item().
+ */
+function geotaxonomy_feedapi_item($op) {
+  switch ($op) {
+    case 'type':
+      return array("XML feed");
+    case 'save':
+    case 'expire':
+    case 'update':
+    case 'delete':
+    case 'purge':
+    case 'unique':
+    default:
+      if (function_exists('_geotaxonomy_'. $op)) {
+        $args = array_slice(func_get_args(), 1);
+        return call_user_func_array('_geotaxonomy_'. $op, $args);
+      }
+  }
+}
+
+/**
+ * Check for expired items.
+ * Not currently supported, taxonomy doesn't store dates.
+ */
+function _geotaxonomy_expire($feed, $settings) {
+  return 0;
+}
+
+/**
+ * Create a term from the feed item.
+ * Stores geo data as well so long as some of it is set.
+ */
+function _geotaxonomy_save($feed_item, $feed_nid, $settings = array()) {
+  $feed_node = node_load($feed_nid);
+  if ($feed_item = feedapi_mapper_map($feed_node, 'geotaxonomy', $feed_item)) {
+    if (isset($feed_item['term_name'])) {
+      $term = array(
+        'name' => $feed_item['term_name'],
+        'vid' => $settings['vocabulary'],
+        'description' => $feed_item['term_description'],
+        'weight' => $feed_item['term_weight'],
+        );
+      if (drupal_write_record('term_data', $term)) {
+        _geotaxonomy_item_tid((!empty($feed_item['term_unique']) ? $feed_item['term_unique'] : $feed_item['term_name'] . crc32(serialize($feed_item))), $term['tid']);
+        if (is_numeric($feed_item['term_lat']) || is_numeric($feed_item['term_lon'])) {
+          $term_geo = array(
+            'tid' => $term['tid'],
+            'lat' => is_numeric($feed_item['term_lat']) ? $feed_item['term_lat'] : NULL,
+            'lon' => is_numeric($feed_item['term_lon']) ? $feed_item['term_lon'] : NULL,
+            'bound_top' => is_numeric($feed_item['term_bound_top']) ? $feed_item['term_bound_top'] : NULL,
+            'bound_right' => is_numeric($feed_item['term_bound_right']) ? $feed_item['term_bound_right'] : NULL,
+            'bound_bottom' => is_numeric($feed_item['term_bound_bottom']) ? $feed_item['term_bound_bottom'] : NULL,
+            'bound_left' => is_numeric($feed_item['term_bound_left']) ? $feed_item['term_bound_left'] : NULL,
+          );
+          drupal_write_record('term_geo', $term_geo);
+        }
+      }
+    }
+  }
+  return $term;
+}
+
+/**
+ * Static cache function to temporarily resolve hierarchical imported information until everything is safely in the database.
+ */
+function _geotaxonomy_item_tid($key, $tid = NULL) {
+  static $allkeys = array();
+  if ($tid) {
+    $allkeys[$key] = $tid;
+  }
+  return $allkeys[$key];
+}
+
+/**
+ * Update a node which already assigned to a feed item
+ */
+function _geotaxonomy_update($feed_item, $feed_nid, $settings, $id) {
+  // not yet supported
+  return array();
+}
+
+/**
+ * Delete a term which already assigned to a feed item
+ */
+function _geotaxonomy_delete($feed_item, $feed_nid) {
+  $feed_node = node_load($feed_nid);
+  if ($feed_item = feedapi_mapper_map($feed_node, 'geotaxonomy', $feed_item)) {
+    if (isset($feed_item['term_name'])) {
+      $tid = db_result(db_query("SELECT tid FROM {term_data} WHERE vid = %d AND name = '%s'", $feed_node->feed->settings['processors']['geotaxonomy']['vocabulary'], $feed_item['term_name']));
+      if($tid) {
+        taxonomy_del_term($tid);
+      }
+    }
+  }
+}
+
+/**
+ * Delete all terms associated with a feed's vocabulary.
+ */
+function _geotaxonomy_purge($feed) {
+  $feed_node = node_load($feed->nid);
+  $result = db_query('SELECT tid FROM {term_data} WHERE vid = %d', $feed_node->feed->settings['processors']['geotaxonomy']['vocabulary']);
+  while ($term = db_fetch_object($result)) {
+    taxonomy_del_term($term->tid);
+  }
+
+  cache_clear_all();
+  drupal_set_message("Deleted all terms in the vocabulary.");
+}
+
+/**
+ * Tell if the feed item was seen before or not at the feed
+ * Assumes every term in the vocabulary it uses is its own property.
+ *
+ * @param $feed_item
+ *  Feed item object
+ * @param $feed_nid
+ *  Feed ID
+ * @return
+ *  TRUE if the item is new, FALSE if the item is a duplicated one
+ */
+function _geotaxonomy_unique($feed_item, $feed_nid, $settings) {
+  $feed_node = node_load($feed_nid);
+  if ($feed_item = feedapi_mapper_map($feed_node, 'geotaxonomy', $feed_item)) {
+    if (isset($feed_item['term_name'])) {
+      if (!empty($feed_item['term_parent_name'])) {
+        $tid = db_result(db_query("SELECT td.tid FROM {term_data} td LEFT JOIN {term_hierarchy} th ON td.tid = th.tid LEFT JOIN {term_data} td2 ON td2.tid = th.parent WHERE td.vid = %d AND td.name = '%s' AND td2.name = '%s'", $feed_node->feed->settings['processors']['geotaxonomy']['vocabulary'], $feed_item['term_name'], $feed_item['term_parent_name']));
+      } else {
+        $tid = db_result(db_query("SELECT td.tid FROM {term_data} td LEFT JOIN {term_hierarchy} th ON td.tid = th.tid WHERE td.vid = %d AND td.name = '%s' AND th.parent = 0", $feed_node->feed->settings['processors']['geotaxonomy']['vocabulary'], $feed_item['term_name']));
+      }
+      if ($tid) {
+        return $tid;
+      }
+    } else {
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
+/**
+ * Implementation of hook_feedapi_after_refresh().
+ */
+function geotaxonomy_feedapi_after_refresh($feed) {
+  if (in_array('geotaxonomy', $feed->processors)) {
+    $feed_node = node_load($feed->nid);
+
+    // Refuse to continue if there are no items on the feed.
+    if (empty($feed->items)) {
+      // feedapi will already alert the user, we just return.
+      return;
+    }
+    $allitems = array();
+    foreach($feed->items as $feed_item){
+      if ($feed_item = feedapi_mapper_map($feed_node, 'geotaxonomy', $feed_item)) {
+        if (isset($feed_item['term_name'])) {
+          $tid = _geotaxonomy_item_tid((!empty($feed_item['term_unique']) ? $feed_item['term_unique'] : $feed_item['term_name'] . crc32(serialize($feed_item))));
+          if ($tid) {
+            $hierarchy = array(
+              'tid' => $tid,
+              'parent' => 0,
+            );
+            $ptid = 0;
+            if (isset($feed_item['term_parent_unique'])) {
+              $ptid = _geotaxonomy_item_tid($feed_item['term_parent_unique']);
+            }
+            if (!$ptid && isset($feed_item['term_parent_name'])) {
+              // Just find parent by name.
+              $ptid = db_result(db_query("SELECT tid FROM {term_data} WHERE vid = %d AND name = '%s'", $feed_node->feed->settings['processors']['geotaxonomy']['vocabulary'], $feed_item['term_parent_name']));
+            }
+            $hierarchy['parent'] = $ptid ? $ptid : 0;
+
+            // Don't attempt to write a record if an identical hierarchy entry exists.
+            $exists = db_result(db_query("SELECT tid FROM {term_hierarchy} WHERE tid = %d AND parent = %d", $hierarchy['tid'], $hierarchy['parent']));
+            if (!$exists) {
+              drupal_write_record('term_hierarchy', $hierarchy);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_feedapi_mapper().
+ */
+function geotaxonomy_feedapi_mapper($op, $feed_node, $processor, $target = NULL, $feed_element = array(), $field_name = '', $sub_field = '') {
+  if ($processor != 'geotaxonomy') {
+    return;
+  }
+  switch ($op) {
+    case 'describe':
+      return t('Maps feed elements to taxonomy term, parent, and description fields as well as geotaxonomy information fields.');
+      break;
+    case 'list':
+      return array(
+        'term_name' => 'Term name',
+        'term_description' => 'Term description',
+        'term_weight' => 'Term weight',
+        'term_parent_name' => 'Term parent name. Unreliable if names can be duplicated.',
+        'term_unique' => 'Unique field to identify this term if names can be repeated, for creating hierarchy.',
+        'term_parent_unique' => 'Unique field of the parent of this term. Requires the unique field to be mapped as well to be relevant.',
+        'term_lat' => 'Latitude',
+        'term_lon' => 'Longitude',
+        'term_bound_top' => 'Bound Top',
+        'term_bound_right' => 'Bound Right',
+        'term_bound_bottom' => 'Bound Bottom',
+        'term_bound_left' => 'Bound Left',
+      );
+      break;
+    case 'map':
+      // Map $feed_element to the key specified by $field_name.
+      $target[$field_name] = $feed_element;
+      return $target;
+  }
+}
+
+/**
+ * Implementation of hook_ctools_plugin_api().
+ */
+function geotaxonomy_ctools_plugin_api($module, $api) {
+  if ($module == "openlayers") {
+    switch ($api) {
+      case 'openlayers_presets':
+        return array('version' => 1);
+      case 'openlayers_behaviors':
+        return array('version' => 1);
+    }
+  }
+  else if ($module == "feeds" && $api == "feeds_importer_default") {
+    return array("version" => 1);
+  }
+}
+
+/**
+ * Implementation of hook_openlayers_presets().
+ */
+function geotaxonomy_openlayers_presets() {
+  // Create full preset array
+  $default = new stdClass();
+  $default->api_version = 1;
+  $default->name = 'geotaxonomy_map';
+  $default->title = t('Geotaxonomy Map');
+  $default->description = t('A Map Used for Geotaxonomy Input');
+  $default->data = array(
+    'projection' => '900913',
+    'width' => '600px',
+    'default_layer' => 'osm_mapnik',
+    'height' => '400px',
+    'center' => array(
+      'initial' => array(
+        'centerpoint' => '0,0',
+        'zoom' => '2'
+      )
+    ),
+    'options' => array(
+      'maxExtent' => openlayers_get_extent('900913'),
+    ),
+    'behaviors' => array(
+      'openlayers_behavior_panzoombar' => array(),
+      'openlayers_behavior_attribution' => array(),
+      'openlayers_behavior_geotaxonomy' => array(),
+      'openlayers_behavior_keyboarddefaults' => array()
+    ),
+    'layers' => array(
+      'osm_mapnik',
+    )
+  );
+  return array('geotaxonomy_map' => $default);
+}
+
+/**
+ * Implementation of hook_openlayers_behaviors
+ */
+function geotaxonomy_openlayers_behaviors() {
+  return array(
+    'openlayers_behavior_geotaxonomy' => array(
+       'title' => t('Geotaxonomy'),
+       'description' => t('Fuels the geotaxonomy map-input form.'),
+       'type' => 'layer',
+       'path' => drupal_get_path('module', 'geotaxonomy') .'/includes/behaviors',
+       'file' => 'openlayers_behavior_geotaxonomy.inc',
+       'behavior' => array(
+         'class' => 'openlayers_behavior_geotaxonomy',
+         'parent' => 'openlayers_behavior',
+       ),
+     ),
+   );
+}
+
+/**
+ * Implementation of hook_feeds_importer_default
+ */
+function geotaxonomy_feeds_importer_default() {
+  $export = array();
+  $feeds_importer = new stdClass;
+  $feeds_importer->disabled = FALSE;
+  $feeds_importer->api_version = 1;
+  $feeds_importer->id = 'locations';
+  $feeds_importer->config = array(
+    'name' => 'Locations',
+    'description' => 'Imports locations into geotaxonomies',
+    'fetcher' => array(
+      'plugin_key' => 'FeedsFileFetcher',
+      'config' => array(),
+    ),
+    'parser' => array(
+      'plugin_key' => 'FeedsCSVParser',
+      'config' => array(
+        'delimiter' => ',',
+      ),
+    ),
+    'processor' => array(
+      'plugin_key' => 'FeedsTermProcessor',
+      'config' => array(
+        'vocabulary' => '2',
+        'update_existing' => 0,
+        'mappings' => array(
+          '0' => array(
+            'source' => 'name',
+            'target' => 'name',
+            'unique' => 1,
+          ),
+          '1' => array(
+            'source' => 'lat',
+            'target' => 'lat',
+            'unique' => FALSE,
+          ),
+          '2' => array(
+            'source' => 'lon',
+            'target' => 'lon',
+            'unique' => FALSE,
+          ),
+          '3' => array(
+            'source' => 'top',
+            'target' => 'bound_top',
+            'unique' => FALSE,
+          ),
+          '4' => array(
+            'source' => 'right',
+            'target' => 'bound_right',
+            'unique' => FALSE,
+          ),
+          '5' => array(
+            'source' => 'bottom',
+            'target' => 'bound_bottom',
+            'unique' => FALSE,
+          ),
+          '6' => array(
+            'source' => 'left',
+            'target' => 'bound_left',
+            'unique' => FALSE,
+          ),
+          '7' => array(
+            'source' => 'parent',
+            'target' => 'parent_name',
+            'unique' => FALSE,
+          ),
+          '8' => array(
+            'source' => 'id',
+            'target' => 'external_id',
+            'unique' => FALSE,
+          ),
+          '9' => array(
+            'source' => 'parent_id',
+            'target' => 'parent_external_id',
+            'unique' => FALSE,
+          ),
+        ),
+      ),
+    ),
+    'content_type' => '',
+    'update' => 0,
+    'import_on_create' => 1,
+    'import_period' => '-1',
+  );
+
+  $export['locations'] = $feeds_importer;
+  return $export;
+}

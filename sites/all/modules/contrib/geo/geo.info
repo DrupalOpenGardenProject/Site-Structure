@@ -1,0 +1,12 @@
+; $Id: geo.info,v 1.6 2008/08/28 09:38:02 vauxia Exp $
+name = Geo
+description = Provides a storage engine and API for Geospatial data. 
+package = Geo
+core = 6.x
+
+; Information added by drupal.org packaging script on 2010-01-14
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "geo"
+datestamp = "1263427689"
+

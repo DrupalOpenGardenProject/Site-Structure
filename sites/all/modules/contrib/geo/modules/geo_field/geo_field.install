@@ -1,0 +1,18 @@
+<?php // $Id: geo_field.install,v 1.2 2010/01/09 19:08:19 jerdavis Exp $
+
+/**
+ * Implementation of hook_install().
+ */
+function geo_field_install() {
+  drupal_load('module', 'content');
+  content_notify('install', 'geo');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function geo_field_uninstall() {
+  drupal_load('module', 'content');
+  content_notify('uninstall', 'geo');
+}
+

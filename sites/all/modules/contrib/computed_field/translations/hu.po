@@ -1,0 +1,161 @@
+# Hungarian translation of computed_field (6.x-1.0-beta2)
+# Copyright (c) 2008 by the Hungarian translation team
+# Generated from files:
+#  computed_field.module,v 1.17.2.4 2008/10/17 21:21:05 moonshine
+#  computed_field.info,v 1.4.2.1 2008/10/01 21:49:38 moonshine
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: computed_field (6.x-1.0-beta2)\n"
+"POT-Creation-Date: 2008-11-21 04:18-0600\n"
+"PO-Revision-Date: 2008-11-02 15:57-0600\n"
+"Last-Translator: Balogh Zoltán\n"
+"Language-Team: Hungarian http://forditas.mindworks.hu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: computed_field.module:114
+msgid "Default"
+msgstr "Alapértelmezett"
+
+#: computed_field.module:242
+msgid "Plain text"
+msgstr "Egyszerű szöveg"
+
+#: computed_field.module:79
+msgid "Sortable"
+msgstr "Rendezhető"
+
+#: computed_field.info:0
+msgid "CCK"
+msgstr "CCK"
+
+#: computed_field.module:178
+msgid "Computed"
+msgstr "Számított"
+
+#: computed_field.module:10,10
+msgid "Computed"
+msgstr "Számított"
+
+#: computed_field.module:11
+msgid "Create field data via PHP code."
+msgstr "Érték létrehozása PHP kóddal."
+
+#: computed_field.module:31
+msgid "Computed Code"
+msgstr "Számítási kód"
+
+#: computed_field.module:32
+msgid "The variables available to your code are: "
+msgstr "A kód számára elérhető változók: "
+
+#: computed_field.module:32
+msgid ". To set the value of the field, set "
+msgstr ". A mező értékének beállításához szükséges változó: "
+
+#: computed_field.module:32
+msgid ""
+". Here's a simple example which sets the computed field's value to the "
+"value of the sum of the number fields field_a and field_b: "
+msgstr ""
+". Itt egy egyszerű példa, amely beállítja a számított mező "
+"értékét a field_a és field_b mezők összegére: "
+
+#: computed_field.module:37
+msgid "Display this field"
+msgstr "A mező megjelenítése"
+
+#: computed_field.module:42
+msgid "Display Format"
+msgstr "Megjelenítési forma"
+
+#: computed_field.module:43
+msgid ""
+"This code should assign a string to the $display variable, which will "
+"be printed as the value of the field. The stored value of the field is "
+"in $node_field_item['value'].  Note: this code has no effect if you "
+"use the \"Computed Value\" formatter option."
+msgstr ""
+"Ennek a kódnak kell hozzárendelnie egy karaktersorozatot a $display "
+"változóhóz, amely mint a változó értéke fog megjelenni. A mező "
+"tárolt értéke a $node_field_item['value'] változóban van. "
+"Megjegyzés: ennek a kódnak nincs hatása „Számított érték” "
+"formázási beállítás használata esetén."
+
+#: computed_field.module:48
+msgid "Store using the database settings below"
+msgstr "Tárolás az alábbi adatbázis beállításokat használva"
+
+#: computed_field.module:51
+msgid "Database Storage Settings"
+msgstr "Adatbázisban tárolás beállításai"
+
+#: computed_field.module:54
+msgid "Data Type"
+msgstr "Adattípus"
+
+#: computed_field.module:55
+msgid "The SQL datatype to store this field in."
+msgstr "A mező tárolásához használt SQL adattípus."
+
+#: computed_field.module:62
+msgid "Data Length"
+msgstr "Adathossz"
+
+#: computed_field.module:68
+msgid "Default Value"
+msgstr "Alapértelmezett érték"
+
+#: computed_field.module:74
+msgid "Not NULL"
+msgstr "Nem NULL"
+
+#: computed_field.module:86
+msgid "To store this field in the database, please specify a data type."
+msgstr ""
+"A mező adatbázisban történő tárolásához meg kell adni egy "
+"adattípust."
+
+#: computed_field.module:89
+msgid "To store this field in the database, please specify the data length."
+msgstr ""
+"A mező adatbázisban történő tárolásához meg kell adni az adat "
+"hosszát."
+
+#: computed_field.module:238
+msgid "Raw text"
+msgstr "Nyers szöveg"
+
+#: computed_field.module:246
+msgid "Markup"
+msgstr "Jelölő"
+
+#: computed_field.module:250
+msgid "Computed Value"
+msgstr "Számított érték"
+
+#: computed_field.module:310
+msgid "Raw, unfiltered text."
+msgstr "Nyers, szűretlen szöveg."
+
+#: computed_field.module:311
+msgid "Formatted and filtered text."
+msgstr "Formázott és szűrt szöveg."
+
+#: computed_field.module:0
+msgid "computed_field"
+msgstr "computed_field"
+
+#: computed_field.info:0
+msgid "Computed Field"
+msgstr "Számított mező"
+
+#: computed_field.info:0
+msgid "Allows the user to define computed values in custom content types."
+msgstr ""
+"Lehetővé teszi számított értékek megadását az egyedi tartalom "
+"típusokban."
+

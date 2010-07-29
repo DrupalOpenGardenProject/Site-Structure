@@ -1,0 +1,35 @@
+/* $Id: views_cloud.css,v 1.5 2009/11/18 02:08:20 quicksketch Exp $ */
+div.views-cloud {
+  line-height: 0.8;
+}
+
+.views-cloud-size-1 {
+  font-size: 1em;
+}
+.views-cloud-size-2 {
+  font-size: 1.4em;
+}
+.views-cloud-size-3 {
+  font-size: 1.8em;
+}
+.views-cloud-size-4 {
+  font-size: 2.2em;
+}
+.views-cloud-size-5 {
+  font-size: 2.6em;
+}
+.views-cloud-size-6 {
+  font-size: 3em;
+}
+.views-cloud-size-7 {
+  font-size: 3.4em;
+}
+.views-cloud-size-8 {
+  font-size: 3.8em;
+}
+.views-cloud-size-9 {
+  font-size: 4.2em;
+}
+.views-cloud-size-10 {
+  font-size: 4.6em;
+}

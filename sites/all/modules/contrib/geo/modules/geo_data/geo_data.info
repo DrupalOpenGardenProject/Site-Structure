@@ -1,0 +1,13 @@
+; $Id: geo_data.info,v 1.1 2008/08/20 15:06:39 vauxia Exp $
+name = Geo Data
+description = Interface with external GIS data, providing views and field integration
+package = Geo
+dependencies[] = geo
+core = 6.x
+
+; Information added by drupal.org packaging script on 2010-01-14
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "geo"
+datestamp = "1263427689"
+

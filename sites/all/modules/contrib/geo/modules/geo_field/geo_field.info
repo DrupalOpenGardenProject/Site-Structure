@@ -1,0 +1,14 @@
+; $Id: geo_field.info,v 1.1 2008/08/06 07:05:46 vauxia Exp $
+name = Geo Field
+description = Provides a CCK field for Geospatial data. 
+package = Geo
+dependencies[] = geo
+dependencies[] = content
+core = 6.x
+
+; Information added by drupal.org packaging script on 2010-01-14
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "geo"
+datestamp = "1263427689"
+

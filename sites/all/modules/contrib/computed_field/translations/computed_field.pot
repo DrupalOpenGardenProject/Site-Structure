@@ -1,0 +1,145 @@
+# $Id: computed_field.pot,v 1.1.2.2 2009/08/01 00:13:33 pl2 Exp $
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  computed_field.module,v 1.17.2.8 2009/07/31 23:38:42 pl2
+#  computed_field.info,v 1.4.2.1 2008/10/01 21:49:38 moonshine
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-08-01 02:11+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: computed_field.module:10;206
+msgid "Computed"
+msgstr ""
+
+#: computed_field.module:11
+msgid "Create field data via PHP code."
+msgstr ""
+
+#: computed_field.module:33
+msgid "Computed Code"
+msgstr ""
+
+#: computed_field.module:34
+msgid "The variables available to your code are: "
+msgstr ""
+
+#: computed_field.module:34
+msgid ". To set the value of the field, set "
+msgstr ""
+
+#: computed_field.module:34
+msgid ". Here's a simple example which sets the computed field's value to the value of the sum of the number fields field_a and field_b: "
+msgstr ""
+
+#: computed_field.module:34
+msgid "Alternately, this code can be supplied by your own custom function named @compute_func()."
+msgstr ""
+
+#: computed_field.module:41
+msgid "This field is computed using @compute_func()."
+msgstr ""
+
+#: computed_field.module:46
+msgid "Display Format"
+msgstr ""
+
+#: computed_field.module:47
+msgid "This code should assign a string to the $display variable, which will be printed as the value of the field. The stored value of the field is in $node_field_item['value'].  Note: this code has no effect if you use the \"Computed Value\" formatter option. Alternately, this code can be supplied by your own custom function named @display_func()."
+msgstr ""
+
+#: computed_field.module:54
+msgid "This field is computed using @display_func()."
+msgstr ""
+
+#: computed_field.module:59
+msgid "Store using the database settings below"
+msgstr ""
+
+#: computed_field.module:62
+msgid "Database Storage Settings"
+msgstr ""
+
+#: computed_field.module:65
+msgid "Data Type"
+msgstr ""
+
+#: computed_field.module:66
+msgid "The SQL datatype to store this field in."
+msgstr ""
+
+#: computed_field.module:73
+msgid "Data Length"
+msgstr ""
+
+#: computed_field.module:79
+msgid "Default Value"
+msgstr ""
+
+#: computed_field.module:85
+msgid "Not NULL"
+msgstr ""
+
+#: computed_field.module:90
+msgid "Sortable"
+msgstr ""
+
+#: computed_field.module:97
+msgid "To store this field in the database, please specify a data type."
+msgstr ""
+
+#: computed_field.module:100
+msgid "To store this field in the database, please specify the data length."
+msgstr ""
+
+#: computed_field.module:131
+msgid "Default"
+msgstr ""
+
+#: computed_field.module:265
+msgid "Raw text"
+msgstr ""
+
+#: computed_field.module:269
+msgid "Plain text"
+msgstr ""
+
+#: computed_field.module:273
+msgid "Markup"
+msgstr ""
+
+#: computed_field.module:277
+msgid "Computed Value"
+msgstr ""
+
+#: computed_field.module:361
+msgid "Raw, unfiltered text."
+msgstr ""
+
+#: computed_field.module:362
+msgid "Formatted and filtered text."
+msgstr ""
+
+#: computed_field.info:0
+msgid "Computed Field"
+msgstr ""
+
+#: computed_field.info:0
+msgid "Allows the user to define computed values in custom content types."
+msgstr ""
+
+#: computed_field.info:0
+msgid "CCK"
+msgstr ""
+

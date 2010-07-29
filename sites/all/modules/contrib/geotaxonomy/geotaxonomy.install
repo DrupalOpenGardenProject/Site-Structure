@@ -1,0 +1,156 @@
+<?php
+// $Id: geotaxonomy.install,v 1.1.2.1.2.1 2010/06/24 14:04:46 tmcw Exp $
+/**
+ * @file
+ * Install functions for geotaxonomy module.
+ */
+
+/**
+ * Implementation of hook_schema().
+ */
+function geotaxonomy_schema() {
+  $schema['term_geo'] = array(
+    'description' => 'Taxonomy term geo data.',
+    'fields' => array(
+      'tid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'The {term_data}.tid of the term to which this geo data maps.',
+      ),
+      'lat' => array(
+        'type' => 'float',
+        'size' => 'big',
+        'not null' => FALSE,
+        'description' => 'Latitude.',
+      ),
+      'lon' => array(
+        'type' => 'float',
+        'size' => 'big',
+        'not null' => FALSE,
+        'description' => 'Longitude.',
+      ),
+      'bound_top' => array(
+        'type' => 'float',
+        'size' => 'big',
+        'not null' => FALSE,
+        'description' => 'Top Bound.',
+      ),
+      'bound_right' => array(
+        'type' => 'float',
+        'size' => 'big',
+        'not null' => FALSE,
+        'description' => 'Right Bound.',
+      ),
+      'bound_bottom' => array(
+        'type' => 'float',
+        'size' => 'big',
+        'not null' => FALSE,
+        'description' => 'Bottom Bound.',
+      ),
+      'bound_left' => array(
+        'type' => 'float',
+        'size' => 'big',
+        'not null' => FALSE,
+        'description' => 'Left Bound.',
+      ),
+      'geometry' => array(
+        'type' => 'text',
+        'description' => 'Geometry.',
+      ),
+      'parent_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The term name of the parent.',
+      ),
+      'external_id' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'An external identifier of this geo term.',
+      ),
+      'parent_external_id' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The external identifier of the parent of this geo term.',
+      ),
+    ),
+    'indexes' => array(
+        'tid' => array('tid'),
+        'parent_name' => array('parent_name'),
+        'external_id' => array('external_id'),
+        'parent_external_id' => array('parent_external_id'),
+      ),
+  );
+  return $schema;
+}
+
+function geotaxonomy_install() {
+  // Create tables.
+  drupal_install_schema('geotaxonomy');
+}
+
+function geotaxonomy_uninstall() {
+  // Remove tables.
+  drupal_uninstall_schema('geotaxonomy');
+}
+
+function geotaxonomy_update_1() {
+  drupal_install_schema('geotaxonomy');
+  return array();
+}
+
+function geotaxonomy_update_2() {
+  $ret = array();
+  $new_field = array(
+    'type' => 'float',
+    'size' => 'big',
+    'not null' => FALSE,
+  );
+  $fields = array (
+    'bound_top' => 'Top Bound',
+    'bound_right' => 'Right Bound',
+    'bound_bottom' => 'Bottom Bound',
+    'bound_left' => 'Left Bound',
+  );
+
+  foreach ($fields as $key => $desc) {
+    $new_field['description'] = $desc;
+    db_add_field($ret, 'term_geo', $key, $new_field);
+  }
+  return $ret;
+}
+
+function geotaxonomy_update_3() {
+  $ret = array();
+  $geometry = array(
+    'type' => 'text',
+    'description' => 'Geometry.',
+  );
+  db_add_field($ret, 'term_geo', 'geometry', $geometry);
+  return $ret;
+}
+
+/**
+ * Add external_id, parent_name and parent_external_id field.
+ *
+ * Start using hook_update_600N() convention.
+ */
+function geotaxonomy_update_6001() {
+  $schema = geotaxonomy_schema();
+  $fields = $schema['term_geo']['fields'];
+  $indexes = $schema['term_geo']['indexes'];
+
+  $ret = array();
+  foreach (array('parent_name', 'external_id', 'parent_external_id') as $name) {
+    db_add_field($ret, 'term_geo', $name, $fields[$name]);
+    db_add_index($ret, 'term_geo', $name, $indexes[$name]);
+  }
+  return $ret;
+}

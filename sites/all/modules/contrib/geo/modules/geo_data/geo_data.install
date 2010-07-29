@@ -1,0 +1,197 @@
+<?php // $Id: geo_data.install,v 1.2 2009/12/02 01:42:03 vauxia Exp $
+
+/**
+ * Install and populate the newly-created geo_data schema.
+ */
+function geo_data_update_1() {
+  // Invalidating this update hook, because we will be moving
+  // geo_data's metadata tables to geo.module instead.
+  return array();
+}
+
+
+/**
+ * Account for all of the content uploaded by geo_data in Geo's API.
+ */
+function geo_data_update_2() {
+  global $db_type;
+  $ret = array();
+
+  switch ($db_type) {
+    case 'mysql':
+    case 'mysqli':
+      $handler = 'GeoSQLMySQL';
+      break;
+    case 'pgsql':
+      $handler = 'GeoSQLPostGIS';
+      break;
+  }
+
+  // If the original version of update_1 ran, a now-defunct geo_data table exists.
+  // Copy its data into the table provided by geo.module and drop geo_data.
+  if (db_table_exists('geo_data')) {
+
+    drupal_get_schema(NULL, TRUE);
+    $res = db_query("SELECT * FROM {geo_data}");
+    while ($row = db_fetch_array($res)) {
+      $row['handler'] = $handler;
+      $row['column_name'] = 'geo';
+
+      $geo = geo_load($row);
+      $geo->setGeoType();
+      $geo->setSRID();
+
+      geo_save($geo);
+    }
+
+    db_drop_table($ret, 'geo_data');
+  }
+
+  // update_1 did not run. Find any geo_data tables that were already
+  // created and add them to Geo's schema.
+  else {
+
+    // Hopefully, we don't need to cover all cases, as there was a limited selection
+    // of identified data types in the original shp2sql code.
+    $tables = array();
+    switch ($db_type) {
+      case 'mysql':
+      case 'mysqli':
+        $res = db_query("SELECT
+            TABLE_NAME,
+            COLUMN_NAME,
+            COLUMN_DEFAULT,
+            IS_NULLABLE,
+            DATA_TYPE,
+            CHARACTER_MAXIMUM_LENGTH,
+            NUMERIC_PRECISION,
+            NUMERIC_SCALE
+          FROM information_schema.columns
+          WHERE TABLE_SCHEMA = database()
+          AND TABLE_NAME LIKE 'geo_data_%'
+          ORDER BY TABLE_NAME, ORDINAL_POSITION");
+
+        while($row = db_fetch_object($res)) {
+          $table = $row->TABLE_NAME;
+          $column = $row->COLUMN_NAME;
+          if (!isset($tables[$table])) $tables[$table] = array('fields' => array());
+          $tables[$table]['fields'][$column] = array(
+            'type' => $row->DATA_TYPE,
+            'not null' => ($row->IS_NULLABLE == 'NO'),
+          );
+          if (isset($row->CHARACTER_MAXIMUM_LENGTH)) {
+            $tables[$table]['fields'][$column]['length'] = $row->CHARACTER_MAXIMUM_LENGTH;
+          }
+          if (isset($row->COLUMN_DEFAULT)) {
+            // Cast as numeric.
+            if (!in_array($type, array('float', 'int'))) $row->COLUMN_DEFAULT += 0;
+
+            $tables[$table]['fields'][$column]['default'] = $row->COLUMN_DEFAULT;
+          }
+          if (isset($row->NUMERIC_PRECISION)) {
+            $tables[$table]['fields'][$column]['precision'] = $row->NUMERIC_PRECISION;
+          }
+        }
+        break;
+
+      case 'pgsql':
+        $map = array(
+          'character' => array('type' => 'char', 'length' => NULL),
+          'character varying' => array('type' => 'varchar', 'length' => NULL),
+          'integer' => array('type' => 'int'),
+          'int_unsigned' => array('type' => 'int', 'unsigned' => TRUE),
+          'smallint' => array('type' => 'int', 'size' => 'small'),
+          'smallint_unsigned' => array('type' => 'int', 'size' => 'small', 'unsigned' => TRUE),
+          'bigint' => array('type' => 'int', 'size' => 'big'),
+          'bigint_unsigned' => array('type' => 'int', 'size' => 'big', 'unsigned' => TRUE),
+          'text' => array('type' => 'text'),
+          'date' => array('type' => 'date'),
+          'timestamp without time zone' => array('type' => 'datetime'),
+          'numeric' => array('type' => 'numeric'),
+          'real' => array('type' => 'float'),
+          'double precision' => array('type' => 'float', 'size' => 'big'),
+          'geometry' => current(geo('schema_field', 'polygon')),
+        );
+
+        $res = db_query("SELECT
+            c.relname AS table,
+            a.attname AS column,
+            format_type(a.atttypid, a.atttypmod) AS type,
+            a.attnotnull AS not_null,
+            d.adsrc AS default
+          FROM pg_class c
+          LEFT JOIN pg_attribute a ON (a.attrelid = c.oid)
+          LEFT OUTER JOIN pg_attrdef d ON (d.adrelid = c.oid AND d.adnum = a.attnum)
+          WHERE c.relname LIKE 'geo_data_%'
+          AND c.relname NOT LIKE '%_seq'
+          AND c.relname NOT LIKE '%_pkey'
+          AND c.relname NOT LIKE '%_idx'
+          AND a.attnum > 0
+          AND NOT a.attisdropped
+          AND a.attrelid = c.oid
+          ORDER BY c.relname, a.attnum
+        ");
+
+        while($row = db_fetch_object($res)) {
+          $table = $row->table;
+          $column = $row->column;
+          if (!isset($tables[$table])) $tables[$table] = array('fields' => array());
+
+          $type = $row->type;
+          if (preg_match('/(.+)?\((\d+)\)/', $type, $m)) {
+            $type = $m[1]; $length = $m[2];
+          }
+          if (isset($map[$type])) {
+            $spec = $map[$type];
+            $spec['not null'] =  ($row->not_null == 't');
+
+            if (array_key_exists('length', $spec)) {
+              $spec['length'] = $length;
+            }
+
+            if (!is_null($row->default)) {
+              if(substr($row->default, 0, 7) == 'nextval') {
+                $spec['type'] = 'serial';
+              }
+              elseif (preg_match('/\'((.*)?)\'/', $row->default, $m)) {
+                $spec['default'] = $m[1];
+              }
+              else {
+                // It's numeric.  Add 0 to cast it properly.
+                $spec['default'] = $row->default + 0;
+              }
+            }
+
+            if ($type == 'geometry') {
+              $spec['srid'] = db_result(db_query("SELECT SRID($column) FROM $table LIMIT 1"));
+              $spec['dimensions'] = db_result(db_query("SELECT NDIMS($column) FROM $table LIMIT 1"));
+              $spec['gis type'] = strtolower(db_result(db_query("SELECT GeometryType($column) FROM $table LIMIT 1")));
+            }
+
+            $tables[$table]['fields'][$column] = $spec;
+          }
+        }
+        break;
+    }
+
+    // Catalog the table definition for each table.
+    drupal_get_schema(NULL, TRUE);
+    foreach ($tables as $table => $schema) {
+      $name = preg_replace('/^geo_data_/', '', $table);
+      $row = array(
+        'name' => $name,
+        'title' => ucwords(strtolower(str_replace('_', ' ', $name))),
+        'table_name' => $table,
+        'column_name' => 'geo',
+        'handler' => $handler,
+        'schema' => array($table => $schema),
+      );
+      $geo = geo_load($row);
+      $geo->setGeoType();
+      $geo->setSRID();
+      geo_save($geo);
+    }
+  }
+
+  return $ret;
+}

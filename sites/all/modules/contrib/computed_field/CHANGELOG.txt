@@ -1,0 +1,60 @@
+15th May 2007
+----------------------------------------------------------------
+* Added a longtext option when storing to database, and fixed validation when
+  data type is text or longtext as per http://drupal.org/node/141340
+* Added callbacks to hook_field_settings as per http://drupal.org/node/87619
+
+28th November 2006
+----------------------------------------------------------------
+* Deleted license in favour of LICENSE.txt
+
+27th November 2006
+----------------------------------------------------------------
+* Updated to work with 5.0 cvs. Thanks bdragon.
+
+29th September 2006
+----------------------------------------------------------------
+* Fixed validation of data length
+* Made non-stored computed fields compute on load, rather than view.
+
+15th September 2006
+----------------------------------------------------------------
+* Made default output the raw text, rather than running check_markup over it
+
+12th September 2006
+----------------------------------------------------------------
+* Moved code, display, and display format from widget to field
+* Added hook_field_formatter_info and hook_field_formatter, and filters op in
+  hook_field to work properly with new views
+
+17th August 2006
+----------------------------------------------------------------
+* Changed computed_field_field_view_item to computed_field_view_item so that
+  it works with views
+
+11th August 2006
+----------------------------------------------------------------
+* Changed display format so that you can enter arbitrary code to display the
+  field
+* Made display format code run even when there isn't any computed code
+* Stored fields are now computed at insert time, rather than submit time. This
+  means that other fields will have more useful values, since they have
+  already been processed by their widgets.
+
+7th August 2006
+----------------------------------------------------------------
+* Made $node editable by computed code
+
+3rd August 2006
+----------------------------------------------------------------
+* Removed a call to check_plain which was more annoying than useful.
+* Changed the field to be computed on submit so that the value can be stored
+  in the database. A consequence of this is that it won't work on preview, but
+  at least now it is only computed once (per submit).
+* Made computed fields visible in views
+* Changed the value you need to set in your code from $node_field['value'] to
+  $node_field[0]['value] so that multiple values can be used.
+
+21st July 2006
+----------------------------------------------------------------
+* Initial Release

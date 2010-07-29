@@ -1,0 +1,225 @@
+<?php // $Id: geo.module,v 1.37 2009/12/09 17:34:02 vauxia Exp $
+
+/**
+ * Geo: Geospatial storage and retrieval.
+ */
+
+// The Geo API should always be available.
+require (dirname(__FILE__)) .'/includes/geo.api.inc';
+
+/**
+ * Implementation of hook_init().
+ */
+function geo_init() {
+  module_load_include('input.inc', 'geo', 'includes/geo');
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function geo_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+
+  switch ($op) {
+
+    case 'rss item':
+      // Append microformats on geo node feeds.
+      $rss = array();
+      foreach (geo_fields() as $field_name => $field) {
+        if (!isset($node->$field_name)) continue;
+
+        foreach ($node->$field_name as $item) {
+          $rss[] = geo('rss_item', $item['wkb']);
+        }
+      }
+      return $rss;
+
+    case 'view':
+      // Add a #pre_render callback to convert geo values to a format
+      // understood by the theme function in use by that field.
+      $node->content['#pre_render'][] = 'geo_field_convert_value';
+      return;
+  }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function geo_theme() {
+  module_load_include('theme.inc', 'geo', 'theme/geo');
+  return geo_theme_theme();
+}
+
+
+/**
+ * Implementation of hook_geo_handler_info().
+ */
+function geo_geo_handler_info() {
+  $path = drupal_get_path('module', 'geo') .'/includes/handlers';
+  $handlers = array(
+    'GeoSimple' => array(
+      'title' => t('Simple geometry library'),
+      'description' => t('A fully-PHP library for basic geometry functions and conversions.'),
+      'file' => 'geo_simple.inc',
+      'path' => $path,
+    ),
+    'GeoSQL' => array(
+      'title' => t('SQL'),
+      'description' => t('Minimal SQL framework for databases that support GIS.  It is expected that you will use a derivative of this backend.'),
+      'file' => 'geo_sql.inc',
+      'path' => $path,
+    ),
+    'GeoSQLMySQL' => array(
+      'title' => t('MySQL'),
+      'description' => t('MySQL spatial extensions for MySQL 4.1+'),
+      'parent' => 'GeoSQL',
+      'file' => 'geo_sql_mysql.inc',
+      'path' => $path,
+      'geo_types' => array(
+        GEO_TYPE_POINT,
+        GEO_TYPE_LINESTRING,
+        GEO_TYPE_POLYGON,
+        GEO_TYPE_COLLECTION,
+        GEO_TYPE_MULTIPOINT,
+        GEO_TYPE_MULTILINESTRING,
+        GEO_TYPE_MULTIPOLYGON,
+      ),
+    ),
+    'GeoSQLPostGIS' => array(
+      'title' => t('PostGIS'),
+      'description' => t('For PostgreSQL databases with the PostGIS library enabled.'),
+      'parent' => 'GeoSQL',
+      'file' => 'geo_sql_postgis.inc',
+      'path' => $path,
+      'geo_types' => array(
+        GEO_TYPE_POINT,
+        GEO_TYPE_LINESTRING,
+        GEO_TYPE_POLYGON,
+        GEO_TYPE_COLLECTION,
+        GEO_TYPE_MULTIPOINT,
+        GEO_TYPE_MULTILINESTRING,
+        GEO_TYPE_MULTIPOLYGON,
+      ),
+    ),
+  );
+  return $handlers;
+}
+
+/**
+ * Implementation of hook_gis_input_info().
+ */
+function geo_gis_input_info($gis_type = NULL) {
+  $inputs = array(
+    'geo_wkt' => array(
+      'label' => t('Well known text'),
+      'gis input' => 'wkt',
+      'safe reverse' => TRUE,
+      'gis types' => array('point', 'linestring', 'polygon'),
+      'element' => array(
+        '#type' => 'textfield',
+      ),
+    ),
+    'geo_latlon' => array(
+      'label' => t('Latitude/Longitude'),
+      'gis input' => 'array',
+      'safe reverse' => TRUE,
+      'gis types' => array('point'),
+      'element' => array(
+        '#type' => 'geo_latlon',
+      ),
+    ),
+  );
+  return $inputs;
+}
+
+/**
+ * Implementation of hook_field_formatter_info().
+ */
+function geo_field_formatter_info() {
+  // TODO some other formatters: asKML, asGML, asGeoRSS, etc
+  return array(
+    'default' => array(
+      'label' => t('Well Known Text'),
+      'field types' => geo_field_type_names(),
+      'gis types' => array('point', 'linestring', 'polygon'),
+      'gis input' => 'wkt',
+    ),
+    'lat' => array(
+      'label' => t('Latitude'),
+      'field types' => geo_field_type_names(),
+      'gis types' => array('point'),
+      'gis input' => 'array',
+    ),
+    'lon' => array(
+      'label' => t('Longitude'),
+      'field types' => geo_field_type_names(),
+      'gis types' => array('point'),
+      'gis input' => 'array',
+    ),
+    'georss' => array(
+      'label' => t('GeoRSS'),
+      'field types' => geo_field_type_names(),
+      'gis types' => array('point', 'linestring', 'polygon'),
+      'gis input' => 'text',
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_content_fieldapi().
+ */
+function geo_content_fieldapi($op, $field) {
+  if (in_array($field['type'], geo_field_type_names())) {
+
+    $db_info = content_database_info($field);
+    foreach ($db_info['columns'] as $column => $info) {
+      if ($info['gis type']) {
+        if (!is_null($geo_type = geo_type($info['gis type']))) {
+          $geo_column = $info['column'];
+        }
+      }
+    }
+
+    // It's possible that a geo field doesn't actually store data.  For now,
+    // we just don't care about tracking these.
+    if (!isset($geo_column)) return;
+
+    $title = $field['widget']['label'];
+
+    $info = array(
+      'name' => $field['field_name'],
+      'title' => $title,
+      'geo_type' => $geo_type,
+    );
+
+    if (!$geo = geo_load($info)) {
+      $geo = geo_create_dataset($info);
+    }
+
+    switch ($op) {
+      case 'create instance':
+      case 'update instance':
+        $geo->setTitle($title);
+        $geo->setSRID($field['srid']);
+        $geo->setGeoType($geo_type);
+
+        $geo->setTableName($db_info['table']);
+        $geo->setColumnName($geo_column);
+        geo_save($geo);
+        break;
+
+      case 'delete instance':
+        geo_delete($geo);
+        break;
+    }
+  }
+}
+
+/**
+ * Implementation of hook_views_api().
+ */
+function geo_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'geo') .'/includes/views',
+  );
+}

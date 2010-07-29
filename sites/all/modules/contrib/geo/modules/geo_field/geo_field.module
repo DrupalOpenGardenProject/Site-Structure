@@ -1,0 +1,185 @@
+<?php // $Id: geo_field.module,v 1.30 2009/12/09 17:34:03 vauxia Exp $
+
+/**
+ * @file
+ * CCK Field integration for geospatial data.
+ */
+
+/**
+ * Implementation of hook_field_info().
+ */
+function geo_field_info() {
+  return array(
+    'geo' => array(
+      'label' => t('Geospatial data'),
+      'callbacks' => array(),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_field_settings().
+ */
+function geo_field_settings($op, $field) {
+  switch ($op) {
+    case 'form':
+      $form = array();
+
+      // Store the geometry type for this field.
+      $form['geo_type'] = array(
+        '#type' => 'select',
+        '#title' => t('Data type'),
+        '#options' => geo('supported_types'),
+        '#default_value' => $field['geo_type'],
+        '#description' => t('Choose the datatype that best describes the information you are storing.  "Point" is suitable for addresses and other fixed points, but you may also choose "Linestring" for lines or tracks, and "Polygon" for shapes and areas.'),
+        '#disabled' => !empty($field['geo_type']),
+      );
+
+      // TODO pick the SRID for this column
+      if (!$field['srid']) $field['srid'] = GEO_SRID_DEFAULT;
+      $form['srid'] = array('#type' => 'value', '#value' => $field['srid']);
+
+      return $form;
+
+    case 'save':
+      return array('srid', 'geo_type');
+
+    case 'database columns':
+      if (!empty($field['geo_type'])) {
+        return geo('schema_field', $field['geo_type']);
+      }
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_field().
+ */
+function geo_field($op, &$node, $field, &$items, $teaser, $page) {
+  static $widget_info;
+
+  // We need the widget type, which indicates the gis format for conversion.
+  if (!isset($widget_info)) {
+    $widget_info  = _content_widget_types();
+  }
+
+  // Set the $gis_input format based on the widget that is currently in use.
+  $gis_input = $widget_info[$field['widget']['type']]['gis input'];
+
+  switch ($op) {
+
+    case 'load':
+      if (!$items) return;
+
+      $geo = geo_load(array('name' => $field['field_name']));
+
+      // Include the field delta in the query if it's a multi-value field.
+      $delta = $field['multiple'] ? ', delta' : '';
+
+      // Result from CCK's select was garbage.  Re-query with AsBinary().
+      $res = db_query("SELECT ". $geo->AsBinary($geo) .' AS geo '. $delta ."
+        FROM {". $geo->tableName() ."} WHERE vid = %d", $node->vid);
+
+      while ($row = db_fetch_array($res)) {
+        $delta = isset($row['delta']) ? $row['delta'] : 0;
+
+        $items[$delta]['gis type'] = $field['geo_type'];
+        $items[$delta]['geo'] = $items[$delta]['wkb'] = db_decode_blob($row['geo']);
+      }
+
+      // Unset the value if it's not actually populated.
+      foreach($items as $delta => $item) {
+        if (empty($item['geo'])) unset($items[$delta]);
+      }
+      return array($field['field_name'] => $items);
+
+    case 'validate':
+      foreach ($items as $k => $item) {
+
+        // Nothing to see here.
+        if(geo_content_is_empty($item, $field)) return;
+
+        // Convert to $wkt and validate it.
+        $wkt = $item['geo'];
+        if ($gis_input) {
+          $wkt = geo_value($wkt, 'wkt', $gis_input);
+        }
+
+        if ($wkt && ($error = geo('wkt_validate', $wkt, $field['geo_type'])) !== TRUE) {
+          $error_field = $field['field_name'];
+          form_set_error($error_field, $error);
+        }
+      }
+      return;
+
+    case 'presave':
+      foreach ($items as $k => $item) {
+        if(!geo_content_is_empty($item, $field)) {
+
+          // Convert to WKT (TODO we don't have direct-to-wkb functions yet!)
+          if ($gis_input) {
+            $wkt = geo_value($item['geo'], 'wkt', $gis_input);
+          }
+          else $wkt = $item['geo'];
+
+          // Convert the WKT to binary data before the insert. This allows the
+          // input to pass through the binary query substitutions.
+          $items[$k]['geo'] = db_result(db_query("SELECT GeomFromText('%s', %d)", $wkt, $field['srid']));
+        }
+      }
+      return;
+  }
+}
+
+/**
+ * Implementation of hook_content_is_empty().
+ * It's named after the field type (geo), not the module (geo_field).
+ */
+function geo_content_is_empty($item, $field) {
+  return empty($item['geo']);
+}
+
+/**
+ * Implementation of hook_widget_info().
+ */
+function geo_field_widget_info() {
+  $widget_info = array();
+  foreach (geo_inputs() as $name => $info) {
+    if (!$info['safe reverse']) continue;
+    $widget_info[$name] = $info;
+    $widget_info[$name]['field types'] = array_keys(geo_field_info());
+// TODO handle multiple?
+  }
+  return $widget_info;
+}
+
+/**
+ * Implementation of hook_widget().
+ */
+function geo_field_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+  $widget_info  = _content_widget_types();
+  $info = $widget_info[$field['widget']['type']];
+
+  foreach ($items as $key => $item) {
+    // Convert from the storage format (wkb) to the element's expected format.
+    //if (!isset($item['geo'])) {
+      if ($info['gis input']) {
+        if (isset($item['wkb'])) {
+          $data = geo_wkb_get_data($item['wkb'], $info['gis input']);
+          $items[$key]['geo'] = $data['value'];
+        }
+      }
+    //}
+  }
+
+  $element['#theme'] = 'geo_fields';
+  $element['geo'] = array_merge($info['element'], array(
+    '#default_value' => isset($items[$delta]['geo']) ? $items[$delta]['geo'] : NULL,
+    '#delta' => $delta,
+    '#title' => t($field['widget']['label']),
+    '#required' => $field['required'],
+    '#description' => $field['widget']['description'],
+  ));
+
+  return $element;
+}

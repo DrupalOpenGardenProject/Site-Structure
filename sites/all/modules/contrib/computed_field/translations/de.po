@@ -1,0 +1,137 @@
+# $Id: de.po,v 1.1.2.3 2008/10/07 16:52:38 moonshine Exp $
+#
+# German translation of Drupal (general)
+# Copyright 2008 <dvc@drupalcenter.de>
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2008-09-25 23:30+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: Drupalchannel - http://www.drupalcenter.de/drupalchannel <dvc@drupalcenter.de>\n"
+"Language-Team: Drupalchannel - http://www.drupalcenter.de/drupalchannel <dvc@drupalcenter.de>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: computed_field.module:10;178
+msgid "Computed"
+msgstr "Berechnet"
+
+#: computed_field.module:11
+msgid "Create field data via PHP code."
+msgstr "Erstellt Feldwerte mit PHP Code."
+
+#: computed_field.module:31
+msgid "Computed Code"
+msgstr "Berechneter Code"
+
+#: computed_field.module:32
+msgid "The variables available to your code are: "
+msgstr "Zur Verfügung stehende Variablen für diesen Code sind: "
+
+#: computed_field.module:32
+msgid ". To set the value of the field, set "
+msgstr ". Um den Wert des Feldes zu setzen, setze "
+
+#: computed_field.module:32
+msgid ". Here's a simple example which sets the computed field's value to the value of the sum of the number fields field_a and field_b: "
+msgstr ". Hier ist ein einfaches Beispiel, welches die Summe der Felder A und B berechnet"
+
+#: computed_field.module:37
+msgid "Display this field"
+msgstr "Zeige dieses Feld an"
+
+#: computed_field.module:42
+msgid "Display Format"
+msgstr "Anzeigeformat"
+
+#: computed_field.module:43
+msgid "This code should assign a string to the $display variable, which will be printed as the value of the field. The stored value of the field is in $node_field_item['value'].  Note: this code has no effect if you use the \"Raw Value\" formatter option."
+msgstr "Dieser Code sollte einer Zeichenkette die $display - Variable zuweisen, damit der Wert für das Feld geschrieben werden kann. Der gespeicherte Wert wird in $node_field_item['value'] gespeichert. HINWEIS: Dieser Code wird nicht verwendet wenn die Formatierungsoption \"Berechneter Wert\" aktiviert ist."
+
+#: computed_field.module:48
+msgid "Store using the database settings below"
+msgstr "Speichern unter Verwendung der folgenden Datenbankeinstellungen"
+
+#: computed_field.module:51
+msgid "Database Storage Settings"
+msgstr "Einstellungen zur Speicherung in der Datenbank"
+
+#: computed_field.module:54
+msgid "Data Type"
+msgstr "Datentyp"
+
+#: computed_field.module:55
+msgid "The SQL datatype to store this field in."
+msgstr "Der SQL Datentyp in dem dieses Feld gespeichert werden soll."
+
+#: computed_field.module:62
+msgid "Data Length"
+msgstr "Feldgröße"
+
+#: computed_field.module:68
+msgid "Default Value"
+msgstr "Standardwert"
+
+#: computed_field.module:74
+msgid "Not NULL"
+msgstr "Nicht NULL"
+
+#: computed_field.module:79
+msgid "Sortable"
+msgstr "Sortierbar"
+
+#: computed_field.module:86
+msgid "To store this field in the database, please specify a data type."
+msgstr "Der Datentyp muss definiert sein, um dieses Feld in der Datenbank zu speichern."
+
+#: computed_field.module:89
+msgid "To store this field in the database, please specify the data length."
+msgstr "Die Feldgröße muss definiert sein, um dieses Feld in der Datenbank zu speichern."
+
+#: computed_field.module:114
+msgid "Default"
+msgstr "Standard"
+
+#: computed_field.module:242
+msgid "Raw text"
+msgstr "Rohtext"
+
+#: computed_field.module:246
+msgid "Plain text"
+msgstr "unformatierter Text"
+
+#: computed_field.module:250
+msgid "Markup"
+msgstr "Textauszeichnung"
+
+#: computed_field.module:254
+msgid "Computed Value"
+msgstr "Berechneter Wert"
+
+#: computed_field.module:314
+msgid "Raw, unfiltered text."
+msgstr "Ungefilterter Rohtext"
+
+#: computed_field.module:315
+msgid "Formatted and filtered text."
+msgstr "Formatierter und gefilterter Text."
+
+#: computed_field.module:0
+msgid "computed_field"
+msgstr "computed_field"
+
+#: computed_field.info:0
+msgid "Computed Field"
+msgstr "Berechnetes Feld"
+
+#: computed_field.info:0
+msgid "Allows the user to define computed values in custom content types."
+msgstr "Erlaubt dem Benutzer berechnete Werte in benutzerdefinierten Inhaltstypen zu definieren."
+
+#: computed_field.info:0
+msgid "CCK"
+msgstr "CCK"
