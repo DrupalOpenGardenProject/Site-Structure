@@ -4,6 +4,8 @@ git clone here: http://github.com/fndtn357/Permaculturenews.git
 
 To check out 'Permaculturenews'
 
+Permaculturenews is an installation of "Managing News" with some feeds already added.
+
 1. Navigate into this folder.
 
 2. Clone fndtn357's (James') Permaculture News git repository:
@@ -11,7 +13,7 @@ git clone http://github.com/fndtn357/Permaculturenews.git
 
 3. This will create a new folder called 'Permaculturenews'
 
-4. Create a local database.
+4. Create a local database for this drupal site.
 
 5. You will need to update sites/default/settings.php and update it with your database name, username and password for mysql.
 
