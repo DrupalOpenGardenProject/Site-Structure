@@ -1,0 +1,600 @@
+<?php
+// $Id: fusioncharts_node.module,v 1.1.2.16 2009/03/15 03:17:39 aaron1234nz Exp $ 
+include_once(drupal_get_path('module', 'fusioncharts') .'/matrix.inc');
+
+/**
+ * Implementation of hook_menu().
+ */
+function fusioncharts_node_menu() {
+  $items['fusioncharts/js/chartsettings'] = array(
+    'title' => 'Javascript chart settings form',
+    'page callback' => 'fusioncharts_form_settings_js',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['fusioncharts/js/matrixfield'] = array(
+    'title' => 'Javascript chart options form',
+    'page callback' => 'fusioncharts_form_matrixfield_js',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_node_info()
+ */
+function fusioncharts_node_info() {
+  return array(
+    'fusioncharts' => array(
+      'name' => t('Fusion Chart'),
+      'module' => 'fusioncharts',
+      'has_body' => FALSE,
+      'description' => t("A chart made with the Fusion Charts system."),
+    )
+  );
+}
+
+/**
+ * Implementation of hook_access().
+ */
+function fusioncharts_access($op, $node, $account) {
+  global $user;
+  if ($op == 'create') {
+    return user_access('create fusioncharts node');
+  }
+  if ($op == 'update' || $op == 'delete') {
+    if (user_access('edit own fusioncharts nodes') && ($user->uid == $node->uid)) {
+      return TRUE;
+    }
+  }
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function fusioncharts_node_perm() {
+  return array('create fusioncharts node', 'edit own fusioncharts nodes');
+}
+
+/**
+ * Implementation of hook_form().
+ */
+function fusioncharts_form(&$node, $form_state) {
+  drupal_add_css(drupal_get_path('module', 'fusioncharts_node') .'/fusioncharts_node.css', 'module', 'all', FALSE);
+  drupal_add_js(drupal_get_path('module', 'fusioncharts') .'/fusioncharts.js');
+  //load the colorpicker css and javascript now becasue it won't get included with the ahah
+  drupal_add_css('misc/farbtastic/farbtastic.css');
+  drupal_add_js('misc/farbtastic/farbtastic.js');
+  drupal_add_js(drupal_get_path('module', 'colorpicker'). '/js/colorpicker.js');
+  drupal_add_css(drupal_get_path('module', 'colorpicker'). '/css/colorpicker.css');
+  $type = node_get_types('type', $node);
+  $chart_types = fusioncharts_settings('fusioncharts');
+  if (!isset($node->chart_type)) {
+    $node->chart_type = 'Column 3D';
+  } 
+  array_unshift($chart_types, ''); //add a blank to the front of the list
+  $form['#tree'] = FALSE;
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => check_plain($type->title_label),
+    '#required' => TRUE,
+    '#default_value' => isset($node->title) ? $node->title : '',
+    '#weight' => -5
+  );
+  $form['chart_type'] = array(
+    '#type' => 'select',
+    '#title' => t('Type of chart'),
+    '#default_value' => $node->chart_type,
+    '#options' => $chart_types,
+    '#description' => t('The is the type of chart to build.  The chart options and data required depend on the type of chart.'),
+    '#required' => TRUE,
+    '#ahah' => array(
+      'path' => 'fusioncharts/js/chartsettings',
+      'wrapper' => 'chart-settings',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+  );
+  $form['size'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Chart size'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    );
+  $form['size']['width'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Chart width'),
+    '#default_value' => isset($node->width) ? $node->width : 500,
+    '#description' => t('The width of the chart (pixels)'),
+    '#size' => 5,
+    '#required' => TRUE,      
+    );
+  $form['size']['height'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Chart height'),
+    '#default_value' =>  isset($node->height) ? $node->height : 300,
+    '#description' => t('The height of the chart (pixels)'),
+    '#size' => 5, 
+    '#required' => TRUE,
+    );
+
+  $form['rows_more'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add more rows'),
+    '#description' => t("If the amount of boxes above isn't enough, click here to add more rows."),
+   // '#weight' => 0,
+    '#ahah' => array(
+      'path' => 'fusioncharts/js/matrixfield',
+      'wrapper' => 'matrix-data',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+  );
+  $form['cols_more'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add more columns'),
+    '#description' => t("If the amount of boxes above isn't enough, click here to add more columns."),
+    '#ahah' => array(
+      'path' => 'fusioncharts/js/matrixfield',
+      'wrapper' => 'matrix-data',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+  );
+  
+  $form['chart_settings'] = fusioncharts_form_settings($node, $node->chart_type);
+  $form['chart_settings']['#prefix'] = '<div id="chart-settings">';
+  $form['chart_settings']['#suffix'] = '</div>';
+  return $form;
+}
+
+/**
+ * Settings sub-form().
+ */
+function fusioncharts_form_settings($node, $chart_type) {
+  include_once(drupal_get_path('module', 'fusioncharts') .'/settings.inc');
+  drupal_add_css(drupal_get_path('module', 'fusioncharts_node') .'/fusioncharts_node.css');
+  $node->data = isset($node->data) ? $node->data : $_POST['matrix']['matrix'];
+  $default_row = variable_get('fusioncharts_default_row', 10);
+  $default_col = variable_get('fusioncharts_default_col', 2);
+  $row_count = max($default_row, count($node->data));
+  $col_count = max($default_col, count($node->data[0]));
+  
+  switch ($chart_type) {
+    case 'Column 3D':
+    case 'Column 2D':
+    case 'Line 2D':
+    case 'Area 2D':
+    case 'Bar 2D':
+    case 'Pie 2D':
+    case 'Pie 3D':
+    case 'Doughnut 2D':
+    case 'Funnel Chart':
+      // Add the current data to the matrixfield.
+      for ($i=1; $i<=$row_count; $i++) {
+        $rows[] = $i;
+      }
+      $header = array('Series', 'Value');
+      $form['matrix'] = fusioncharts_form_matrixfield($node->data, $header, $rows);
+      $form['matrix']['#prefix'] = '<div id="matrix-data" class="single-series">';
+      $form['matrix']['#suffix'] = '</div>';
+      break;
+    case 'Multi-series Column 2D':
+    case 'Multi-series Column 3D':
+    case 'Multi-series Line 2D':
+    case 'Multi-series Bar 2D':
+    case 'Multi-series Area 2D':
+    case 'Stacked Column 3D':
+    case 'Stacked Column 2D':
+    case 'Stacked Bar 2D':
+    case 'Stacked Area 2D':
+      $rows[0] = 'Label';
+      // Add the current data to the matrixfield.
+      for ($i=1; $i<=$row_count; $i++) {
+        $rows[] = $i;
+      }
+      $header[] = 'Series';
+      for ($i=1; $i<$col_count; $i++) {
+        $header[] = '';
+      }
+      $form['matrix'] = fusioncharts_form_matrixfield($node->data, $header, $rows);
+      $form['matrix']['#prefix'] = '<div id="matrix-data" class="multi-series">';
+      $form['matrix']['#suffix'] = '</div>';
+
+      break;
+    case 'Multi-series Column 2D + Line - Dual Y Axis':
+    case 'Multi-series Column 3D + Line - Dual Y Axis':
+      $rows[0] = 'Label';
+      $rows[1] = 'P/S';
+      for ($i=2; $i<=$row_count+1; $i++) {
+        $rows[] = $i-1;
+      }       
+      $header[] = 'Series';
+      for ($i=1; $i<$col_count; $i++) {
+        $header[] = '';
+      }
+      $form['matrix'] = fusioncharts_form_matrixfield($node->data, $header, $rows);
+      $form['matrix']['#prefix'] = '<div id="matrix-data" class="multi-series-dual">';
+      $form['matrix']['#suffix'] = '</div>';
+      break;
+    case 'Candlestick Chart':
+    //not yet implemented
+      break;
+    case 'Gantt Chart':
+    //not yet implemented
+      break;
+  }
+
+  $form['fill_boxes'] = array(
+    '#type' => 'checkbox',
+    '#default_value' => isset($node->attributes['fill_boxes']) ? $node->attributes['fill_boxes'] : 1,
+    '#title' => t('Fill blanks cells with "0"'),
+  );
+  
+  $form['settings'] = array(
+    '#tree' => TRUE
+    );
+  $form['attributes'] = array(
+    '#tree' => TRUE
+    );
+  //each chart has a number or properties that can be set.  There are a number of common properties, and a number that apply to
+  //a selection of charts.  The following section defines all the possible attributes for each chart.
+  $form = array_merge_recursive($form,  _fusioncharts_settings_subform($chart_type, $node));
+  return $form;
+}
+
+/**
+ * Menu callback for AHAH form().
+ */
+function fusioncharts_form_settings_js() {
+  $node_state->settings = $_POST['settings'];
+  $node_state->attributes = $_POST['attributes'];
+  $node_state->data = $_POST['matrix']['matrix'];
+  
+  $new_subform = fusioncharts_form_settings($node_state, $_POST['chart_type']);
+  $output = ahah_render($new_subform, 'chart-settings');
+  switch ($_POST['chart_type']) {
+      case 'Column 3D':
+      case 'Column 2D':
+      case 'Line 2D':
+      case 'Area 2D':
+      case 'Bar 2D':
+      case 'Pie 2D':
+      case 'Pie 3D':
+      case 'Doughnut 2D':
+      case 'Funnel Chart':
+        $js = "$('#edit-rows-more').show(); $('#edit-cols-more').hide();";
+      case 'Multi-series Column 2D':
+      case 'Multi-series Column 3D':
+      case 'Multi-series Line 2D':
+      case 'Multi-series Bar 2D':
+      case 'Multi-series Area 2D':
+      case 'Stacked Column 3D':
+      case 'Stacked Column 2D':
+      case 'Stacked Bar 2D':
+      case 'Stacked Area 2D':
+      case 'Multi-series Column 2D + Line - Dual Y Axis':
+      case 'Multi-series Column 3D + Line - Dual Y Axis':
+        $js = "$('#edit-rows-more').show(); $('#edit-cols-more').show();";
+  }
+
+    //    'Candlestick Chart':
+    // 'Gantt Chart' :
+  
+  $output .= "<script>var t=setTimeout(colorpicker_init, '100');$js</script>"; //reinitialise the colorpickers
+  print drupal_to_js(array('data' => $output, 'status' => true));
+  exit();
+}
+
+/**
+ * Matrix sub-form.
+ */
+function fusioncharts_form_matrixfield($data, $header, $rows) {
+  $form = array(
+    '#type' => 'fc_matrixfield',
+    '#title' => t('Data'),
+    '#description' => t('Enter your data here'),
+    '#cols' => $header,
+    '#rows' => $rows,
+    '#default_value' => $data,
+  );
+  return $form;
+}
+
+/**
+ *  Menu callback for AHAH form().
+ */
+function fusioncharts_form_matrixfield_js() {
+  $data = $_POST['matrix']['matrix'];
+  $header = unserialize($_POST['matrix']['header']);
+  $first_col = unserialize($_POST['matrix']['first_col']);
+  
+  array_shift($header);
+  if ($_POST['op'] == 'Add more columns') {
+   $header[] = '';
+  }
+  if ($_POST['op'] == 'Add more rows') {
+    $row_delta = 5;
+  }
+  // Add the current data back to the matrixfield.
+  for ($i=1; $i <= count($first_col)+$row_delta; $i++) {
+    $rows[] = $i;
+  }
+  
+  $form = fusioncharts_form_matrixfield($data, $header, $rows);
+  $output = ahah_render($form, "matrix");
+  print drupal_to_js(array('data' => $output, 'status' => true));
+  exit();
+}
+
+/**
+ * Implementation of hook_insert().
+ */
+function fusioncharts_insert($node) {
+  if ($node->fill_boxes) {
+    fusioncharts_node_fill_zeros($node);
+  }
+  foreach ($node->attributes as $sub => $subarray) {
+    foreach ($subarray as $key => $value) {
+      $attributes[$key] = $value;
+    }
+  }
+  foreach ($node->settings as $sub => $subarray) {
+    foreach ($subarray as $key => $value) {
+      $settings[$key] = $value;
+    }
+  }
+  db_query("INSERT INTO {fusioncharts} (nid, vid, chart_type, settings, attributes, data, width, height) VALUES (%d, %d, '%s', '%s', '%s', '%s', %d, %d)",  $node->nid, $node->vid, $node->chart_type, serialize($settings), serialize($attributes), serialize($node->matrix['matrix']), $node->width, $node->height);
+}
+
+
+/**
+ * Implementation of hook_update().
+ */
+function fusioncharts_update($node) {
+  if ($node->fill_boxes) {
+    fusioncharts_node_fill_zeros($node);
+  }
+  foreach ((array)$node->attributes as $sub => $subarray) {
+    foreach ($subarray as $key => $value) {
+      $attributes[$key] = $value;
+    }
+  }
+  foreach ((array)$node->settings as $sub => $subarray) {
+    foreach ($subarray as $key => $value) {
+      $settings[$key] = $value;
+    }
+  }
+  if ($node->revision) {
+    fusioncharts_node_insert($node);
+  }
+  else {
+    db_query("UPDATE {fusioncharts} SET chart_type = '%s', settings = '%s', attributes = '%s', data = '%s', width = %d, height = %d WHERE vid = %d", $node->chart_type, serialize($settings), serialize($attributes), serialize($node->matrix['matrix']), $node->width, $node->height, $node->vid);
+  }
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function fusioncharts_nodeapi(&$node, $op, $teaser, $page) {
+  switch ($op) {
+    case 'delete revision':
+      // Notice that we're matching a single revision based on the node's vid.
+      db_query('DELETE FROM {fusioncharts} WHERE vid = %d', $node->vid);
+      break;
+    case 'load':
+      $node->settings = unserialize($node->settings);
+      $node->attributes = unserialize($node->attributes);
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_delete().
+ */
+function fusioncharts_delete($node) {
+  db_query('DELETE FROM {fusioncharts} WHERE nid = %d', $node->nid);
+}
+
+/**
+ * Implementation of hook_load().
+ */
+function fusioncharts_load($node) {
+  $add = db_fetch_object(db_query("SELECT * FROM {fusioncharts} WHERE vid = %d", $node->vid));
+  $add->data = unserialize($add->data);
+  return $add;
+}
+
+/**
+ * Implementation of hook_view().
+ */
+function fusioncharts_view($node, $teaser = FALSE, $page = FALSE) {
+  $node->content['chart'] = array(
+    '#value' => theme('fusionchart', 'fusionchart_node', 'node_'. $node->nid, $node),
+    '#weight' => 1,
+  );
+  return $node;
+}
+
+/**
+ * FusionCharts callback to render the node
+ */
+function fusionchart_node_fusionchart_callback($args = NULL) {
+  $node = $args[0];
+  if ($node->op == 'Preview') { //special case to deal with the data when the Preview button is pressed
+    $raw_data = $node->matrix['matrix'];
+    foreach ((array)$node->attributes as $sub => $subarray) {
+      foreach ($subarray as $key => $value) {
+        $attributes_raw[$key] = $value;
+      }
+    }
+    foreach ((array)$node->settings as $sub => $subarray) {
+      foreach ($subarray as $key => $value) {
+        $settings[$key] = $value;
+      }
+    }
+  }
+  else {
+    $raw_data = $node->data;
+    $settings = $node->settings;
+    $attributes_raw = $node->attributes;
+  }
+  foreach ((array)$attributes_raw as $key => $value) {
+    if (substr($value, 0, 1) == '#' && strlen($value) == 7) { //remove the # from the color
+      $attributes['color'][] = substr($value, 1);
+    }
+    else {
+      $attributes[$key] = $value;
+    }
+  }
+  //append another 50 random colours, just so we don't run out!
+  for ($i=1; $i<50; $i++) {
+    $attributes['color'][] = dechex(rand(0, 255)) . dechex(rand(0, 255)) . dechex(rand(0, 255));
+  }
+  
+  foreach ((array)$settings as $key => $value) {
+    if (substr($value, 0, 1) == '#' && strlen($value) == 7) { //remove the # from the color
+      $settings[$key] = substr($value, 1);
+    }
+  }
+
+  switch ($node->chart_type) {
+    case 'Column 3D':
+    case 'Column 2D':
+    case 'Line 2D':
+    case 'Area 2D':
+    case 'Bar 2D':
+    case 'Pie 2D':
+    case 'Pie 3D':
+    case 'Doughnut 2D':
+    case 'Funnel Chart':
+      $data = $raw_data;
+      break;
+      
+    case 'Multi-series Column 2D':
+    case 'Multi-series Column 3D':
+    case 'Multi-series Line 2D':
+    case 'Multi-series Bar 2D':
+    case 'Multi-series Area 2D':
+    case 'Stacked Column 3D':
+    case 'Stacked Column 2D':
+    case 'Stacked Bar 2D':
+    case 'Stacked Area 2D':
+      $no_of_rows = count($raw_data);
+      $no_of_cols = count($raw_data[0]);
+      for ($i=1; $i<$no_of_cols; $i++) {
+        for ($j=1; $j<$no_of_rows; $j++) {
+          if ($raw_data[$j][$i] != '') {
+            $data[] = array($raw_data[$j][0], $raw_data[0][$i], $raw_data[$j][$i]);
+          }
+        }           
+      }
+      break;
+   
+    case 'Multi-series Column 2D + Line - Dual Y Axis':
+    case 'Multi-series Column 3D + Line - Dual Y Axis':
+      $no_of_rows = count($raw_data);
+      $no_of_cols = count($raw_data[0]);
+      for ($i=1; $i<$no_of_cols; $i++) {
+        for ($j=2; $j<$no_of_rows; $j++) {
+          if ($raw_data[$j][$i] != '') {
+            $data[] = array( $raw_data[0][$i], $raw_data[$j][0], $raw_data[1][$i], $raw_data[$j][$i]);
+          }
+        }           
+      }
+      break;
+      
+    case 'Candlestick Chart':
+      //not implemented yet
+      break;
+
+    case 'Gantt Chart':
+      //not implemented yet
+      break;
+  }
+  $info->chart_type = $node->chart_type;
+  $info->width = $node->width;
+  $info->height = $node->height;
+  $info->settings = $settings;
+  $info->attributes = $attributes;
+  $info->data = $data;
+  return $info;
+}
+
+/**
+ * Fill the node data with 0's if they are blank and the "fill 0's" textbox is ticked
+ */
+function fusioncharts_node_fill_zeros(&$node) {
+  foreach ($node->matrix['matrix'] as $rowid => $row) {
+    foreach ($row as $columnid => $cell) {
+      if ($columnid == 0 && $cell == '') {
+        break; //skip if the row is empty
+      }
+      if (!$columnid == 0) {
+        if ($cell == '') {
+          $node->matrix['matrix'][$rowid][$columnid] = "0";
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_filter_tips().
+ *
+ */
+function fusioncharts_node_filter_tips($delta, $format, $long = FALSE) {
+  switch ($delta) {
+    case 0:
+      if ($long) {
+        return t('Substitutes a the string "[fusionchart:#]" with a fusionchart node (where # is the node id).  You can also set the width and height [fusionchart:#|w:300|h:100]');
+      }
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_filter().
+ */
+function fusioncharts_node_filter($op, $delta = 0, $format = -1, $text = '') {
+  if ($op == 'list') {
+    return array(0 => t('FusionChart node insert'));
+  }
+
+  switch ($delta) {
+    case 0:
+
+      switch ($op) {
+        case 'description':
+          return t('Substitutes a the string "[fusionchart:#]" with a fusionchart node (where # is the node id).');
+
+        case 'prepare':
+          return $text;
+
+        case 'process':
+          preg_match_all('/\[fusionchart:(\d+)\|?(.*)\]/', $text, $matches);
+          $match_count = count($matches[0]);
+          for ($i = 0; $i<$match_count; $i++) {
+            unset($node);
+            $components = explode('|', $matches[2][$i]);
+            foreach ($components as $component) {
+              list($key, $value) = explode(':', $component);
+              $overrides[strtolower($key)] = $value;
+            }
+            $node = node_load($matches[1][$i]);
+
+            $node->width = isset($overrides['w']) ? $overrides['w'] : $node->width;
+            $node->height = isset($overrides['h']) ? $overrides['h'] : $node->height;
+
+            $find[] = $matches[0][$i];
+            $replace[] = theme('fusionchart', 'fusionchart_node', 'node_'. $node->nid, $node);
+          }
+          return str_replace($find, $replace, $text);
+
+        case 'settings':
+          return array();
+      }
+      break;
+  }
+}

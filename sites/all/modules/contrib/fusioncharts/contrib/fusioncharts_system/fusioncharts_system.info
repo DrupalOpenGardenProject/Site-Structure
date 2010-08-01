@@ -1,0 +1,11 @@
+name = Fusion Charts for System modules
+core = 6.x
+description = Integration of Fusion Charts with core system modules.
+package = Fusion Charts
+dependencies[] = fusioncharts
+; Information added by drupal.org packaging script on 2009-04-24
+version = "6.x-1.0"
+core = "6.x"
+project = "fusioncharts"
+datestamp = "1240617028"
+

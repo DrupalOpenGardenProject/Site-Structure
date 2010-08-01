@@ -1,0 +1,480 @@
+<?php
+// $Id: drawing_graph.module,v 1.1.2.3 2009/05/09 05:54:53 danielb Exp $
+
+/**
+ * Histogram rendering function for drawing SVG
+ * $chart structure:
+ * $chart['xlabel'] = char * (aka string)
+ * $chart['ylabel'] = char *
+ * $chart['dx'] = int/double - stepsize for tics, fallback to 1
+ * $chart['dy'] = int/double - fallback to 1
+ * $chart['xrange'] = int/double
+ * $chart['yrange'] = int/double
+ * $chart['points'] = array()
+ */
+
+function drawing_graph_graph($chart, $config) {
+	$function = 'drawing_graph_' . $config['type'];
+	$canvas = call_user_func_array($function, array($chart, $config));
+	return $canvas;
+}
+
+/**
+ * Draw a horizontal bar-chart
+ */
+
+function drawing_graph_hbar($chart, $config) {
+  $canvas = drawing_graph_canvas($config);
+  $canvas = drawing_graph_build_bar_plot($canvas, $chart, $config); 
+  $canvas = drawing_graph_build_axes($canvas, $chart, $config); //including tics
+	if($config['labels']) 
+		$canvas['labels'] = drawing_graph_build_axislabels($chart, $config);
+	return $canvas;
+}
+
+/**
+ * Draw a vertical bar-chart
+ */
+
+function drawing_graph_vbar($chart, $config) {
+  $canvas = drawing_graph_canvas($config);
+  $canvas = drawing_graph_build_bar_plot($canvas, $chart, $config); 
+  $canvas = drawing_graph_build_axes($canvas, $chart, $config); //including tics
+	if($config['labels']) 
+		$canvas['labels'] = drawing_graph_build_axislabels($chart, $config);
+	return $canvas;
+}
+
+/**
+ * Draw a bar-chart like graph
+ */
+function drawing_graph_histogram($chart, $config) {
+  $canvas = drawing_graph_canvas($config);
+  $canvas = drawing_graph_build_bar_plot($canvas, $chart, $config); 
+  $canvas = drawing_graph_build_axes($canvas, $chart, $config); //including tics
+  $canvas['labels'] = drawing_graph_build_axislabels($chart, $config);
+  return $canvas;
+}
+
+/**
+ * Draw a pie chart, centered to the canvas, radius is defined by the size of the canvas
+ */
+function drawing_graph_piechart($chart, $config) {
+  $canvas = drawing_graph_canvas($config);
+  $canvas = drawing_graph_build_piechart($canvas, $chart, $config);
+  /*$canvas = drawing_graph_build_axes($canvas, $chart, $config);*/
+  /*$canvas['labels'] = drawing_graph_build_axislabels($chart, $config);*/
+  return $canvas;
+}
+/**
+ * Draw a stackbar
+ */
+function drawing_graph_stackbar($chart, $config) {
+  $canvas = drawing_graph_canvas($config);
+  $canvas = drawing_graph_build_stackbar($canvas, $chart, $config);
+  /*$canvas = drawing_graph_build_axes($canvas, $chart, $config);*/
+  /*$canvas['labels'] = drawing_graph_build_axislabels($chart, $config);*/
+  return $canvas;
+}
+
+/**
+ * Prepare canvas and plot area,
+ * leaves 50px empty space on the left axis for labels, and
+ * also mirrors the whole coordinate system, so we can parameter 
+ * things later sanely
+ */
+function drawing_graph_canvas($config) {
+  drupal_add_css(drupal_get_path('module', 'drawing_graph') . '/drawing_graph.css');
+  drupal_add_js(drupal_get_path('module', 'drawing_graph') . '/drawing_graph.js');
+  $canvas = array(
+    '#type' => 'canvas',
+    '#width' => isset($config['canvas_width']) ? $config['canvas_width'] : $config['width'],
+    '#height' => isset($config['canvas_height']) ? $config['canvas_height'] : $config['height'],
+  );
+	$canvas_id = isset($config['canvas_id']) ? $config['canvas_id'] : 'plot';
+
+  $canvas[$canvas_id] = array(
+    '#type' => 'group',
+		'#id' => $canvas_id,
+    '#stroke' => 'black',
+    '#stroke-width' => 2,
+  );
+  return $canvas;
+}
+
+function drawing_graph_build_axislabels($chart, $config) {
+  /* legends */
+  $canvas['xlabel'] = array(
+    '#type' => 'text',
+    '#stroke' => $config['theme']['label'],
+    '#cx' => $config['width']/2,
+    '#cy' => $config['height'] - 20,
+    '#value' => $chart['xlabel'],
+  );
+  $canvas['ylabel'] = array(
+    '#type' => 'text',
+    '#stroke' => $config['theme']['label'],
+    '#cx' => '0',
+    '#cy' => $config['height']/2,
+    '#value' => $chart['ylabel'],
+    '#transform' => array(
+    'rotate' => array(-90),
+    'translate' => array(-$config['height']/2, -$config['height']/2 + 40),
+    ),
+  );
+  return $canvas;
+}
+
+/**
+ * Build the axes, including x and y tics
+ */
+function drawing_graph_build_axes($canvas, $chart, $config) {
+  $canvas['plot']['axes'] = array(
+    '#type' => 'polyline',
+    '#stroke' => 'black',
+    '#stroke-width' => '2',
+    '#fill' => 'none',
+    '#points' => array(
+      1 => array('#cx' => 0, '#cy' => $config['height']),
+      2 => array('#cx' => 0, '#cy' => 0),
+      3 => array('#cx' => $config['width'], '#cy' => 0),
+    ),
+  );
+  $canvas['plot']['xtics'] = drawing_graph_xtics($chart, $config);
+  $canvas['plot']['ytics'] = drawing_graph_ytics($chart, $config);
+  return $canvas;
+}
+
+/**
+ * assemble the structure for xtics
+ */
+function drawing_graph_xtics($chart, $config) {
+  $output = array();
+  $dx = 20;
+  for($i = $dx; $i< $config['width'] - 50; $i += $dx) {
+    $cx1 = $i;
+    $output[] = array(
+      '#type' => 'line',
+      '#cx1' => $cx1,
+      '#cy1' => 0,
+      '#cx2' => $cx1,
+      '#cy2' => - $config['xtics_height'],
+      '#stroke-width' => '1px',
+    );
+  }
+  return $output;
+}
+
+/**
+ * assemble the structure for ytics
+ */
+function drawing_graph_ytics($chart, $config) { // lets make complete horizontal helpers
+  $output = array();
+  $dy = $config['ytics_stepsize'];
+  $dy2 = $config['ytics_stepsize'] * 2; // secondary tics
+
+	/*
+  for($cy1 = $dy; $cy1 < $config['height']; $cy1 += $dy) {
+    $output[] = array(
+      '#type' => 'line',
+      '#cx1' => -$config['ytics_height']/2, //correction for plotarea shift
+      '#cx2' => $config['ytics_height']/2,
+      '#cy1' => $cy1,
+      '#cy2' => $cy1,
+      '#stroke-width' => 1,
+      '#stroke' => 'black',
+      );
+  }
+	 */
+
+	/*
+		for($cy1 = $dy2; $cy1 < $config['height']; $cy1 += $dy2) {
+    $output['helpers'][] = array(
+      '#type' => 'line',
+      '#cx1' => $config['ytics_height']/2,
+      '#cx2' => $config['width'],
+      '#cy1' => $cy1,
+      '#cy2' => $cy1,
+      '#stroke-width' => '1px',
+      '#stroke' => 'grey',
+      );
+  }
+	 */
+  return $output;
+}
+
+function drawing_graph_build_bar_plot($canvas, $chart, $config) {
+	$canvas_id = isset($config['canvas_id']) ? $config['canvas_id'] : 'plot';
+  $canvas[$canvas_id]['#transform'] = array(
+		/*'translate' => array('50', $config['height']-50), */
+    'translate' => array('0', $config['height']), 
+    'scale' => array(1,-1),
+	);
+	/*$canvas['plot']['dots'] = drawing_graph_build_dot_plot($chart['points'], $config);*/
+	/*$canvas['plot']['pointlabels'] = drawing_graph_build_labels($chart['points']);*/
+  $canvas['plot']['bars'] = _drawing_graph_build_bar_plot($chart['points'], $config);
+	/*$canvas['plot']['line'] = _drawing_graph_build_line_plot($chart['points']);*/
+
+  return $canvas;
+}
+
+function drawing_graph_build_labels($points) {
+  $dx = 5; // the distance of the label from the point, dont overlap
+  $dy = 5;
+  $nth = 1;
+  $i = 0; //starting point where label gets printed
+  $n = 0;
+  foreach($points as $value) {
+    $i++;
+    if(($i%$nth)) { continue; } //only print every nth value, to avoid overcrowding
+    $n++;
+    $output[$n]['0'] = array( // numeric order to manipulate rendering order
+      '#type' => 'text',
+      '#cx' => $value[0] + $dx,
+      '#cy' => 400 - ($value[1] + $dy), //because of the screw-up transformations
+      '#value' => $value[0] . ', ' . $value[1],
+      '#transform' => array(
+        'scale' => array(1,-1),
+        'translate' => array(0,-400),
+      ),
+      '#stroke' => 'none',
+      '#id' => 'label_' . $n,
+      '#class' => 'point_label',
+    );
+    /*$output[$n]['labelbg'] = array(*/
+    $output[$n]['1'] = array(
+      '#type' => 'rectangle',
+      '#cx' => $value[0],
+      '#cy' => $value[1],
+      '#height' => 20,
+      '#width' => 70,
+      '#rx' => 5,
+      '#ry' => 5,
+      '#fill' => '#aaaadf',
+      '#id' => 'labelbg_'.$n,
+      '#class' => 'point_label',
+      '#opacity' => 0.7,
+    );
+  }
+  return $output;
+}
+
+function _drawing_graph_build_bar_plot($points, $config) {
+	/* spread the values along the whole width and height */
+  $barwidth = isset($config['barwidth']) ? $config['barwidth'] : 25;
+	$opacity = isset($config['opacity']) ? $config['opacity'] : 0.6;
+
+	$xvals = drawing_graph_get_dimension(1, $points);
+	$yvals = drawing_graph_get_dimension(2, $points);
+
+	$ymax = max($yvals);
+	$interval_x = max($xvals) - min($xvals);
+
+  foreach($points as $value) {
+    $output[] = array(
+      '#type' => 'rectangle',
+      '#fill' => $config['theme']['fill'],
+			'#stroke' => 'none',
+      '#height' => $config['height'] * $value[1]/$ymax,
+      '#width' => $barwidth,
+      '#cx' => $barwidth*$value[0] - $barwidth/2, // TODO: insert separation here
+      '#cy' => 0,
+      '#opacity' => $opacity,
+      );
+  }
+  return $output;
+}
+
+function _drawing_graph_build_line_plot($points) {
+  $output = array(
+    '#type' => 'polyline',
+    '#fill' => 'none',
+  );
+  foreach($points as $value) {
+    $output['#points'][] = array('#cx' => $value[0], '#cy' => $value[1]);
+  }
+  return $output;
+}
+
+function drawing_graph_build_dot_plot($points, $config) {
+  $output = array();
+  $id = 'point_'; // CSS reference!
+  $class = 'graph_point'; // CSS reference!
+  $n = 1;
+  foreach($points as $value) {
+    $output[] = array(
+      '#type' => 'circle',
+      '#cx' => $value[0],
+      '#cy' => $value[1],
+      '#r' => 5,
+      '#fill' => $config['fill'],
+      '#stroke' => 'white',
+      '#id' => $id . $n,
+      '#class' => $class,
+    );
+    $n++;
+  }
+  return $output;
+}
+
+/**
+ * Draw the pie chart
+ */
+function drawing_graph_build_piechart($canvas, $chart, $config) {
+  $canvas['plot'] = array(
+    '#type' => 'group',
+    '#stroke' => 'black',
+    '#stroke-width' => 2,
+    '#transform' => array(
+      /*'translate' => array('50', $config['height']-50), //to have space for ylabel and xlabel*/
+      'translate' => array($config['width']/2 , $config['height']/2), //to have space for ylabel and xlabel
+      /*'scale' => array(1,-1),*/
+    ),
+  );
+  $canvas['plot']['slices'] = _drawing_graph_build_pie_chart($config, $chart);
+  return $canvas;
+}
+
+function _drawing_graph_build_pie_chart($config, $chart) {
+  /* polar coordinates */
+  $theme = drawing_graph_color($config, $chart);
+  $start = 0; //define a starting angle for the first slice
+  $separation = 0.1; // this will be for exploded pie
+  $r = min($config['height'], $config['width'])/2 - 20;
+  $center = '0,0';
+  foreach($chart['points'] as $points) {
+    $sum += $points[1];
+  }
+
+  $L = drawing_graph_crd(drawing_graph_rad_to_crd($start, $r));
+  $ang = 0;
+  foreach($chart['points'] as $n => $points) {
+    /* $points[0] is the label, $points[1] is the value*/
+    $stepsize = $points[1]/$sum * 2 * M_PI; //angle of the slice
+
+    if($stepsize > M_PI) { $longarc = 1; }
+    else { $longarc = 0;}
+
+    $ang += $stepsize; //to calculate the angle of the end of the arc
+    /*$A = drawing_graph_crd(drawing_graph_rad_to_crd($ang - $separation, $r)); //end of the arc*/
+    $A = drawing_graph_crd(drawing_graph_rad_to_crd($ang, $r)); //end of the arc
+
+    /*$center = drawing_graph_crd(drawing_graph_rad_to_crd($ang - $stepsize/2, 10)); //for exploded pie*/
+
+    $d[$n] = 'M ' . $center // move to the center (if we want to explode the pie, do here)
+      . ' L ' . $L  // move to the start of the arc
+      . ' A ' . $r . ',' . $r . ' 0 ' . $longarc . ',1 ' . $A //arc
+      /*. ' A ' . $r . ',' . $r . ' 0 0,1 ' . $A //arc*/
+      . ' Z'; // close the curve
+    /*$L = drawing_graph_crd(drawing_graph_rad_to_crd($ang - $separation, $r)); //end of the arc*/
+    $L = $A;
+
+    $canvas['plot']['slice_'.$n] = array(
+      '#type' => 'path',
+      '#fill' => $theme[$n]['fill'],
+      '#explicit' => TRUE,
+      '#points' => $d[$n],
+      '#opacity' => 0.5,
+      );
+    /* Label part */
+    $dist = $config['labels']['inside'] ? 2/3 * $r : $r *1.1;
+    $coordinates = drawing_graph_rad_to_crd($ang - $stepsize/2, $dist);
+    $canvas['plot']['label_'.$n] = array(
+      '#type' => 'text',
+      '#value' => $points[0],
+      '#cx' => $coordinates[0],
+      '#cy' => $coordinates[1],
+      '#stroke' => 'none',
+    );
+  }
+  return $canvas;
+}
+
+/**
+ * helper function for pie chart, 
+ * it does a polar coordinate transformation
+ * returns coordinates from the angle (in radian) and the radius
+ */
+function drawing_graph_rad_to_crd($ang, $r) {
+  $x = cos($ang) * $r;
+  $y = sin($ang) * $r;
+  return array($x,$y);
+}
+
+function drawing_graph_crd($crds) {
+  return implode(',', $crds);
+}
+
+
+/**
+ * Stackbar chart: vertical layers to represent quantitative data
+ */
+function drawing_graph_build_stackbar($canvas, $chart, $config) {
+  $canvas['plot'] = array(
+    '#type' => 'group',
+    '#stroke' => 'black',
+    '#stroke-width' => 2,
+    );
+  $canvas['plot']['bars'] = _drawing_graph_build_stackbar($config, $chart);
+  return $canvas;
+}
+
+function _drawing_graph_build_stackbar($config, $chart) {
+  $theme = drawing_graph_color($config, $chart);
+
+  $values = array();
+  foreach($chart['points'] as $points) {
+    $sum += $points[1];
+    $values[$points[0]] = $points[1];
+  }
+  asort($values);
+  $height_prev = isset($config['canvas_height']) ? $config['canvas_height'] - $config['height'] : 0;
+  $n = 0;
+  $dist = $config['labels']['inside'] ? $config['width']/10 : $config['width'] + 10;
+  foreach($values as $label => $point) {
+    $height = $point/$sum * $config['height']; 
+    $canvas['plot']['label_'.$n] = array(
+      '#type' => 'text',
+      '#value' => $label,
+      '#stroke' => 'none',
+      '#cx' => $dist,
+      '#cy' => $height_prev + $height/2,
+    );
+    $canvas['plot']['stack_'.$n] = array( 
+      '#type' => 'rectangle',
+      '#fill' => $theme[$n]['fill'],
+      '#cx' => 0,
+      '#cy' => $height_prev,
+      '#height' => $height,
+      '#width' => $config['width'],
+      '#stroke' => 'white',
+      '#stroke-width' => 1,
+    );
+    $n++;
+    $height_prev += $height;
+  }
+  return $canvas;
+}
+
+
+/**
+ * Colorschemer for theming graphs.
+ * TODO: integration with color module, define colourset
+ * on settings page
+ */
+function drawing_graph_color($config, $chart) {
+  $theme = array();
+  $scheme = isset($config['theme']['fill']) ? $config['theme']['fill'] : '#00BB0F'; //default base color
+  foreach($chart['points'] as $n => $values) {
+    $theme[$n]['fill'] = isset($config['theme']['fill_'.$n]) ? $config['theme']['fill_'.$n] : $scheme;
+  }
+  return $theme;
+}
+
+function drawing_graph_get_dimension($dim, $points) {
+	$slice = array();
+	foreach($points as $values) {
+		$slice[] = $values[$dim-1];
+	}
+	return $slice;
+}

@@ -1,0 +1,11 @@
+name = Fusion Charts
+core = 6.x
+package = Fusion Charts
+description = Integration with Fusion Charts Free.
+
+; Information added by drupal.org packaging script on 2009-04-24
+version = "6.x-1.0"
+core = "6.x"
+project = "fusioncharts"
+datestamp = "1240617028"
+

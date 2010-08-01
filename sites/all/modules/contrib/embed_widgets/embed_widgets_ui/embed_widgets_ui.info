@@ -1,0 +1,15 @@
+; $Id: embed_widgets_ui.info,v 1.6 2009/05/26 22:04:16 jtsnow Exp $
+name =  Embed Widgets UI
+description = UI for creating and managing widgets.
+dependencies[] = embed_widgets
+core = 6.x
+package = "Embed Widgets"
+
+
+
+; Information added by drupal.org packaging script on 2009-09-09
+version = "6.x-2.0-alpha2"
+core = "6.x"
+project = "embed_widgets"
+datestamp = "1252467328"
+

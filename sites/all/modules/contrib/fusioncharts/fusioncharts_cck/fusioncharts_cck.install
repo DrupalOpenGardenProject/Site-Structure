@@ -1,0 +1,152 @@
+<?php
+// $Id: fusioncharts_cck.install,v 1.1.2.3 2009/02/14 19:47:27 aaron1234nz Exp $
+ 
+/**
+ * @file
+ * Installation of Fusion Charts for CCK
+ */
+
+ /**
+ * Implementation of hook_install().
+ */
+function fusioncharts_cck_schema() {
+  $schema['fusioncharts_cck_fields'] = array(
+    'description' => t('Stores the settings for CCK fusionchart field types.  CCKs internal database handeling is not flexiable enough to use.'),
+    'fields' => array(
+      'field_name' => array(
+        'description' => t('The field identifier.'),
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => ''),
+      'chart_type' => array(
+        'description' => t('The chart type for this node.'),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => ''),
+      'settings' => array(
+        'description' => t('Serialised array of settings for this chart as per the fusioncharts free documentation.'),
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => TRUE,
+        'default' => ''),
+      'attributes' => array(
+        'description' => t('Serialised array of attributes for this chart as per the fusioncharts free documentation.  Currently unimplemented'),
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => TRUE,
+        'default' => ''),
+      'width' => array(
+        'description' => t('The width of the chart.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+      'height' => array(
+        'description' => t('The height of the chart.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0),
+      'cols' => array(
+        'description' => t('Serialised array of column headings for this chart.'),
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => TRUE,
+        'default' => ''),
+      'rows' => array(
+        'description' => t('The number of rows to present to the user.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0),
+      'default_values' => array(
+        'description' => t('Serialized array of the default_values.'),
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => TRUE,
+        'default' => ''),
+      ),
+    'primary key' => array('field_name'),
+  );
+
+  $schema['fusionchart_cck_node_field'] = array(
+    'description' => t('Stores the data in fusionchart_cck fields.'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('The primary identifier for a node.'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+      'vid' => array(
+        'description' => t('The current {node_revisions}.vid version identifier.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0),
+      'field_name' => array(
+        'description' => t('The field identifier.'),
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => ''),
+      'delta' => array(
+        'description' => t('The delta of the field.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0),
+      'data' => array(
+        'description' => t('Serialized array of the data.'),
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => TRUE,
+        'default' => ''),
+      ),
+    'unique keys' => array(
+      'nid_vid' => array('nid', 'vid', 'field_name'),
+      'vid'     => array('vid')
+      ),
+  );
+  return $schema;
+}
+ 
+ 
+/**
+ * Implementation of hook_install().
+ */
+function fusioncharts_cck_install() {
+  drupal_install_schema('fusioncharts_cck');
+  drupal_load('module', 'content');
+  content_notify('install', 'fusioncharts_cck');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function fusioncharts_cck_uninstall() {
+  drupal_uninstall_schema('fusioncharts_cck');
+  drupal_load('module', 'content');
+  content_notify('uninstall', 'fusioncharts_cck');
+}
+
+/**
+ * Implementation of hook_enable().
+ *
+ * Notify content module when this module is enabled.
+ */
+function fusioncharts_cck_enable() {
+  drupal_load('module', 'content');
+  content_notify('enable', 'fusioncharts_cck');
+}
+
+/**
+ * Implementation of hook_disable().
+ *
+ * Notify content module when this module is disabled.
+ */
+function fusioncharts_cck_disable() {
+  drupal_load('module', 'content');
+  content_notify('disable', 'fusioncharts_cck');
+}
+

@@ -1,0 +1,388 @@
+<?php
+// $Id: drawing_svg.module,v 1.1.2.3 2009/05/09 05:54:53 danielb Exp $
+
+/**
+ * @file
+ * The SVG toolkit module.
+ */
+
+/**
+ * Implementation of hook_drawing_method().
+ */
+function drawing_svg_drawing_method() {
+  return array('drawing_svg' => t('SVG toolkit'));
+}
+
+/**
+ * A list of SVG element types the drawing module should theme.
+ */
+function drawing_svg_element_list() {
+  return array(
+    'canvas',
+    'group',
+    'file',
+    'ellipse',
+    'circle',
+    'rectangle',
+    'line',
+    'polyline',
+    'polygon',
+    'path',
+    'text',
+  );
+}
+
+/**
+ * Implementation of hook_drawing_theme_alter().
+ */
+function drawing_svg_drawing_theme_alter(&$themes) {
+  $drawing_themes = drawing_svg_element_list();
+  foreach ($drawing_themes as $theme_name) {
+    $themes[] = 'drawing_'. $theme_name;
+  }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function drawing_svg_theme() {
+  $drawing_svg_themes = array();
+  $themes = drawing_svg_element_list();
+  foreach($themes as $theme_name) {
+    $drawing_svg_themes['drawing_svg_drawing_'. $theme_name] = array(
+      'arguments' => array(
+        'element' => NULL,
+      ),
+    );
+  }
+  return $drawing_svg_themes;
+}
+
+/**
+ * Create a header for the SVG graphics. Note for more shapes in one canvas
+ * this should be called only once!
+ */
+function drawing_svg_header() {
+  return '<?xml version="1.0" standalone="no"?>
+  <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">';
+}
+
+/**
+ * Prepare the shape, define height, width
+ * To be called before every shape.
+ */
+function drawing_svg_prepare($shape) {
+  drawing_svg_set_header_xhtml();
+  $svg = array();
+  $svg['height'] = drawing_svg_get_value('#height', 'height', $shape);
+  $svg['width'] = drawing_svg_get_value('#width', 'width', $shape);
+  $svg['id'] = drawing_svg_get_value('#id', 'id', $shape);
+  $svg['xmlns:svg'] = 'xmlns:svg="http://www.w3.org/2000/svg"';
+  $svg['xmlns:xlink'] = 'xmlns:xlink="http://www.w3.org/1999/xlink"';
+  $attributes = implode($svg, ' ');
+  $viewbox = drawing_svg_get_viewbox($shape);
+  $drawing_svg_open = '<svg:svg '. $attributes .' '. $viewbox .'>';
+  return $drawing_svg_open;
+}
+
+/**
+ * Append the closing tag.
+ */
+function drawing_svg_finish() {
+  $drawing_svg_close = '</svg:svg>';
+  return $drawing_svg_close;
+}
+
+/**
+ * Add the style part, theming possible here.
+ */
+function drawing_svg_style($shape) {
+  $style['fill'] = (isset($shape['#fill'])) ? $shape['#fill'] : '';
+  $style['stroke'] = isset($shape['#stroke']) ? $shape['#stroke'] : '';
+  $style['stroke-width'] = isset($shape['#stroke-width']) ? $shape['#stroke-width'] : '';
+  $opacity = (isset($shape['#opacity']) && $shape['#opacity'] != '') ? 'opacity="'. $shape['#opacity'] .'" ' : '';
+
+  $output = '';
+  foreach ($style as $key => $val) {
+    if (isset($val) && $val != '') {
+      $output .= $key .':'. $val .';'; // example: fill:#00ff00;
+    }
+  }
+
+  if (isset($output) && $output != '') {
+    return $opacity .'style="'. $output .'"';
+  }
+  else
+    return '';
+}
+
+/**
+ * Root canvas drawing theme function.
+ */
+function theme_drawing_svg_drawing_canvas($element) {
+  $output = drawing_svg_prepare($element) . $element['#children'] . drawing_svg_finish();
+  return $output;
+}
+
+/**
+ * Group canvas drawing theme function.
+ */
+function theme_drawing_svg_drawing_group($element) {
+  $group['id'] = drawing_svg_get_value('#id', 'id', $element);
+  $attributes = implode($group, ' ');
+  $transform = drawing_svg_get_transformation($element);
+  $viewbox = drawing_svg_get_viewbox($shape);
+  return '<svg:g '. $attributes . $transform .' '. drawing_svg_style($element) .' '.
+    $viewbox .'>'. $element['#children'] .'</svg:g>';
+}
+
+/**
+ * Standalone image embedding.
+ */
+function theme_drawing_svg_drawing_file($element) {
+  $dimensions = (isset($element['#height']) && ($element['#width'])) ?
+    ' width="'. $element['#width'] .'" height="'. $element['#height'] .'"' : '';
+  return '<object data="'. $element['#location'] .'" type="image/svg+xml" '. $dimensions .' >
+    <embed src="'. $element['#location'] .'" type="image/svg+xml" '. $dimensions .' /></object>';
+}
+
+/**
+ * Return an ellipse. The whole world is an ellipse:
+ * dot, circle, and even (!) an ellipse
+ * obligatory elements: #cx, #cy, #amaj, #amin.
+ */
+function theme_drawing_svg_drawing_ellipse($shape) {
+  $ellipse = array();
+  $ellipse['cx'] = drawing_svg_get_value('#cx', 'cx', $shape);
+  $ellipse['cy'] = drawing_svg_get_value('#cy', 'cy', $shape);
+  $ellipse['rx'] = drawing_svg_get_value('#rx', 'rx', $shape);
+  $ellipse['ry'] = drawing_svg_get_value('#ry', 'ry', $shape);
+  $ellipse['id'] = drawing_svg_get_value('#id', 'id', $shape);
+  $ellipse['class'] = drawing_svg_get_value('#class', 'class', $shape);
+  $attributes = implode($ellipse, ' ');
+  $output = '<svg:ellipse '. $attributes . drawing_svg_style($shape) .'/>';
+  $output = drawing_svg_anchor($shape, $output);
+  return $output;
+}
+
+/**
+ * Return a circle.
+ */
+function theme_drawing_svg_drawing_circle($shape) {
+  $circle = array();
+  $circle['cx'] = drawing_svg_get_value('#cx', 'cx', $shape);
+  $circle['cy'] = drawing_svg_get_value('#cy', 'cy', $shape);
+  $circle['r'] = drawing_svg_get_value('#r', 'r', $shape);
+  $circle['id'] = drawing_svg_get_value('#id', 'id', $shape);
+  $circle['class'] = drawing_svg_get_value('#class', 'class', $shape);
+  $attributes = implode($circle, ' ');
+  $output = '<svg:circle '. $attributes . drawing_svg_style($shape) .'/>';
+  $output = drawing_svg_anchor($shape, $output);
+  return $output;
+}
+
+/**
+ * Return a rectangle
+ * obligatory elements: #cx, #cy, #height, #width
+ * TODO: implement rounded rectangle.
+ */
+function theme_drawing_svg_drawing_rectangle($shape) {
+  $rect = array();
+  $rect['position'] = drawing_svg_get_position($shape);
+  $rect['rx'] = drawing_svg_get_value('#rx', 'rx', $shape);
+  $rect['ry'] = drawing_svg_get_value('#ry', 'ry', $shape);
+  $rect['height'] = drawing_svg_get_value('#height', 'height', $shape);
+  $rect['width'] = drawing_svg_get_value('#width', 'width', $shape);
+  $rect['id'] = drawing_svg_get_value('#id', 'id', $shape);
+  $rect['class'] = drawing_svg_get_value('#class', 'class', $shape);
+  $attributes = implode($rect, ' ');
+  $output = '<svg:rect '. $attributes . drawing_svg_style($shape) .'/>';
+  $output = drawing_svg_anchor($shape, $output);
+  return $output;
+}
+
+/**
+ * Return a line
+ * obligatory elements: #cx1, #cy1, #cx2, #cy2.
+ */
+function theme_drawing_svg_drawing_line($shape) {
+  $line['cx1'] = drawing_svg_get_value('#cx1', 'x1', $shape);
+  $line['cy1'] = drawing_svg_get_value('#cy1', 'y1', $shape);
+  $line['cx2'] = drawing_svg_get_value('#cx2', 'x2', $shape);
+  $line['cy2'] = drawing_svg_get_value('#cy2', 'y2', $shape);
+  $line['id'] = drawing_svg_get_value('#id', 'id', $shape);
+  $line['class']  = drawing_svg_get_value('#class', 'class', $shape);
+  $attributes = implode($line, ' ');
+  $output = '<svg:line '. $attributes . drawing_svg_style($shape) .'/>';
+  $output = drawing_svg_anchor($shape, $output);
+  return $output;
+}
+
+/**
+ * Return a polyline
+ * Shape has a special element: $shape['#points'] = array(),
+ * this contains the coordinate pairs for each point.
+ */
+function theme_drawing_svg_drawing_polyline($shape) {
+  $points = '';
+  $polyline['id'] = drawing_svg_get_value('#id', 'id', $shape);
+  $polyline['class'] = drawing_svg_get_value('#class', 'class', $shape);
+  $attributes = implode($polyline, ' ');
+  foreach ($shape['#points'] as $point => $crds) {
+    /* output form: cx1,cy1 cx2,cy2 cx3,cx3 ... */
+    $points .= $crds['#cx'] .','. $crds['#cy'] .' '; // the number of the point is $point
+  }
+  $output = '<svg:polyline points="'. $points .'" '. $attributes . drawing_svg_style($shape) .'/>';
+  $output = drawing_svg_anchor($shape, $output);
+  return $output;
+}
+
+/**
+ * Return a polygon
+ * $shape['#points'] = array( int N => array( '#cx' => 'int', '#cy' => 'int')); where N
+ * is the number of the given point.
+ */
+function theme_drawing_svg_drawing_polygon($shape) {
+  $polygon['id']  = drawing_svg_get_value('#id', 'id', $shape);
+  $polygon['class']  = drawing_svg_get_value('#class', 'class', $shape);
+  $attributes = implode($polygon, ' ');
+
+  $points = '';
+  foreach ($shape['#points'] as $point => $crds) {
+    /* output form: cx1,cy1 cx2,cy2 cx3,cx3 ... */
+    $points .= $crds['#cx'] .','. $crds['#cy'] .' '; // the number of the point is $point
+  }
+  $output = '<svg:polygon points="'. $points .'" '. $attributes . drawing_svg_style($shape) .'/>';
+  $output = drawing_svg_anchor($shape, $output);
+  return $output;
+}
+
+/**
+ * Return a path
+ * point definition can be explicit or implicit.
+ */
+function theme_drawing_svg_drawing_path($shape) {
+  $points = '';
+  $output = '';
+  $id = drawing_svg_get_value('#id', 'id', $shape);
+  $class = drawing_svg_get_value('#class', 'class', $shape);
+  if (!isset($shape['#explicit']) || $shape['#explicit'] == FALSE) {
+    /* not having '#explicit' set means we define the points via the API */
+    foreach ($shape['#points'] as $point => $attributes) { // $points = int N
+      $modifier = $attributes['#modifier'];
+      $points .= ((isset($modifier) && $modifier != 'z') ? $modifier : '' ) .
+        $attributes['#cx'] .','. $attributes['#cy'] .
+        (($modifier == 'z') ? $modifier : '') .' ';
+    }
+  }
+  else { /* meaning we have explicit point declaration, e.g from a drawing program */
+    /* Warning, no validation checking here! */
+    $points = $shape['#points'];
+  }
+  $output = drawing_svg_anchor($shape, $output);
+  $output = '<svg:path '. $id .' d="'. $points .'" '. drawing_svg_style($shape) .'/>';
+  return $output;
+}
+
+/**
+ * Return text.
+ */
+function theme_drawing_svg_drawing_text($shape) {
+  $text = array();
+  $text['id'] = drawing_svg_get_value('#id', 'id', $shape);
+  $text['class'] = drawing_svg_get_value('#class', 'class', $shape);
+  $text['position'] = drawing_svg_get_position($shape);
+  $text['rotation'] = drawing_svg_get_value('#rotate', 'rotate', $shape);
+  $text['textlength'] = drawing_svg_get_value('#width', 'textLength', $shape);
+  $attributes = implode($text, ' ');
+  $attributes = $attributes . drawing_svg_get_transformation($shape);
+  $output = '<svg:text '. $attributes . drawing_svg_style($shape) .'>'. $shape['#value'] .'</svg:text>';
+  $output = drawing_svg_anchor($shape, $output);
+  return $output;
+}
+
+/**
+ * Set SVG specific header if needed
+ * Standalone mime type.
+ */
+function drawing_svg_set_header() {
+  drupal_set_header('Content-Type: image/svg+xml; charset=utf-8');
+}
+
+/**
+ * Use for inline svg.
+ */
+function drawing_svg_set_header_xhtml() {
+  drupal_set_html_head('<object id="AdobeSVG" classid="clsid:78156a80-c6a1-4bbf-8e6a-3cd390eeb4e2"></object><?import namespace="svg" implementation="#AdobeSVG"?>');
+  if (stristr($_SERVER["HTTP_ACCEPT"], "application/xhtml+xml")) {
+    drupal_set_header('Content-Type: application/xhtml+xml; charset=utf-8');
+  }
+  else { // IE hack
+    drupal_set_header('Content-Type: text/html; charset=utf-8');
+  }
+}
+
+/**
+ * helper function to get custom values identified by $string from the array $shape
+ * and insert them into the xml as attribute named $name.
+ */
+function drawing_svg_get_value($string, $name, $shape) {
+  $value = isset($shape[$string]) ? $name .'="'. $shape[$string] .'" ' : '';
+  return $value;
+}
+
+/**
+ * process the $shape array to extract positions.
+ */
+function drawing_svg_get_position($shape) {
+  $position = array();
+  $position['#cx'] = drawing_svg_get_value('#cx', 'x', $shape);
+  $position['#cy'] = drawing_svg_get_value('#cy', 'y', $shape);
+  return implode($position, ' ');
+}
+
+/**
+ * Embed an element into an anchor
+ */
+function drawing_svg_anchor($shape, $string) {
+  if (isset($shape['#a']) && $shape['#a'] != '')  {
+    $string = '<svg:a xlink:href="'. $shape['#a'] .'">'. $string .'</svg:a>';
+  }
+  return $string;
+}
+
+/**
+ * helper function to get all the transformations defined and assemble it
+ * as valid svg attribute.
+ */
+function drawing_svg_get_transformation($shape) {
+  $transform = '';
+  if (isset($shape['#transform'])) {
+    $transform = 'transform="';
+    foreach ($shape['#transform'] as $operation => $args) {
+      $transform .= $operation .'('. implode($args, ',') .') ';
+    }
+    $transform .= '" ';
+  }
+  return $transform;
+}
+
+/**
+ * helper function to extract the viewbox definition from the $shape array.
+ */
+function drawing_svg_get_viewbox($shape) {
+  $viewbox = '';
+  if (isset($shape['#viewbox'])) {
+    $viewbox = 'viewBox="';
+    $viewbox .= $shape['#viewbox']['min-x'] .' '.
+      $shape['#viewbox']['min-y'] .' '.
+      $shape['#viewbox']['width'] .' '.
+      $shape['#viewbox']['height'];
+    $viewbox .= '" ';
+    $viewbox .= isset($shape['#viewbox']['aspect']) ?
+      'preserveAspectRatio="'. $shape['#viewbox']['aspect'] .'"' :
+      'preserveAspectRatio="none" ';  /* by default it won't preserve AR */
+  }
+  return $viewbox;
+}

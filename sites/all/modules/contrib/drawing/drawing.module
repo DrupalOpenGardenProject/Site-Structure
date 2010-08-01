@@ -1,0 +1,220 @@
+<?php
+// $Id: drawing.module,v 1.25.4.4 2009/05/09 05:54:53 danielb Exp $
+
+/**
+ * @file
+ * The Drawing API module.
+ */
+
+/**
+ * Implementation of hook_theme().
+ */
+function drawing_theme() {
+  $drawing_themes = array();
+  // all our themes have the same registry data:
+  $drawing = array(
+    'arguments' => array(
+      'element' => NULL,
+    ),
+    'function' => 'theme_drawing',
+  );
+  // list of themes
+  $themes = array(
+    'drawing',
+  );
+  // modules can easily add to this list by implementing hook_drawing_theme_alter().
+  // modules requiring advanced manipulation should use hook_theme_registry_alter().
+  drupal_alter('drawing_theme', $themes);
+  foreach ($themes as $theme) {
+    $drawing_themes[$theme] = $drawing;
+  }
+  return $drawing_themes;
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function drawing_menu() {
+  $items = array();
+  $items['admin/settings/drawing'] = array(
+    'title' => 'Drawing API',
+    'description' => 'Drawing API settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('drawing_admin'),
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+/**
+ * Admin form for Drawing API settings.
+ */
+function drawing_admin() {
+  $form = array();
+  $form['drawing_type'] = array(
+    '#type' => 'radios',
+    '#title' => t('Default toolkit'),
+    '#default_value' => variable_get('drawing_type', 'drawing_svg'),
+    '#description' => t('Select the default toolkit to use on the site.'),
+    '#options' => drawing_get_all_methods(),
+  );
+  return system_settings_form($form);
+}
+
+/**
+ * Retrieves a canvas from a builder function, passes it on for
+ * processing, and renders the canvas.
+ *
+ * @param $canvas_id
+ *   The unique string identifying the desired canvas. If a function
+ *   with that name exists, it is called to build the canvas array.
+ *   Modules that need to generate the same canvas (or very similar canvases)
+ *   using different $canvas_ids can implement hook_canvases(), which maps
+ *   different $canvas_id values to the proper canvas building function.
+ * @param ...
+ *   Any additional arguments needed by the canvas building function.
+ * @return
+ *   The rendered canvas.
+ */
+function drawing_get_canvas($canvas_id) {
+  $args = func_get_args();
+  $canvas = call_user_func_array('drawing_retrieve_canvas', $args);
+  drawing_prepare_canvas($args[0], $canvas);
+  return drawing_render_canvas($canvas_id, $canvas);
+}
+
+/**
+ * Retrieves the structured array that defines a given canvas.
+ *
+ * @param $canvas_id
+ *   The unique string identifying the desired canvas. If a function
+ *   with that name exists, it is called to build the canvas array.
+ *   Modules that need to generate the same canvas (or very similar canvases)
+ *   using different $canvas_ids can implement hook_canvases(), which maps
+ *   different $canvas_id values to the proper canvas building function.
+ * @param ...
+ *   Any additional arguments needed by the canvas building function.
+ */
+function drawing_retrieve_canvas($canvas_id) {
+  static $canvases;
+  $args = func_get_args();
+  $saved_args = $args;
+  array_shift($args);
+
+  if (!function_exists($canvas_id)) {
+    // if you want to handle your canvas uniquely, do it with hook_canvases()
+    if (!isset($canvases) || !isset($canvases[$canvas_id])) {
+      $canvases = module_invoke_all('canvases', $saved_args);
+    }
+    $canvas_definition = $canvases[$canvas_id];
+    if (isset($canvas_definition['callback arguments'])) {
+      $args = array_merge($canvas_definition['callback arguments'], $args);
+    }
+    if (isset($canvas_definition['callback'])) {
+      $callback = $canvas_definition['callback'];
+    }
+  }
+  $canvas = call_user_func_array(isset($callback) ? $callback : $canvas_id, $args);
+  $canvas['#parameters'] = $saved_args;
+  return $canvas;
+}
+
+/**
+ * Renders a structured canvas array into themed output.
+ *
+ * @param $canvas_id
+ *   A unique string identifying the canvas for hook_drawing_canvas_alter
+ *   functions.
+ * @param $canvas
+ *   An associative array containing the structure of the canvas.
+ * @return
+ *   The themed output as rendered by drupal_render().
+ */
+function drawing_render_canvas($canvas_id, &$canvas) {
+  $canvas['#pre_render'][] = 'drawing_pre_render_canvas';
+  // Don't override #theme if someone already set it.
+  if (!isset($canvas['#theme'])) {
+    init_theme();
+    $registry = theme_get_registry();
+    if (isset($registry[$canvas_id])) {
+      $canvas['#theme'] = $canvas_id;
+    }
+  }
+  $canvas['#method'] = drawing_get_method($canvas);
+  $output = drupal_render($canvas);
+  return $output;
+}
+
+/**
+ * Recursively pre render the canvas elements.
+ *
+ * @param $canvas
+ *   The canvas to process
+ * @return
+ *   The updated canvas.
+ */
+function drawing_pre_render_canvas($canvas) {
+  if ($canvas['#type']) {
+    $canvas['#type'] = 'drawing_'. $canvas['#type'];
+    $canvas['#handler'] = $canvas['#method'] .'_'. $canvas['#type'];
+  }
+  foreach (element_children($canvas) as $child) {
+    // pass down the #method
+    $canvas[$child]['#method'] = $canvas['#method'];
+    $canvas[$child] = drawing_pre_render_canvas($canvas[$child]);
+  }
+  // allow toolkit modules to add to this pre_render
+  if (function_exists($canvas['#handler'])) {
+    $canvas = $canvas['#handler']($canvas);
+  }
+  return $canvas;
+}
+
+/**
+ * Prepares a structured canvas array by adding required elements,
+ * and executing any hook_drawing_canvas_alter functions.
+ *
+ * @param $canvas_id
+ *   A unique string identifying the canvas for hook_drawing_canvas_alter
+ *   functions.
+ * @param $canvas
+ *   An associative array containing the structure of the canvas.
+ */
+function drawing_prepare_canvas($canvas_id, &$canvas) {
+  foreach (module_implements('drawing_canvas_alter') as $module) {
+    $function = $module .'_drawing_canvas_alter';
+    $function($canvas_id, $canvas);
+  }
+  return $canvas;
+}
+
+/**
+ * Extract the defined method, defaults to 'drawing_svg'.
+ * Method can be explicitly set on the element, or the default config will be used.
+ */
+function drawing_get_method($element = NULL) {
+  $drawing_method = $element['#method'] ? 'drawing_'. $element['#method'] : variable_get('drawing_method', 'drawing_svg');
+  return $drawing_method;
+}
+
+/**
+ * Get a list of drawing methods from other modules.
+ */
+function drawing_get_all_methods() {
+  static $drawing_methods;
+  if (empty($drawing_methods)) {
+    $drawing_methods = module_invoke_all('drawing_method');
+    if (empty($drawing_methods)) {
+      drupal_set_message(t('Drawing API could not find any enabled <em>toolkit</em> modules.'), 'error');
+    }
+  }
+  return $drawing_methods;
+}
+
+/**
+ * Theme function.
+ */
+function theme_drawing($element) {
+  return theme($element['#handler'], $element);
+}

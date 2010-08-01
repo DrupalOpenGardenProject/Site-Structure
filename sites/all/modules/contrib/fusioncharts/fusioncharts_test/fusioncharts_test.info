@@ -1,0 +1,11 @@
+name = Fusion Charts example suite
+core = 6.x
+package = Fusion Charts
+description = Fusion Charts examples.
+dependencies[]  = fusioncharts
+; Information added by drupal.org packaging script on 2009-04-24
+version = "6.x-1.0"
+core = "6.x"
+project = "fusioncharts"
+datestamp = "1240617028"
+

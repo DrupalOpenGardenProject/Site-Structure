@@ -1,0 +1,302 @@
+<?php
+// $Id: sparkline.module,v 1.6 2007/12/30 22:00:47 chris Exp $
+
+/**
+ * @file
+ * A Drupal wrapper for the PHP Sparklines library.  Allows other modules to
+ * generate sparklines, and provides a filter for users to embed them in posts.
+ */
+
+function sparkline_menu() {
+  $items = array();
+  $items['admin/settings/sparkling'] = array(
+    'title' => 'Sparklines',
+    'description' => 'Configure the cache location and other settings for sparkline rendering.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sparkline_admin_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer sparklines'),
+  );
+  return $items;
+}
+
+
+/**
+ * Implementation of hook_perm(). Just used to control access to the admin screen.
+ */
+function sparkline_perm() {
+  return array('administer sparklines');
+}
+
+/**
+ * Implementation of hook_theme().  Registers theme functions.
+ */
+function sparkline_theme() {
+  return array(
+    'sparkline' => array('arguments' => array('element')),
+    'sparkline_element' => array('arguments' => array()),
+    );
+}
+
+
+/**
+ * Implementation of hook_cron(). This clears out any 'non-permanent' cached sparklines.
+ */
+function sparkline_cron() {
+  _sparkline_flush_cache();
+}
+
+/**
+ * Implementation of hook_help().
+ */
+function sparkline_help($path, $arg) {
+  switch ($path) {
+    case 'admin/modules#description':
+      // This description is shown in the listing at admin/modules.
+      return t('Lets users sparkline graphs using simple tags.');
+  }
+}
+
+/**
+ * Form API callback to validate the sparkline admin settings form.
+ */
+function sparkline_admin_settings_validate($form, &$form_state) {
+  if (!is_dir($form_state['values']['sparkline_path'])) {
+    form_set_error('sparkline_path', t('The directory %dir does not exist.', array('%dir' => $form_state['values']['sparkline_path'])));
+  }
+  $cache_path = file_directory_path() .'/'. $form_state['values']['sparkline_cache'];
+  file_check_directory($cache_path, FILE_CREATE_DIRECTORY, 'sparkline_cache');
+}
+
+function sparkline_admin_settings() {
+  $form = array();
+  $form['sparkline_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Sparkline PHP path'),
+    '#required' => TRUE,
+    '#description' => t('The Sparklines PHP library (http://sparkline.org) is required. Download it and copy it to the sparkline module directory.'),
+    '#default_value' => variable_get('sparkline_path', drupal_get_path('module', 'sparkline') .'/sparkline-php-0.2'),
+  );
+  
+  $form['sparkline_cache'] = array(
+    '#type' => 'textfield',
+    '#title' => t('The name of the sparkline cache directory, inside of the normal Drupal files directory'),
+    '#required' => TRUE,
+    '#default_value' => variable_get('sparkline_cache', 'sparkline'),
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Implementation of hook_filter_tips().
+ */
+function sparkline_filter_tips($delta, $format, $long = FALSE) {
+   return t('Sparkline filter: [sparkline style=line|bar|winloss height=15 12,3,-2,39,23,2,......]');
+}
+
+/**
+ * Implementation of hook_filter().
+ */
+function sparkline_filter($op, $delta = 0, $format = -1, $text = '') {
+  if ($op == 'list') {
+    return array(0 => t('Sparkline filter'));
+  }
+
+  switch ($delta) {
+    case 0:
+      switch ($op) {
+        case 'description':
+          return t('Lets writers use the [sparkline] tag to embed tiny visual graphs in their posts.');
+
+        case 'prepare':
+          return $text;
+
+        case 'process':
+          return _sparkline_process_text($text);
+      }
+      break;
+  }
+}
+
+function _sparkline_process_text($text) {
+  $pattern = "/\[sparkline[ +]?(?:(?:style=)?(bar|line|winloss))?[ +]?(?:height=([0-9]*))?[ +]?(?:width=([0-9]*))?[ +]?(?:min=([0-9]*))?[ +]?(?:max=([0-9]*))? ([-0-9,]*)\]/";
+  if (preg_match_all($pattern, $text, $matches)) {
+    foreach ($matches[0] as $key => $value) {
+      $style = empty($matches[1][$key]) ? 'bar' : $matches[1][$key];     
+      $tmp = sparkline_elements(); 
+      $sparkline = $tmp['sparkline_'. $style];
+
+      if (!empty($matches[2][$key])) {
+        $sparkline['#height'] = $matches[2][$key];
+      }
+      if (!empty($matches[3][$key])) {
+        $sparkline['#width'] = $matches[3][$key];
+      }
+      $sparkline['#min'] = empty($matches[4][$key]) ? NULL : $matches[4][$key];
+      $sparkline['#max'] = empty($matches[5][$key]) ? NULL : $matches[5][$key];
+      $sparkline['#data'] = explode(',', $matches[6][$key]);
+      
+      // We do this so that filtered sparklines (which rarely change and whose urls are cached)
+      // don't get blown out of the cache folder at cron-time.
+      $sparkline['#do_not_flush'] = TRUE;
+      
+      $replacements[$key] = theme('sparkline', $sparkline);
+    }
+    $text = str_replace($matches[0], $replacements, $text);
+  }
+  return $text;
+}
+
+function sparkline_elements() {
+  $elements['sparkline_line'] = _sparkline_defaults(array(
+    '#style' => 'line',
+    '#flag_points' => TRUE,
+    '#min' => NULL,
+    '#max' => NULL,
+  ));
+
+  $elements['sparkline_bar'] = _sparkline_defaults(array(
+    '#style' => 'bar',
+    '#bar_width' => 2,
+    '#bar_gap' => 1,
+    '#min' => NULL,
+    '#max' => NULL,
+  ));
+  
+  $elements['sparkline_winloss'] = _sparkline_defaults(array(
+    '#style' => 'winloss',
+    '#bar_width' => 2,
+    '#bar_gap' => 1,
+  ));
+  
+  return $elements;
+}
+
+function _sparkline_defaults($element = array()) {
+  $element['#width'] = 'auto';
+  $element['#height'] = 15;
+  $element['#positive_color'] = 'black';
+  $element['#negative_color'] = 'red';
+  $element['#background_color'] = 'white';
+  $element['#data'] = array();
+  $element['#theme'] = 'sparkline_element';
+  $element['#do_not_flush'] = FALSE;
+  return $element;
+}
+
+function theme_sparkline($element) {    
+  $api_path =  variable_get('sparkline_path', drupal_get_path('module', 'sparkline') .'/sparkline-php-0.2') .'/lib';
+
+  switch ($element['#style']) {
+    case 'line':
+      $path = _sparkline_generate_path($element);
+      if (!file_exists($path)) {
+        require_once($api_path .'/Sparkline_Line.php');
+        $sparkline = new Sparkline_Line(FALSE);
+        $min = 0;
+        $max = 0;
+        foreach ($element['#data'] as $i => $value) {
+          $min = ($element['#data'][$min] > $value) ? $i : $min;
+          $max = ($element['#data'][$max] < $value) ? $i : $max;
+        
+          $sparkline->SetData($i, $value);
+        }
+        if ($element['#width'] == 'auto') {
+          $element['#width'] = min(count($element['#data']) * 3, 200);
+        }
+      
+        if (!empty($element['#min'])) {
+          $sparkline->SetYMin($element['#min']);
+        }
+        if (!empty($element['#max'])) {
+          $sparkline->SetYMax($element['#max']);
+        }
+        if ($element['#flag_points']) {
+          $keys = array_keys($element['#data']);
+          $end = $keys[count($keys) - 1];
+          $sparkline->SetFeaturePoint($end - 1, $element['#data'][$end], 'grey', 2);
+          $sparkline->SetFeaturePoint($min, $element['#data'][$min], $element['#negative_color'], 2);
+          $sparkline->SetFeaturePoint($max, $element['#data'][$max ], $element['#positive_color'], 2);
+        }
+
+        $sparkline->RenderResampled($element['#width'], $element['#height']);
+        $sparkline->Output($path);
+      }
+      break;
+
+    case 'bar':
+      $path = _sparkline_generate_path($element);
+      if (!file_exists($path)) {
+        require_once($api_path .'/Sparkline_Bar.php');
+        $sparkline = new Sparkline_Bar(FALSE);
+      
+        $sparkline->SetBarWidth($element['#bar_width']);
+        $sparkline->SetBarSpacing($element['#bar_gap']);
+
+        foreach ($element['#data'] as $i => $value) {
+          $sparkline->SetData($i, $value, ($value < 0 ? $element['#negative_color'] : $element['#positive_color']), FALSE);
+        }
+        if (!empty($element['#min'])) {
+          $sparkline->SetYMin($element['#min']);
+        }
+        if (!empty($element['#max'])) {
+          $sparkline->SetYMax($element['#max']);
+        }
+        $sparkline->Render($element['#height']);
+        $sparkline->Output($path);
+      }
+      break;
+
+    case 'winloss':
+      $path = _sparkline_generate_path($element);
+      if (!file_exists($path)) {
+        require_once($api_path .'/Sparkline_Bar.php');
+        $sparkline = new Sparkline_Bar(FALSE);
+      
+        $sparkline->SetBarWidth($element['#bar_width']);
+        $sparkline->SetBarSpacing($element['#bar_gap']);
+
+        foreach ($element['#data'] as $i => $value) {
+          if ($value < 1) {
+            $sparkline->SetData($i, -1, $element['#negative_color'], FALSE);
+          }
+          else {
+            $sparkline->SetData($i, 1, $element['#positive_color'], FALSE);
+          }
+        }
+        if (!empty($element['#min'])) {
+          $sparkline->SetYMin($element['#min']);
+        }
+        $sparkline->Render($element['#height']);
+        $sparkline->Output($path);
+      }
+      break;
+  }
+
+  if (isset($path)) {
+    return theme('image', $path, NULL, NULL, array('class' => 'sparkline'));
+  }
+}
+
+function theme_sparkline_element($element) {
+  return theme('form_element', $element, theme('sparkline', $element));
+}
+
+function _sparkline_generate_path($sparkline) {
+  if (!empty($sparkline['#filename'])) {
+    return file_directory_path() .'/'. variable_get('sparkline_cache', 'sparkline') .'/'. $sparkline['#filename'];
+  }
+  else {
+    return file_directory_path() .'/'. variable_get('sparkline_cache', 'sparkline') .'/'. ($element['#do_not_flush'] ? '-' : '') . md5(serialize($sparkline)) .'.png';
+  }
+}
+
+function _sparkline_flush_cache() {
+  $listing = file_directory_path() .'/'. variable_get('sparkline_cache', 'sparkline') ."/{!-}*.png";
+  foreach (glob($listing) as $file) {
+    if (is_file($file) === true) {
+      @unlink($file);
+    }
+  }
+}

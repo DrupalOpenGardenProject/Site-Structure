@@ -1,0 +1,11 @@
+; $Id: sparkline.info,v 1.2 2007/12/30 22:00:47 chris Exp $
+name = Sparkline
+description = Provides an API for rendering small graphs and a filter for embedding them in content.
+core = "6.x"
+
+; Information added by drupal.org packaging script on 2010-07-11
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "sparkline"
+datestamp = "1278835752"
+

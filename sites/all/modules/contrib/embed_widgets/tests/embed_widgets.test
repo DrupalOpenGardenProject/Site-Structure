@@ -1,0 +1,88 @@
+<?php
+// $Id: embed_widgets.test,v 1.7.2.6 2009/09/09 03:08:02 jtsnow Exp $
+
+/**
+ * @file embed_widgets.test
+ * Contains SimpleTests for Embed Widgets.
+ */
+
+/**
+* Unit tests for embed_widget class.
+*/
+class EmbedWidgetsEmbedWidgetTestCase extends DrupalWebTestCase {
+
+  /**
+   * Drupal SimpleTest method: return metadata about the test.
+   */
+  function getInfo() {
+    return array(
+      'name'  => t('embed_widget class'),
+      'desc'  => t('Tests the embed_widget class.'),
+      'group' => t('Embed Widgets'),
+    );
+  }
+  
+  /**
+   * Implementation of setUp().
+   */
+  function setUp() {       
+    parent::setUp(
+      'embed_widgets'
+    );
+  }
+  
+  function tearDown() {
+    // Do tear down tasks...
+  
+    // Finally...
+    parent::tearDown();
+  }
+  
+  /**
+   * Build Widget
+   */
+  function build_widget($wid = NULL) {
+    $node = $this->drupalCreateNode();
+    $widget = new embed_widget('node', $node->nid);
+    $widget->title = $this->randomName(15);
+
+    return $widget;
+  }
+  
+  function testWidgetCrudTest() {
+    
+    $node = $this->drupalCreateNode();
+    $widget = embed_widgets_new('node', $node->nid);
+    $widget->title = $this->randomName(15);
+    
+    $embed_widget = $widget;
+    
+    // Save widget
+    $create = $embed_widget->save();
+    $this->assertEqual($create, SAVED_NEW, t('Widget saved'), t('Widget CRUD'));
+    $this->pass(var_export($embed_widget, TRUE));
+    
+    $widget = embed_widgets_new('node', $node->nid);
+    $widget->load();
+    $this->assertEqual($embed_widget->title, $widget->title, t('Widget loaded'), t('Widget CRUD'));
+    $this->pass(var_export($widget, TRUE));
+    
+    // Edit widget
+    $widget->title = "Edited!";
+    $updated = $widget->save();
+    $this->assertEqual($updated, SAVED_UPDATED, t('Edited widget saved.'), t('Widget CRUD'));
+    $this->pass(var_export($widget, TRUE));
+    
+    $widget = embed_widgets_new('node', $node->nid);
+    $widget->load();
+    $this->pass(var_export($widget, TRUE));
+    $this->assertEqual("Edited!", $widget->title, t('Edited widget loaded'), t('Widget CRUD'));
+    
+    // Delete widget
+    $result = $widget->delete();
+    $this->assertTrue($result, t('Widget deleted'), t('Widget CRUD'));
+    $widget = embed_widgets_new('node', $node->nid);
+    $widget->load();
+    $this->assertNull($widget->wid, t('Widget delete confirmed'), t('Widget CRUD'));
+  }  
+}

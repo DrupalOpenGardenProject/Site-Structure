@@ -1,0 +1,13 @@
+; $Id: fusioncharts_cck.info,v 1.1.2.3 2009/02/14 19:47:27 aaron1234nz Exp $
+name = FusionCharts for CCK
+description = Allows FusionCharts to be created with CCK
+dependencies[] = content
+dependencies[] = fusioncharts
+package = Fusion Charts
+core = 6.x
+; Information added by drupal.org packaging script on 2009-04-24
+version = "6.x-1.0"
+core = "6.x"
+project = "fusioncharts"
+datestamp = "1240617028"
+

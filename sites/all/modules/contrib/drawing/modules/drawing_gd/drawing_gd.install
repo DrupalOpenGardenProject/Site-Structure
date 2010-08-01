@@ -1,0 +1,77 @@
+<?php
+// $Id: drawing_gd.install,v 1.1.2.1 2009/05/09 05:56:28 danielb Exp $
+
+/**
+ * @file
+ */
+
+/**
+ * Implementation of hook_schema().
+ */
+function drawing_gd_schema() {
+  $schema['drawing_gd_image'] = array(
+    'fields' => array(
+      'gd_id' => array(
+        'type' => 'serial', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+      ),
+      'file' => array(
+        'type' => 'varchar', 
+        'length' => 255, 
+      ),
+      'data' => array(
+        'type' => 'text', 
+        'not null' => TRUE,
+        'serialize' => TRUE,
+      ),
+    ),
+    'primary key' => array('gd_id'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function drawing_gd_install() {
+  drupal_install_schema('drawing_gd');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function drawing_gd_uninstall() {
+  drupal_uninstall_schema('drawing_gd');
+
+  $path = realpath(file_directory_path() .'/drawing_gd');
+  if ($path != FALSE) {
+    _drawing_gd_recursive_delete($path);
+  }
+
+}
+
+/**
+ * Recursively delete all files and folders in the specified filepath, then
+ * delete the containing folder Note that this only deletes visible files with
+ * write permission
+ *
+ * @param string $path
+ *   An absolute filepath (relative to the filesystem) to delete
+ */
+function _drawing_gd_recursive_delete($path) {
+  $listing = $path ."/*";
+
+  foreach (glob($listing) as $file) {
+    if (is_file($file) === TRUE) {
+      @unlink($file);
+    }
+    elseif (is_dir($file) === TRUE) {
+      _drawing_gd_recursive_delete($file);
+      @rmdir($file);
+    }
+  }
+
+  @rmdir($path);
+}

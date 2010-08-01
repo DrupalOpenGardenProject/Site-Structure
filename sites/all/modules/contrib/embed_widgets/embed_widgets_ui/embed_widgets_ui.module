@@ -1,0 +1,446 @@
+<?php
+// $Id: embed_widgets_ui.module,v 1.15.2.17 2009/08/15 22:09:00 jtsnow Exp $
+
+function embed_widgets_ui_menu() {
+  $items = array();
+  
+  $items['admin/settings/embed-widgets'] = array(
+    'title' => 'Embed Widgets',
+    'description' => 'Configuration for embed widgets',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('embed_widgets_ui_settings_form'),
+    'access arguments' => array('administer widgets'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/settings/embed-widgets/setup'] = array(
+    'title' => 'Setup',
+    'description' => 'Configuration for embed widgets',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('embed_widgets_ui_settings_form'),
+    'access arguments' => array('administer widgets'),
+    'weight' => -10,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['admin/settings/embed-widgets/defaults'] = array(
+    'title' => 'Default Values',
+    'description' => 'Set default values for widget.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('embed_widgets_ui_default_settings_form'),
+    'access arguments' => array('administer widgets'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/settings/embed-widgets/platforms'] = array(
+    'title' => 'Platforms',
+    'description' => 'Platform-specific settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('embed_widgets_ui_platform_settings_form'),
+    'access arguments' => array('administer widgets'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  
+  $items['embed-widgets/preview'] = array(
+    'page callback' => 'embed_widgets_ui_preview',
+    'access arguments' => array('access content'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+//  $items['embed-widgets/edit/%embed_widgets'] = array(
+//    'title' => 'Edit Widget',
+//    'page callback' => 'drupal_get_form',
+//    'page arguments' => array('embed_widgets_ui_edit_form', 2),
+//    'access callback' => 'embed_widgets_ui_access',
+//    'access arguments' => array('edit', 'widget', 2),
+//    'type' => MENU_LOCAL_TASK,
+//  );
+//
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function embed_widgets_ui_perm() {
+  return array('administer widgets', 'override widget default settings');
+}
+
+//function embed_widgets_ui_edit_form($form_state, embed_widget $widget) {
+//  drupal_set_title("Edit " . $widget->title);
+//  $form = array('#tree' => TRUE);
+//  $form['embed_widget'] = array(
+//    '#type' => 'value',
+//    '#value' => $widget,
+//  );
+//  $form['widget'] = array(
+//    '#type' => 'fieldset',
+//    '#title' => t('Widget Settings'),
+//    '#collapsible' => TRUE,
+//  );
+//  $form['widget']['attributes'] = embed_widget::widget_attributes_form($widget);
+//  $form['widget']['settings'] = embed_widget::widget_settings_form($widget->get_settings());
+//
+//  $form['submit'] = array(
+//    '#type' => 'submit',
+//    '#value' => t('Save Widget'),
+//  );
+//  return $form;
+//}
+//
+//function embed_widgets_ui_edit_form_submit($form, &$form_state) {
+//  $widget = $form_state['values']['embed_widget'];
+//  foreach ($form_state['values']['widget']['attributes'] as $name => $value) {
+//    $widget->$name = $value;
+//  }
+//  foreach ($form_state['values']['widget']['settings'] as $name => $value) {
+//    $widget->set_variable($name, $value);
+//  }
+//  $widget->save();
+//  drupal_set_message("Widget saved.");
+//}
+
+function embed_widgets_ui_override_form(&$form, $widget) {
+  $form['embed_widgets'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Widget Settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#tree' => TRUE,
+  );
+  
+  $form['embed_widgets']['override'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Override default values.'),
+    '#default_value' => !empty($widget->wid),
+  );
+  
+  $form['embed_widgets']['prefix'] = array(
+    '#type' => 'markup',
+    '#value' => '<div id="embed-widgets-hide-wrapper">',
+  );
+
+  $form['embed_widgets']['attributes'] = embed_widget_node::widget_attributes_form($widget);
+  
+  $form['embed_widgets']['settings'] = embed_widget_node::widget_settings_form($widget->get_settings());
+  
+  $form['embed_widgets']['suffix'] = array(
+    '#type' => 'markup',
+    '#value' => '</div>',
+   );
+   
+  if (!empty($_REQUEST['has_js'])) {
+    $form['embed_widgets']['show_preview'] = array(
+      '#type' => 'submit',
+      '#value' => t('Preview Widget'),
+      '#description' => t("If the amount of boxes above isn't enough, click here to add more choices."),
+      '#weight' => 1,
+      '#submit' => array('poll_more_choices_submit'), // If no javascript action.
+      '#ahah' => array(
+        'path' => 'embed-widgets/preview',
+        'wrapper' => 'widget-preview',
+        'method' => 'replace',
+        'effect' => 'fade',
+      ),
+      '#suffix' => '<div id="widget-preview"></div>',
+    );
+  }
+  
+  $form['embed_widgets']['widget'] = array(
+    '#type' => 'value',
+    '#value' => $widget,
+  );
+  
+  $form['#pre_render'][] = 'embed_widgets_ui_override_form_prerender';
+}
+
+function embed_widgets_ui_form_alter(&$form, $form_state) {
+  if ((isset($form['type']) && isset($form['#node']) && $form['type']['#value'] .'_node_form' == $form['form_id']['#value']) && user_access('override widget default settings')) {
+    $content_types = variable_get('embed_widgets_content_types', array());
+    if (!empty($content_types[$form['type']['#value']])) {
+      $widget = embed_widgets_load('node', $form['nid']['#value']);
+      $widget->title = empty($widget->title) ? $form['#node']->title : $widget->title;
+      embed_widgets_ui_override_form($form, $widget);
+    }
+  }
+}
+
+function embed_widgets_ui_override_form_prerender($elements) {
+  drupal_add_js(drupal_get_path('module', 'embed_widgets_ui') . '/embed_widgets_ui.js', 'module');
+  return $elements;
+}
+
+function embed_widgets_ui_form_block_admin_configure_alter(&$form, $form_state) {
+  if (user_access('override widget default settings')) {
+    $module = $form['module']['#value'];
+    $delta = $form['delta']['#value'];
+  
+    $widget = embed_widgets_new('block', $module, $delta);
+    $widget->title = empty($widget->title) ? $form['block_settings']['title']['#default_value'] : $widget->title;
+    embed_widgets_ui_override_form($form, $widget);
+    
+    $form['#submit']['embed_widgets_block'] = 'embed_widgets_ui_block_edit_submit';
+    $form['submit']['#weight'] = 1;
+  }
+}
+
+function embed_widgets_ui_block_edit_submit($form, &$form_state) {
+  $widget = embed_widgets_new('block', $form_state['values']['module'], $form_state['values']['delta']);
+
+  if (!empty($form_state['values']['embed_widgets']['override'])) {
+    $widget->title = $form_state['values']['embed_widgets']['attributes']['title'];
+    $widget->status = $form_state['values']['embed_widgets']['attributes']['status'];
+    $widget->description = $form_state['values']['embed_widgets']['attributes']['description'];
+    $widget->settings = $form_state['values']['embed_widgets']['settings'];
+    $widget->save();
+  }
+  elseif (isset($widget->wid)) {
+    $widget->delete();
+  }
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function embed_widgets_ui_nodeapi(&$node, $op = 'view', $teaser, $page) {
+  switch ($op) {
+    case 'load':
+        //$node->widget = embed_widgets_load('node', $node->nid);
+      break;
+    case 'update':
+    case 'insert':
+      if ($node->embed_widgets['override']) {
+        $widget = embed_widgets_new('node', $node->nid);
+        $widget->title = $node->embed_widgets['attributes']['title'];
+        $widget->description = $node->embed_widgets['attributes']['description'];
+        $widget->status = $node->embed_widgets['attributes']['status'];
+        $widget->settings = $node->embed_widgets['settings'];
+        $widget->save();
+        $node->widget_id = $widget->wid;
+      }
+      else  {
+        $widget = embed_widgets_new('node', $node->nid);
+        if (isset($widget->wid)) {
+            $widget->delete();
+        }
+      }
+      
+      break;
+    case 'delete':
+      $widget = embed_widgets_new('node', $node->nid);
+      if (isset($widget->wid)) {
+        $widget->delete();
+      }
+      break;
+  }
+}
+
+/**
+ * Menu callback for AHAH request. Returns HTML to preview a widget.
+ */
+function embed_widgets_ui_preview() {
+  $form_build_id = $_REQUEST['form_build_id'];
+  $form_state = array('submitted' => FALSE);
+  $form = form_get_cache($form_build_id, $form_state);
+  $widget = $form['embed_widgets']['widget']['#value'];
+  unset($form);
+  
+  $widget->status = $_REQUEST['embed_widgets']['attributes']['status'];
+  $widget->title = $_REQUEST['embed_widgets']['attributes']['title'];
+  $widget->description = $_REQUEST['embed_widgets']['attributes']['description'];
+  $widget->set_variable('width', $_REQUEST['embed_widgets']['settings']['width']);
+  $widget->set_variable('height', $_REQUEST['embed_widgets']['settings']['height']);
+  
+  $widget->cache($form_build_id);
+  
+  $code = $widget->get_code(TRUE);
+  
+  $output = '<div id="widget-preview">';
+  $output .= theme('status_messages') . $code;
+  $output .= '</div>';
+  drupal_json(array('status' => TRUE, 'data' => $output));
+}
+
+/**
+ * FAPI definition for the embed widget configuration form.
+ *
+ * @ingroup forms
+ */
+function embed_widgets_ui_settings_form() {
+  global $base_url, $cookie_domain, $theme_key;
+
+  $info = embed_widgets_get_info($refresh = FALSE);
+  $widget_types = variable_get('embed_widgets_widget_types', array('node' => 'node', 'block' => 'block', 'view' => 'view'));
+  
+  $form = array();
+  
+  $form['widget_content'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Widget Content'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#description' => t('Configure which elements of your site can be embedded as widgets.'),
+  );
+  
+  foreach ($info['sources'] as $key => $source) {
+    if ($key != 'embed_widget_callback') {
+      $options[$source['name']] = $source['title'];
+    }
+  }
+  $form['widget_content']['embed_widgets_widget_types'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Widget Types'),
+    '#description' => t('Check the box next to each type of content that you would like to be able to use as a widget.'),
+    '#options' => $options,
+    '#default_value' => $widget_types,
+  );
+  $form['widget_content']['embed_widgets_share_text'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Share link text'),
+    '#description' => t('This text will be used as the text for all "Share this widget" links.'),
+    '#default_value' => variable_get('embed_widgets_share_text', t("Share this widget!")),
+  );
+  
+  $form['widget_behavior'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Widget Behavior'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#description' => t('Configure how users interact with your widgets.'),
+  );
+  $options = array(t('Open only links to the listed pages in a new window.'), t('Open every link in a new window except links to the listed pages.'));
+  $description = t("Enter one page per line as Drupal paths. The '*' character is a wildcard. Example paths are %blog for the blog page and %blog-wildcard for every personal blog. %front is the front page.", array('%blog' => 'blog', '%blog-wildcard' => 'blog/*', '%front' => '<front>'));
+  
+  $form['widget_behavior']['embed_widgets_link_behavior'] = array(
+    '#type' => 'radios',
+    '#title' => t('Widget link behavior'),
+    '#options' => $options,
+    '#default_value' => variable_get('embed_widgets_link_behavior', 0),
+  );
+  $form['widget_behavior']['embed_widgets_link_pages'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Pages'),
+    '#default_value' => variable_get('embed_widgets_link_pages', "node/*\n"),
+    '#description' => $description,
+  );
+  
+  foreach ($info['sources'] as $key => $source) {
+    if (!empty($widget_types[$source['name']]) && method_exists($key, admin_settings_form)) {
+      $form = $form + call_user_func($key . '::admin_settings_form');
+    }
+  }
+  $form = system_settings_form($form);
+  
+  $form['#submit'][] = 'embed_widgets_ui_settings_form_submit';
+  return $form;
+}
+
+function embed_widgets_ui_settings_form_submit($form, &$form_state) {
+  embed_widgets_get_info(TRUE);
+}
+
+/**
+ * FAPI definition for the embed widget platforms configuration form.
+ *
+ * @ingroup forms
+ */
+function embed_widgets_ui_platform_settings_form() {
+  $info = embed_widgets_get_info($refresh = FALSE);
+    
+  $form = array();
+
+  foreach ($info['platform'] as $key => $platform) {
+      $options[$key] = $platform['title'];
+  }
+  $form['platforms']['embed_widgets_platforms'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Widget Platforms'),
+    '#description' => t('Check the box next to each platform on which you would like users to be able to embed your widgets.'),
+    '#options' => $options,
+    '#default_value' => variable_get('embed_widgets_platforms', array_combine(array_keys($options), array_keys($options))),
+  );
+  
+  foreach ($info['platform'] as $key => $source) {
+    $form = $form + call_user_func($key . '::' . 'settings_form');
+  }
+  
+  $form = system_settings_form($form);
+  return $form;
+}
+
+/**
+ * FAPI definition for the embed widget configuration form.
+ *
+ * @ingroup forms
+ */
+function embed_widgets_ui_default_settings_form() {
+  $form = array('#tree' => TRUE);
+  $form['widget'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Default Widget Settings'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+    '#description' => t('This form allows you to configure default settings for newly created widget.'),
+  );
+  $form['widget']['settings'] = embed_widget::widget_settings_form();
+  
+  $form['widget_content'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Default Content'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+    '#description' => t("This allows you to configure the content will be displayed if a widget's original content is no longer available. For example, if a node is embedded in a third party site, but is later deleted."),
+  );
+  $form['widget_content']['embed_widgets_default_title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Title'),
+    '#description' => t('This is the title that will be displayed if its content is no longer available.'),
+    '#options' => $options,
+    '#default_value' => variable_get('embed_widgets_default_title', t('Content unavailable')),
+  );
+  $form['widget_content']['embed_widgets_default_content'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Content'),
+    '#description' => t('This is the content that will be displayed if its content is no longer available.'),
+    '#options' => $options,
+    '#default_value' => variable_get('embed_widgets_default_content', t('The content for this widget is no longer available.')),
+  );
+
+  $filter = variable_get('embed_widgets_default_content_filter', FILTER_FORMAT_DEFAULT);
+  $form['widget_content']['embed_widgets_default_content_filter'] = filter_form($filter);
+  
+  
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+  );
+  $form['reset'] = array(
+    '#type' => 'submit',
+    '#value' => t('Reset to defaults'),
+  );
+  return $form;
+}
+
+/**
+ * FAPI definition for the embed widget configuration form.
+ *
+ * @ingroup forms
+ */
+function embed_widgets_ui_default_settings_form_submit($form, &$form_state) {
+  $settings = array();
+  if($form_state['values']['op'] == $form_state['values']['reset']) {
+    embed_widget::default_settings($settings, true);
+    variable_del('embed_widgets_default_title');
+    variable_del('embed_widgets_default_content');
+    return;
+  }
+  foreach ($form_state['values']['widget']['settings'] as $name => $value) {
+    $settings[$name] = $value;
+  }
+  
+  variable_set('embed_widgets_default_title', $form_state['values']['widget_content']['embed_widgets_default_title']);
+  variable_set('embed_widgets_default_content', $form_state['values']['widget_content']['embed_widgets_default_content']);
+  variable_set('embed_widgets_default_content_filter', $form_state['values']['format']);
+  
+  drupal_set_message(t("Your settings have been saved."));
+  embed_widget::default_settings($settings);
+}
+

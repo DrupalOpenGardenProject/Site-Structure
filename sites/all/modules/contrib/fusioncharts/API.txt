@@ -1,0 +1,172 @@
+FusionCharts Module API
+================================================================================
+
+Description
+--------------------------------------------------------------------------------
+The API for FusionCharts is quite simple and straight forward.  There are two ways
+to create a chart, depending on your needs.  The first is to create an object which
+contains all the necessary settings for a chart and pass this as the first parameter
+to theme_fusionchart.
+
+The second way is to create a function named xxx_fusioncharts_callback and have this
+function return an object of the necessary settings to render a chart. In this case 
+the first parameter to pass to theme_fusionchart is the name of the function (minus
+the _fusioncharts_callback part)
+
+
+FusionChart theme function:
+This takes up to three parameters
+1. Name of the callback function or the object of settings.
+   eg. theme('fusionchart', 'examplefunction');
+2. Optional.  A string used as the ID for the chart (useful if you want to access the chart with Javascript)
+   eg. theme('fusionchart', 'example1', 'jsexample1');
+3. Optional. an array containing any further variables you want passed to the callback function
+   eg. theme('fusionchart', 'example1', NULL, array('parameter1', 'parameter2'));
+
+The chart settings object:
+The chart settings object contains the following attributes:
+1. $object->data        An array of data to be charted (see below)
+2. $object->query       The SQL query to get the data from
+3. $object->chart_type  The type of graph (see below)
+4. $object->settings    An array of settings (see below)
+5. $object->attributes  An array of attributes (see below)
+6. $object->width       Width of the chart
+7. $object->height      Height of the chart
+
+Note only $object->data or $object->query need be supplied.  If both are supplied, the query will be used
+
+Types of graph
+--------------------------------------------------------------------------------
+This is the list of charts available in the FusionCharts free package.
+Note: Not all of these are integrated yet.
+      
+Single Series Charts
+--------------------
+  Column 3D
+  Column 2D
+  Line 2D
+  Area 2D
+  Bar 2D
+  Pie 2D
+  Pie 3D
+  Doughnut 2D
+
+Multi-series Charts
+-------------------
+  Multi-series Column 2D
+  Multi-series Column 3D
+  Multi-series Line 2D
+  Multi-series Bar 2D
+  Multi-series Area 2D
+
+Stacked Charts
+--------------
+  Stacked Column 3D
+  Stacked Column 2D
+  Stacked Bar 2D
+  Stacked Area 2D
+
+Combination Charts
+------------------
+  Multi-series Column 2D + Line - Dual Y Axis
+  Multi-series Column 3D + Line - Dual Y Axis
+
+Other Charts
+----------------
+  Candlestick Chart (currently not implemented)
+  Funnel Chart 
+  Gantt Chart (currently not implemnted)
+
+
+Settings
+--------------------------------------------------------------------------------
+There are a large number of graph settings that can be set, and they vary depending
+on the type of graph.  Check out the FusionCharts documentation for a complete list
+http://www.fusioncharts.com/free/docs/?gMenuItemId=19
+
+If you do not supply any values, sensible ones will be chosen by default.
+
+
+Attributes
+--------------------------------------------------------------------------------
+A list of extra settings as listed below:
+'callback'       The name of a fusionchart callback to be called when a bar on a graph is clicked.
+                 The data in the graph will be updated with the data provided by callback function.
+'color'          An array of hex colors WITHOUT a # infront
+'trendline'      An associative array specifying properties of a trendline/s (all properties are optional)
+                 'startvalue'   The Y value of the line (starting point)
+                 'endvalue'     The Y value of the line (end point)
+                 'displayvalue' Text to display beside the line
+                 'color'        Color of the line
+                 'thickness'    Thickness of the line
+                 'istrendzone'  Whenther the startvalue and endvalues define a line (0) or an area (1)
+                 'showontop'    Display the line on top of the bars (1) or behind the bars (0)
+                 'alpha'        Transparency of the trend line (0-100)
+'hoverText'      associative array specifying the hover text for each bar.
+                 eg. 'my series name' => 'my hover text'
+'alpha'          associative array specifying the alpha for each bar.
+                 eg. 'my series name' => 'my alpha value'
+'showName'       associative array specifying the show name for each bar.
+                 eg. 'my series name' => 'my text'
+'link'           associative array specifying the URL to link each bar to.
+                 it is possible to specify a link for a whole category, and still have separate links by series
+                 in another category
+                 eg.
+                 $info->attributes['link']['2007']['Jan'] = 'http://example.com';
+                 $info->attributes['link']['2007']['Feb'] = 'http://drupal.org';
+                 $info->attributes['link']['2007']['Mar'] = 'http://yahoo.com';
+                 $info->attributes['link']['2007']['Apr'] = 'http://google.com';
+                 $info->attributes['link']['2008'] = 'http://bible.org';
+
+Queries
+--------------------------------------------------------------------------------
+When using a SQL query to provide data, the fields that are returned must have specific names:
+In the case of Single Series Charts and Funnel Charts: "name" and "value"
+In the case of Multi-series Charts and Stacked Charts: "category", "series", and "value"
+In the case of Combination Charts: "category", "series", "axis" ("P" or "S"), and "value"
+
+Upgrade
+--------------------------------------------------------------------------------
+The API and the inner working of this module have changed considerably in the Drupal 6 version
+The concepts and data structures are the same.
+
+Example 1: Data provided by a SQL query by passing the settings object by a callback
+--------------------------------------------------------------------------------
+function fusioncharts_example1() {
+  return theme('fusionchart', 'example1');
+}
+
+function example1_fusionchart_callback($args = NULL) {
+  $info->query = "SELECT t.name AS name, COUNT(*) as value FROM {term_data} t JOIN {term_node} tn ON t.tid = tn.tid WHERE t.vid=2 GROUP BY t.tid";
+  $info->chart_type = 'Column 3D';
+  $info->settings = array('Caption' => 'Sample chart using the API and a query to generate the data');
+  $info->attributes = array();
+  $info->width = 500;
+  $info->height = 300;
+	
+  return $info;
+}
+
+Example 2: Data provided by a multi-dimensional array by passing the settings object directly
+--------------------------------------------------------------------------------
+function fusioncharts_example2() {
+  $info->data = array(
+                  array('Cat', 1),
+                  array('Dog', 2),
+                  array('Pig', 3),
+     		      array('Mouse', 4),
+	          );
+  $info->chart_type = 'Column 3D';
+  $info->settings = array('Caption' => 'Sample chart using the API and sample data');
+  $info->attributes = array('callback' => 'example2',
+                      'color' => array('121212', 'ff0000'), //no # in front of color
+                      'trendline' => array(
+                                      'startvalue' => 5,
+                                      'displayvalue' => 'Test',
+                                      'color' => '0000ff'
+                                     )
+                      ); 
+  $info->width = 500;
+  $info->height = 300;
+  return theme('fusionchart', $info);
+}

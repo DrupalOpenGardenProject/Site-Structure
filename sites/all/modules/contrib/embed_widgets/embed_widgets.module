@@ -1,0 +1,863 @@
+<?php
+// $Id: embed_widgets.module,v 1.38.2.32 2009/09/09 03:08:01 jtsnow Exp $
+
+/**
+ * @file embed_widgets.module
+ * Enables the distribution of widgets that can be embedded in other (including non-Drupal) sites.
+ *
+ * Provides hooks for modules to create new widget types.
+ * Also provides an API for module developers to create widgets.
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+function embed_widgets_menu() {
+  $items = array();
+  
+  $items['embed-widgets/%embed_widgets/view'] = array(
+    'description' => 'Preview the widget.',
+    'page callback' => 'embed_widgets_view',
+    'page arguments' => array(1),
+    'access callback' => 'user_access',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['embed-widgets/%embed_widgets/embed'] = array(
+    'description' => 'The embedded file.',
+    'page callback' => 'embed_widgets_embed_file',
+    'page arguments' => array(1),
+    'access callback' => 'user_access',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['embed-widgets/%embed_widgets/content'] = array(
+    'description' => 'The embedded widget content.',
+    'page callback' => 'embed_widgets_render',
+    'page arguments' => array(1),
+    'access callback' => 'user_access',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['embed-widgets/%embed_widgets/platform'] = array(
+    'description' => 'A platform-specific file.',
+    'page callback' => 'embed_widgets_platform_file',
+    'page arguments' => array(1),
+    'access callback' => 'user_access',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['embed-widgets/%embed_widgets/share'] = array(
+    'title' => 'Share this widget!',
+    'description' => 'Share this widget across in various formats.',
+    'page callback' => 'embed_widgets_share',
+    'page arguments' => array(1),
+    'access callback' => 'user_access',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  
+  return $items;
+}
+
+/**
+ * Implementation of hook_boot().
+ */
+function embed_widgets_boot() {
+  global $widgets_mode;
+  $widgets_mode = isset($_REQUEST['widgets_mode']) ? $_REQUEST['widgets_mode'] : NULL;
+
+  spl_autoload_register('embed_widgets_autoload');
+}
+
+/**
+ * Implementation of hook_init().
+ */
+function embed_widgets_init() {
+  global $widgets_mode;
+
+  if ($widgets_mode) {
+    module_invoke('admin_menu', 'suppress');
+    $widget = embed_widgets_load($widgets_mode);
+    $widget->add_css();
+  }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function embed_widgets_theme() {
+  $ret = array(
+    'widget' => array(
+      'template' => 'widget',
+      'arguments' => array('content' => NULL, 'show_blocks' => TRUE, 'show_messages' => TRUE),
+      'path' => 'sites/all/modules/embed_widgets'
+    ),
+  );
+  
+  $themes = embed_widgets_component_invoke_all(NULL, 'theme');
+  foreach ($themes as $name => $theme_array) {
+    if (isset($theme_array)) {
+      $ret = array_merge($ret, $theme_array);
+    }
+  }
+
+  return $ret;
+}
+
+/**
+ * Implementation of hook_theme_registry_alter().
+ */
+function embed_widgets_theme_registry_alter(&$theme_registry) {
+  $path = drupal_get_path('module', 'embed_widgets');
+  if (!in_array($path, $theme_registry['page']['theme paths'])) {
+    array_unshift($theme_registry['page']['theme paths'], $path);
+  }
+}
+
+/**
+ * Class autoload function.
+ *
+ * @param $class_name
+ *   The name of the class to load.
+ */
+function embed_widgets_autoload($class_name) {
+  static $files = array();
+
+  if (!class_exists($class_name, FALSE)) {
+    if (!count($files)) {
+      $files = drupal_system_listing(".inc", drupal_get_path('module', 'embed_widgets') ."/includes", 'name', 0);
+    }
+    if (isset($files[$class_name])) {
+      require './' . $files[$class_name]->filename;
+    }
+  }
+}
+
+/**
+ * Return an array of installed .inc files and/or loads them upon request.
+ * This routine is modeled after drupal_system_listing() (and also depends on it).
+ * It's major difference, however, is that it loads .inc files by default.
+ *
+ * @param $component
+ *   Optional; name of the passed folder to look in.
+ * @param $load
+ *   Defaults to TRUE; whether to include matching files into memory.
+ * @return
+ *   An array of file objects optionally matching $provider.
+ */
+function embed_widgets_system_list($component = './', $class = NULL, $load = TRUE) {
+  if ($component == 'format') {
+    $files = drupal_system_listing("$class\.inc", drupal_get_path('module', 'embed_widgets') ."/includes/$component/$class", 'name', 0);
+  }
+  else {
+    $files = drupal_system_listing("$class\.inc", drupal_get_path('module', 'embed_widgets') ."/includes/$component", 'name', 0);
+  }
+
+  ksort($files);
+
+  if ($load) {
+    foreach ($files as $file) {
+      include_once('./'. $file->filename);
+    }
+  }
+  return $files;
+}
+
+/**
+ * Determine whether an include implements a hook, cf. module_hook.
+ *
+ * @param $provider
+ *   The name of the provider file (without the .inc extension), such as 'youtube' or 'google'.
+ * @param $hook
+ *   The name of the hook (e.g. "thumbnail", "settings", etc.).
+ * @return
+ *   TRUE if the provider is loaded and the hook is implemented.
+ */
+function embed_widgets_include_hook($class, $hook) {
+  return function_exists('embed_widgets_'. $class .'_'. $hook);
+}
+
+/**
+ * Invoke hook in a particular include.
+ *
+ * @param $component
+ *  The type of the class being invoked (e.g. "format", "platform", etc.)
+ * @param $class
+ *   The name of the class that contains the hook.
+ * @param $hook
+ *   The name of the hook.
+ * @param ...
+ *   Arguments to pass to the hook implementation.
+ * @return
+ *   The return value of the hook implementation.
+ */
+function embed_widgets_component_invoke() {
+  $args     = func_get_args();
+  $component = array_shift($args);
+  $class = array_shift($args);
+  $hook     = array_shift($args);
+  $function = $class .'::'. $hook;
+  embed_widgets_system_list($component, $class);
+  return method_exists($class, $hook) ? call_user_func_array($function, $args) : NULL;
+}
+
+/**
+ * Invoke hook in all classes of a common type.
+ *
+ * @param $component
+ *  The type of the class being invoked (e.g. "format", "platform", etc.)
+ * @param $class
+ *   The name of the class that contains the hook.
+ * @param $hook
+ *   The name of the hook.
+ * @param ...
+ *   Arguments to pass to the hook implementation.
+ * @return
+ *   The return value of the hook implementation.
+ */
+function embed_widgets_component_invoke_all() {
+  $args     = func_get_args();
+  $component = array_shift($args);
+  $hook     = array_shift($args);
+  $files = embed_widgets_system_list($component);
+  $ret = array();
+  foreach ($files as $name => $object) {
+    $function = $name .'::'. $hook;
+    if (method_exists($name, $hook)) {
+      $data = call_user_func_array($function, $args);
+      if (!empty($data)) {
+        $ret[$name] = $data;
+      }
+    }
+  }
+  return $ret;
+}
+
+/**
+ * Gets information about each class.
+ *
+ * @param $refresh
+ *  If true, the cache will be rebuilt.
+ * @return
+ *   An associative array of information provided by the "info" hook.
+ */
+function embed_widgets_get_info($refresh = NULL) {
+  global $cookie_domain, $base_path;
+  // This is needed for multi-site installs that share a cache table.
+  $id = $cookie_domain . '_' . $base_path;
+
+  static $info = array();
+
+  if (empty($info) || isset($refresh)  || !is_array($info)) {
+    $cache = cache_get('embed_widgets_info_'. $id);
+    $info = $cache->data;
+  }
+  if (empty($info) || isset($refresh)  || !is_array($info)) {
+    $info = array();
+    $info['format'] = embed_widgets_component_invoke_all('format', 'info');
+    $info['platform'] = embed_widgets_component_invoke_all('platform', 'info');
+    $info['sources'] = embed_widgets_component_invoke_all('widgets', 'info');
+    $info['hashes'] = array();
+
+    foreach ($info['sources'] as $key => $source) {
+      foreach ($info['platform'] as $platform_key => $platform) {
+        foreach ($platform['formats'] as $format_key) {
+          $hash = embed_widget::hash($source['name'] . $format_key . $platform_key);
+          $info['hashes'][$hash]['type'] = $source['name'];
+          $info['hashes'][$hash]['format'] = $format_key;
+          $info['hashes'][$hash]['platform'] = $platform_key;
+        }
+      }
+    }
+    $info['module_widgets'] = embed_widgets_get_widgets();
+    cache_set('embed_widgets_info_'. $id, $info, 'cache', CACHE_TEMPORARY);
+  }
+  return $info;
+}
+
+/**
+* Return widgets declared programmatically by modules.
+*/
+function embed_widgets_get_widgets() {
+  $module_widgets = array();
+  
+  $modules = module_implements('embed_widgets');
+  foreach ($modules as $module) {
+    $widgets = call_user_func($module .'_embed_widgets');
+    if (!empty($widgets)) {
+      $module_widgets[$module] = $widgets;
+    }
+  }
+  
+  return $module_widgets;
+}
+
+/**
+* Return information about a certain widget declared by a specified module.
+*/
+function embed_widgets_module_widget($module, $delta) {
+  $info = embed_widgets_get_info();
+  return $info['module_widgets'][$module][$delta];
+}
+
+function embed_widgets_embed_widgets() {
+  $widgets = array(
+    'test-widget' => array(
+      'callback' => 'embed_widget_callback',
+      'access_callback' => 'embed_widget_access_callback',
+      'title' => t('My Widget'),
+    ),
+  );
+  return $widgets;
+}
+
+function embed_widget_callback() {
+  return "My widget callback content";
+}
+
+function embed_widget_access_callback() {
+  return TRUE;
+}
+
+/**
+ * Creates a new widget object.
+ *
+ * @param $type
+ *  The type of source associated with this widget.
+ * @param $options
+ *  An array of options passed to the source constructor.
+ * @return
+ *   A widget object.
+ */
+function embed_widgets_new($type = NULL, $id = NULL, $delta = NULL, $platform = 'html', $format = 'iframe') {
+  $class = 'embed_widget_' . $type;
+  if (class_exists($class)) {
+    $embed_widget = new $class($type, $id, $delta, $platform, $format);
+  }
+  else {
+    $embed_widget = new embed_widget($type, $id, $delta, $platform, $format);
+  }
+  return $embed_widget;
+}
+
+/**
+ * Loads a widget placement from the database.
+ *
+ * @param $wid
+ *  Either the widget ID as found in the database or an encrypted ID.
+ * @param $iid
+ *  A widget instance ID.
+ * @return
+ *   A widget object.
+ */
+function embed_widgets_load($type, $id = NULL, $delta = NULL, $platform = 'html', $format = 'iframe') {
+  if (isset($id)) {
+    $class = 'embed_widget_' . $type;
+  }
+  elseif (is_string($type)) {
+    $decoded = embed_widget::decode($type);
+    if (!empty($decoded)) {
+      $type = $decoded['type'];
+      $id = $decoded['id'];
+      $delta = $decoded['delta'];
+      $platform = $decoded['platform'];
+      $format = $decoded['format'];
+      $class = 'embed_widget_' . $type;
+      $cache_id = $decoded['cache_id'];
+    }
+  }
+  if (class_exists($class)) {
+    $embed_widget = new $class($type, $id, $delta, $platform, $format, $cache_id);
+  }
+  else {
+    $embed_widget = new embed_widget($type, $id, $delta, $platform, $format, $cache_id);
+  }
+  return $embed_widget;
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function embed_widgets_form_alter(&$form, $form_state, $form_id) {
+  global $widgets_mode;
+  if ($widgets_mode) {
+    $form['#submit'][] = 'embed_widgets_form_override_submit';
+    //$form['#validate'][] = 'embed_widgets_form_override_submit';
+    
+    $buttons = embed_widgets_array_search_recursive('submit', $form);
+    foreach($buttons as $key => $value) {
+      if (is_array($value)) {
+        $form[$key] = embed_widgets_array_insert($form[$key], $buttons[$key]);
+      }
+    }
+    /*$buttons = embed_widgets_array_search_recursive('validate', $form);
+    foreach($buttons as $key => $value) {
+      if (is_array($value)) {
+        $form[$key] = embed_widgets_array_insert($form[$key], $buttons[$key]);
+      }
+    }*/
+    
+    $form['widgets_mode'] = array(
+      '#type' => 'hidden',
+      '#value' => $widgets_mode,
+    );
+  }
+}
+
+/**
+ * Combine two arrays recursively.
+ *
+ * @param $arr
+ *   An array to be added to. Duplicates are replaced by the values in the second array.
+ * @param $ins
+ *   An array that will be inserted into the first array.
+ * @return
+ *   The combined array.
+ */
+function embed_widgets_array_insert($arr, $ins) {
+  // Loop through all Elements in $ins:
+  if (is_array($arr) && is_array($ins)) foreach ($ins as $k => $v) {
+    // Key exists in $arr and both Elements are Arrays: Merge recursively.
+    if (isset($arr[$k]) && is_array($v) && is_array($arr[$k])) $arr[$k] = embed_widgets_array_insert($arr[$k], $v);
+    // Otherwise replace Element in $arr with Element in $ins:
+    else $arr[$k] = $v;
+  }
+  // Return merged Arrays:
+  return ($arr);
+}
+
+/**
+ * Implementation of hook_preproccess_page().
+ */
+function embed_widgets_preprocess_page(&$variables) {
+  global $widgets_mode;
+  global $theme_key;
+  
+  // Add template suggestions if in widgets mode.
+  if (isset($widgets_mode)) {
+    $variables['body_classes'] = str_replace(" sidebar-left", "", $variables['body_classes']);
+    $variables['body_classes'] = str_replace(" sidebar-right", "", $variables['body_classes']);
+    $variables['body_classes'] = str_replace(" sidebar-left", "", $variables['body_classes']);
+    $variables['body_classes'] .= ' embed-widget';
+
+    $widget = embed_widgets_load($widgets_mode);
+    
+    foreach ($variables['template_files'] as $template) {
+      if (substr_compare($template, "page", 0, 5)) {
+        $template = substr($template, 4);
+      }
+      $suggestions[] = 'widget-' . $widget->format . $template;
+    }
+    $variables['width'] = $widget->get_variable('width');
+    $variables['height'] = $widget->get_variable('height');
+    
+    $variables['template_files'][] = 'widget-' . $widget->format;
+    
+    if (!empty($suggestions)) {
+      foreach ($suggestions as $template) {
+        $variables['template_files'][] = $template;
+      }
+    }
+    embed_widgets_alter_links($variables['content']);
+    if (!empty($variables['tabs'])) {
+      embed_widgets_alter_links($variables['tabs']);
+    }
+    $regions = system_region_list($theme_key);
+    
+    foreach ($regions as $region => $name) {
+      if (!empty($variables[$region])) {
+        embed_widgets_alter_links($variables[$region]);
+      }
+    }
+    
+    $link = $widget->get_share_url();
+    $variables['share_widget'] = l(variable_get('embed_widgets_share_text', t("Share this widget!")), $link);
+  }
+}
+
+/**
+ * Implementation of hook_preproccess_node().
+ */
+function embed_widgets_preprocess_node(&$variables) {
+  global $widgets_mode;
+  
+  if (isset($widgets_mode)) {
+    foreach ($variables['template_files'] as $template) {
+      $variables['template_files'][] = 'widget-' . $template;
+    }
+  }
+}
+
+/**
+ * Implementation of hook_preproccess_block().
+ */
+function embed_widgets_preprocess_block(&$variables) {
+  global $widgets_mode;
+  
+  if (!isset($widgets_mode) && $variables['block']->module != 'embed_widgets') {
+    $widget = embed_widgets_new('block', $variables['block']->module, $variables['block']->delta);
+    if (!empty($widget->status)) {
+      $variables['share_widget_link'] = l(variable_get('embed_widgets_share_text', t("Share this widget!")), $widget->get_share_url());
+      
+      if (variable_get('embed_widgets_block_append_link', FALSE)) {
+        $variables['block']->content .= '<div class="widgets-share-link">' . $variables['share_widget_link'] . '</div>';
+      }
+    }
+  }
+}
+
+/**
+ * Sets the target attribute of all A tags in an HTML string to "_blank"
+ * depending on the embed widgets configuration.
+ *
+ * @param &$string
+ *   A string containing HTML.
+ * @return
+ *   A string containing the original HTML, with links modified.
+ */
+function embed_widgets_alter_links(&$string) {
+  global $cookie_domain;
+  $domain = substr($cookie_domain, 1);
+  $domain = preg_quote($domain, '/');
+  $behavior = variable_get('embed_widgets_link_behavior', 0);
+  $pages = variable_get('embed_widgets_link_pages', "node/*\n");
+  
+  $dom = new domDocument;
+  $dom->loadHTML($string);
+  
+  // Get all links
+  $a_tags = $dom->getElementsByTagName('a');
+  
+  // Loop through links
+  foreach ($a_tags as $tag) {
+    $href = trim($tag->getAttribute('href'), ' /');
+    $target = trim($tag->getAttribute('target'));
+    
+    if ($target != "_blank") {
+      if (preg_match("/^https?:\/\/(?!({$domain}|(\w+\.)?{$domain}))/i", $href)) {
+        // External links
+        $tag->setAttribute('target', "_blank");
+      }
+      else {
+        // Internal links
+        $path = trim($href, '/');
+        $match = (drupal_match_path(drupal_get_path_alias($href), $pages) || drupal_match_path(drupal_get_normal_path($href), $pages));
+        if ($behavior xor $match) {
+          $tag->setAttribute('target', "_blank");
+        }
+        else {
+          global $widgets_mode;
+          $separator = strpos($href, '?') === FALSE ? '?' : '&';
+          
+          if (strpos($href, 'widgets_mode=') === FALSE) {
+            $fragment_pos = strpos($href, '#');
+            if ($fragment_pos === FALSE) {
+              $tag->setAttribute('href', '/' . $href . $separator . 'widgets_mode=' . $widgets_mode);
+            }
+            else {
+              $fragment = substr($href, $fragment_pos);
+              $href = substr($href, 0, $fragment_pos);
+              $tag->setAttribute('href', '/' . $href . $separator . 'widgets_mode=' . $widgets_mode . $fragment);
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  $string = preg_replace('/^<!DOCTYPE.+?>/', '', str_replace( array('<html>', '</html>', '<body>', '</body>'), array('', '', '', ''), $dom->saveHTML()));
+  return $string;
+}
+
+/**
+ * Apply a user function recursively to every member of an array. Improved over
+ * normal PHP version.
+ *
+ * @param $input
+ *   The input array.
+ * @param $funcname
+ *   The name of the function to be applied.
+ * @return
+ *   Returns TRUE on success or FALSE on failure.
+ */
+function embed_widgets_array_walk_recursive(&$input, $funcname) {
+  static $depth = -1;
+   if (!is_callable($funcname)) {
+       return false;
+   }
+
+   if (!is_array($input)) {
+       return false;
+   }
+
+   $depth++;
+
+   foreach (array_keys($input) AS $keyIdx => $key) {
+        $saved_value = $input[$key];
+        $saved_key = $key;
+        call_user_func_array($funcname, array(&$input[$saved_key], &$key));
+
+        if ($input[$saved_key] !== $saved_value || $saved_key !== $key) {
+            $saved_value = $input[$saved_key];
+
+            unset($input[$saved_key]);
+            $input[$key] = $saved_value;
+        }
+       if (is_array($input[$key])) {
+            if (!embed_widgets_array_walk_recursive($input[$key], $funcname)) return false;
+            $depth--;
+       }
+   }
+   return true;
+}
+
+/**
+ * FAPI submit handler to force pages to stay in 'widget mode' after form submission.
+ */
+function embed_widgets_form_override_submit($form, &$form_state) {
+  global $widgets_mode;
+  $options = array();
+  if ($form['#id'] == 'node-form' && !isset($form_state['redirect'])) {
+    $form_state['redirect'] = 'node/'. $node->nid;
+  }
+  if (isset($form_state['redirect'])) {
+    if (is_array($form_state['redirect'])) {
+      $form_state['redirect'][1]['widgets_mode'] = $widgets_mode;
+      $path = $form_state['redirect'][0];
+      if (isset($form_state['redirect'][1]) && is_array($form_state['redirect'][1])) {
+        $options = $form_state['redirect'][1];
+      }
+    }
+    else {
+      $path = $form_state['redirect'];
+      $form_state['redirect'] = array();
+      $form_state['redirect'][0] = $path;
+      $form_state['redirect'][1]['widgets_mode'] = $widgets_mode;
+    }
+  }
+  elseif (isset($_REQUEST['destination'])) {
+    $_REQUEST['destination'] .= '?widgets_mode=' . $widgets_mode;
+  }
+  else {
+    $item = menu_get_item();
+    $path = $item['href'];
+    $_REQUEST['destination'] = $item['href'] . '?widgets_mode=' . $widgets_mode;
+  }
+}
+
+/**
+ * Recursively searches a Forms API array for certain elements and add submit handler to them.
+ *
+ * @param $needle
+ *   The searched value.
+ * @param $haystack
+ *   The array.
+ * @return
+ *   An a array of elements that were found and modified.
+ */
+function embed_widgets_array_search_recursive($needle, $haystack){
+  $path=array();
+  foreach($haystack as $id => $val) {
+    if($id == '#type' && $val === $needle) {
+     $path[$id]=$val;
+     $path['#' . $needle]['widgets'] = 'embed_widgets_form_override_submit';
+    }
+    else if(is_array($val)){
+     $found=embed_widgets_array_search_recursive($needle, $val);
+      if(count($found)>0){
+          $path[$id]=$found;
+      }
+    }
+  }
+  return $path;
+}
+
+/**
+ * Menu callback. Builds widget content to be displayed as HTML.
+ *
+ * @param $widget
+ *   A widget object.
+ * @return
+ *   The HTML content to be displayed.
+ */
+function embed_widgets_render($widget) {
+  global $widgets_mode;
+  module_invoke('admin_menu', 'suppress');
+  
+  $widgets_mode = $widget->encode();
+  drupal_add_js(array(widgetID => $widgets_mode), 'setting');
+  $base = drupal_get_path('module', 'embed_widgets');
+  
+  $widget->add_css();
+
+  $content = $widget->build();
+  drupal_set_title($widget->title);
+  
+  return $content['content'];
+}
+
+/**
+ * Menu callback. Outputs a widget's embed file.
+ *
+ * @param $widget
+ *   A widget object.
+ */
+function embed_widgets_embed_file(embed_widget $widget) {
+  if (isset($widget->format)) {
+    $file = call_user_func($widget->format . '::embed_file', $widget);
+    print $file;
+  }
+}
+
+/**
+ * Menu callback. Returns the contents of a platform-specific file.
+ *
+ * @param $widget
+ *   A widget object.
+ * @return
+ *   The file contents.
+ */
+function embed_widgets_platform_file(embed_widget $widget) {
+  if (isset($widget->platform)) {
+    $file = $widget->get_platform_file();
+    print $file;
+  }
+}
+
+/**
+ * Returns the HTML for displaying widget embed code and share links.
+ *
+ * @param $widget
+ *   A widget object.
+ * @return
+ *   The HTML content to be displayed.
+ */
+function embed_widgets_share(embed_widget $widget) {
+  $info = embed_widgets_get_info();
+  $content = '';
+  $links = array();
+  $platforms = variable_get('embed_widgets_platforms', NULL);
+  if (empty($platforms)) {
+    $platforms = array_keys($info['platform']);
+  }
+
+  foreach($info['platform'] as $id => $platform) {
+    if (!empty($platforms[$id])) {
+      $widget->platform = $id;
+
+      if ($platform['share_method'] == 'code') {
+        $code = $widget->get_code();
+
+        $form['widget_code'] = array(
+          '#type' => 'textfield',
+          '#input' => TRUE,
+          '#title' => t('Copy') . ' &amp; ' . t('Paste'),
+          '#size' => 25,
+          '#value' => $code,
+          '#attributes' => array('onClick' => "javascript:this.focus(); this.select()"),
+          '#description' => $platform['description'],
+        );
+        $content .= drupal_render($form['widget_code']);
+      }
+      elseif ($platform['share_method'] == 'link') {
+        $links[] = $widget->get_link();
+      }
+    }
+  }
+
+  if (!empty($links)) {
+    $content .= theme('item_list', $links, NULL, 'ul', array('class' => 'widget-links'));
+  }
+  
+  return $content;
+}
+
+function embed_widgets_view($widget) {
+  $code = $widget->get_code();
+  
+  $form['widget_code'] = array(
+    '#type' => 'textarea',
+    '#input' => TRUE,
+    '#title' => t('Widget code for %title widget', array('%title' => $widget->title)),
+    '#value' => $code,
+    '#attributes' => array('onClick' => "javascript:this.focus(); this.select()"),
+    '#description' => t('To embed this widget in your site, copy and paste this code on a page into your website.'),
+  );
+  $content .= drupal_render($form['widget_code']);
+  $content .= $code;
+  return $content;
+}
+
+/**
+ * Implementation of hook_block().
+ */
+function embed_widgets_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      // If $op is "list", we just need to return a list of block descriptions.
+      // This is used to provide a list of possible blocks to the administrator,
+      // end users will not see these descriptions.
+      $blocks[0] = array(
+        'info'       => t('Widgets embed code'),
+      );
+      return $blocks;
+    case 'configure':
+      $form = array();
+      if ($delta == 0) {
+//        $form['block_example_string'] = array(
+//          '#type' => 'textfield',
+//          '#title' => t('Block contents'),
+//          '#size' => 60,
+//          '#description' => t('This string will appear in the example block.'),
+//          '#default_value' => variable_get('block_example_string',  t('Some example content.')),
+//        );
+      }
+      return $form;
+    case 'save':
+      if ($delta == 0) {
+        // save the string to the database.
+        //variable_set('block_example_string', $edit['block_example_string']);
+      }
+      return;
+    case 'view': default:
+      switch ($delta) {
+        case 0:
+          $block['subject'] = t('Embed this content');
+          $block['content'] = embed_widgets_block_contents();
+          break;
+      }
+      return $block;
+  }
+}
+
+/**
+ * Returns the contents of the widget embed code block.
+ */
+function embed_widgets_block_contents() {
+  $item = menu_get_item();
+  
+  $enabled_types = variable_get('embed_widgets_widget_types', array_fill_keys(array('node', 'block', 'view'), 1));
+  $info = embed_widgets_get_info();
+  $info = $info['sources'];
+  
+  $page = $info['embed_widget_page'];
+  unset($info['embed_widget_page']);  // TODO: This one must be last. Implement weights?
+  $info['embed_widget_page'] = $page;
+
+  foreach($info as $class => $widget_type) {
+    if (!empty($enabled_types[$widget_type['name']])) {
+      $method = $class .'::'. 'path_load';
+      $widget = call_user_func($method);
+      if (is_object($widget)) {
+        return embed_widgets_share($widget);
+      }
+      elseif ($widget !== NULL) {
+        break;
+      }
+    }
+  }
+  return NULL;
+  
+}
+

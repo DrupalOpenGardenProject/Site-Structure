@@ -1,0 +1,11 @@
+rect#leg {
+  display: none;
+}
+
+text#leg_label {
+  display: none;
+}
+
+.point_label {
+  display: none;
+}

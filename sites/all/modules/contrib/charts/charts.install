@@ -1,0 +1,47 @@
+<?php
+// $Id: charts.install,v 1.4.2.1 2009/07/14 02:40:43 brmassa Exp $
+/**
+ * @author Bruno Massa http://drupal.org/user/67164
+ * @file
+ * Install and unistall functions for this module
+ */
+
+DEFINE(CHARTS_MINIMUM_PHP, '5.2.0');
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function charts_uninstall() {
+  variable_del('charts_settings');
+}
+
+/**
+ * Implementation of hook_requirements().
+ */
+function charts_requirements($phase) {
+  // Test PHP version
+  if (version_compare(phpversion(), CHARTS_MINIMUM_PHP) < 0) {
+    $requirements['charts_php']['title']        = t('PHP Charts');
+    $requirements['charts_php']['value']        = ($phase == 'runtime') ? l(phpversion(), 'admin/logs/status/php') : phpversion();
+    $requirements['charts_php']['description']  = t('Your PHP installation is too old. Charts requires at least PHP %version.',
+      array('%version' => CHARTS_MINIMUM_PHP));
+    $requirements['charts_php']['severity']     = REQUIREMENT_ERROR;
+  }
+
+  if ($phase == 'runtime' and !$modules = module_invoke_all('charts_info', 'list')) {
+    $requirements['charts']['title']        = t('Charts');
+    $requirements['charts']['value']        = t('No Charts provider installed');
+    $requirements['charts']['severity']     = REQUIREMENT_ERROR;
+    $requirements['charts']['description']  = t('Charts core module only provides a a common set of functions. You must install a Charts provider module to create charts.');
+  }
+  elseif ($phase == 'runtime' and !$settings = variable_get('charts_settings', array())) {
+    $requirements['charts']['title']        = t('Charts');
+    $requirements['charts']['value']        = t('Charts module not yet configured');
+    $requirements['charts']['severity']     = REQUIREMENT_ERROR;
+    $requirements['charts']['description']  = t('Charts core module needs to get some default options in order to operate. You must go to <a href="!link">settings page</a> and configure it.', array('!link' => url('admin/settings/charts')));
+  }
+
+  if (isset($requirements)) {
+    return $requirements;
+  }
+}

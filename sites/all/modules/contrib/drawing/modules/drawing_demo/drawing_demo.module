@@ -1,0 +1,586 @@
+<?php
+// $Id: drawing_demo.module,v 1.1.2.3 2009/05/09 05:54:53 danielb Exp $
+
+/**
+ * @file
+ * The Drawing Demo module.
+ */
+
+
+###############################################################################
+######################### DRUPAL HOOK IMPLEMENTATIONS #########################
+###############################################################################
+
+/*
+ * Implementation of hook_menu().
+ *
+ * To add more demos, simply add 'Your_Demo' to the $demos array, where 
+ * Your_Demo is the computer-safe title of your demo.  The page callback will
+ * be "drawing_demo_your_demo()", the path will be "drawing_demo/your_demo",
+ * and the title of the page will be "Demo Your Demo drawing".
+ *
+ */
+function drawing_demo_menu() {
+  $items = array();
+  $items['drawing_demo'] = array(
+    'title' => 'Drawing demo',
+    'page callback' => '_drawing_demo',
+    'access arguments' => array('access content'),
+  );
+  $demos = array(
+    'GD',
+    'SVG',
+    'graph',
+    'stackbar',
+    'pie_chart',
+    'tagstack',
+  );
+  foreach ($demos as $demo) {
+    $key = strtolower($demo);
+    $display = str_replace('_', ' ', $demo);
+    $items['drawing_demo/'. $key] = array(
+      'title' => 'Demo '. $display .' drawing',
+      'page callback' => 'drawing_demo_'. $key,
+      'access arguments' => array('access content'),
+      'type' => MENU_CALLBACK,
+    );
+  }
+  return $items;
+}
+
+/*
+ * Implementation of hook_block().
+ */
+function drawing_demo_block($op = 'list', $delta = 0, $edit = array()) {
+  if ($op == 'list') {
+    $blocks = array(
+      'info' => t('Pie chart block'),
+      'weight' => 0,
+      'enabled' => 1,
+      'region' => 'left',
+    );
+    return $blocks;
+  }
+  elseif ($op == 'view') {
+    $blocks = array(
+      'subject' => t('Pie chart block'),
+      'content' => drawing_demo_pie_chart(),
+    );
+    return $blocks;
+  }
+}
+
+
+###############################################################################
+############################## INTERNAL FUNCTIONS #############################
+###############################################################################
+
+/**
+ * Callback for drawing demo menu page.
+ */
+function _drawing_demo() {
+  $list = array();
+  $menu = drawing_demo_menu();
+  unset($menu['drawing_demo']);
+  foreach ($menu as $path => $item) {
+    $list[] = l(t($item['title']), $path);
+  }
+  return theme('item_list', $list);
+}
+
+
+###############################################################################
+############################## DRUPLICON CANVAS ###############################
+###############################################################################
+
+/**
+ * Drawings in the Drawing API are called canvases, and are built in a similar 
+ * way to forms.  This canvas draws the drupal logo known as 'druplicon'.
+ */
+function drawing_demo_druplicon_canvas() {
+  $canvas = array(
+    '#type' => 'canvas',
+    '#height' => '450px',
+    '#width' => '600px',
+  );
+  $canvas['group'] = array(
+    '#type' => 'group',
+    '#transform' => array(
+      'translate' => array(0, 60),
+      'scale' => array(0.5, 0.5),
+    ),
+  );
+  $canvas['group']['path2'] = array(
+    '#type' => 'path',
+    '#explicit' => TRUE,
+    '#points' => 'M 449.25,610.5 C 461.25,610.5 474,611.25 483,617.25 C 492,
+  623.25 497.25,636.75 500.25,644.25 C 503.25,651.75 500.25,656.25 494.25,
+  659.25 C 489,662.25 488.25,660.75 483,651 C 477.75,641.25 473.25,
+  631.5 447,631.5 C 420.75,631.5 412.5,640.5 399.75,651 C 387,661.5 382.5,
+  665.25 378,659.25 C 373.5,653.25 375,647.25 383.25,639.75 C 391.5,632.25 405,
+  620.25 417.75,615 C 430.5,609.75 437.25,610.5 449.25,610.5 L 449.25,
+  610.5 z ',
+    '#fill' => '#ffffff',
+  );
+  $canvas['group']['path3'] = array(
+    '#type' => 'path',
+    '#explicit' => TRUE,
+    '#points' => 'M 324.75,696 C 339.75,708 362.25,717.75 410.25,
+  717.75 C 458.25,717.75 492,704.25 507,693 C 513.75,687.75 516.75,
+  692.25 517.5,695.25 C 518.25,698.25 519.75,702.75 514.5,708 C 510.75,
+  711.75 476.25,735.75 435.75,739.5 C 395.25,743.25 340.5,745.5 307.5,
+  715.5 C 302.25,710.25 303.75,702.75 307.5,699.75 C 311.25,696.75 314.25,
+  694.5 318.75,694.5 C 323.25,694.5 322.5,694.5 324.75,696 L 324.75,696 z ',
+    '#fill' => '#ffffff',
+  );
+
+  $canvas['group']['path6'] = array(
+    '#type' => 'path',
+    '#explicit' => TRUE,
+    '#points' => 'M 316.5,15 C 327,45.75 325.5,61.5 325.5,68.25 C 325.5,
+  75 321.75,93 309.75,102 C 304.5,105.75 303,108.75 303,109.5 C 303,
+  112.5 309.75,114.75 309.75,121.5 C 309.75,129.75 306,146.25 266.25,
+  186 C 226.5,225.75 169.5,261 125.25,282.75 C 81,304.5 60,303 54,292.5 C 48,
+  282 56.25,258.75 84,228 C 111.75,197.25 199.5,153 199.5,153 L 309,76.5 L 315,
+  47.25',
+    '#fill' => '#93c5e4',
+  );
+  $canvas['group']['path7'] = array(
+    '#type' => 'path',
+    '#explicit' => TRUE,
+    '#points' => 'M 316.5,14.25 C 309.75,63.75 294.75,78.75 274.5,
+  94.5 C 240.75,120 207.75,135.75 200.25,139.5 C 180.75,149.25 110.25,
+  188.25 73.5,244.5 C 62.25,261.75 73.5,268.5 75.75,270 C 78,271.5 103.5,
+  274.5 158.25,241.5 C 213,208.5 237,189 267.75,156.75 C 284.25,139.5 286.5,
+  129.75 286.5,125.25 C 286.5,120 282.75,117.75 276.75,116.25 C 273.75,
+  115.5 273,114 276.75,111.75 C 280.5,109.5 296.25,102 300,99 C 303.75,
+  96 321.75,84 322.5,64.5 C 323.25,45 321.75,31.5 316.5,14.25 L 316.5,
+  14.25 z ',
+    '#fill' => '#ffffff',
+  );
+
+  $canvas['group']['path8'] = array(
+    '#type' => 'path',
+    '#explicit' => TRUE,
+    '#points' => 'M 147.75,559.5 C 148.5,501 203.25,446.25 272.25,445.5 C 360,
+  444.75 420.75,532.5 465,531.75 C 502.5,531 574.5,457.5 609.75,457.5 C 647.25,
+  457.5 657.75,496.5 657.75,519.75 C 657.75,543 650.25,585 632.25,
+  611.25 C 614.25,637.5 603,647.25 582,645.75 C 555,643.5 501,559.5 466.5,
+  558 C 423,556.5 328.5,648.75 254.25,648.75 C 209.25,648.75 195.75,642 180.75,
+  632.25 C 158.25,616.5 147,592.5 147.75,559.5 L 147.75,559.5 z ',
+    '#fill' => '#ffffff',
+  );
+  $canvas['group']['path4'] = array(
+    '#type' => 'path',
+    '#explicit' => TRUE,
+    '#points' => 'M 141,639 C 198,638.25 208.5,628.5 258.75,606 C 530.25,
+  484.5 580.5,373.5 590.25,348 C 600,322.5 614.25,281.25 599.25,
+  235.5 C 596.354,226.668 594.244,219.576 592.72,213.87 C 556.641,
+  173.527 520.821,151.513 510,144.75 C 471,120 432.75,110.25 395.25,
+  85.5 C 372,70.5 339.75,32.25 312.75,0 C 307.5,51.75 292.5,73.5 273.75,
+  87.75 C 235.5,117.75 211.5,126.75 178.5,144.75 C 150.75,159.75 0,
+  249 0,442.5 C 0,504.28 16.593,560.861 45.063,609.266 L 52.5,
+  609 C 68.25,623.25 93,639.75 141,639 z ',
+    '#fill' => '#0073ba',
+  );
+  $canvas['group']['path5'] = array(
+    '#type' => 'path',
+    '#explicit' => TRUE,
+    '#points' => 'M 510,144.75 C 471,120 432.75,110.25 395.25,85.5 C 372,
+  70.5 339.75,32.25 312.75,0 C 307.5,51.75 292.5,73.5 273.75,87.75 C 235.5,
+  117.75 211.5,126.75 178.5,144.75 C 150.75,159.75 0,249 0,442.5 C 0,
+  504.28 16.593,560.861 45.063,609.266 C 105.763,712.467 220.46,778.5 343.5,
+  778.5 C 524.25,778.5 681,647.25 681,448.5 C 681,339.354 636.668,
+  263.012 592.72,213.87 C 556.641,173.527 520.82,151.513 510,
+  144.75 z M 601.164,232.547 C 650.406,294.111 675.375,366.768 675.375,
+  448.5 C 675.375,495.928 666.342,540.73 648.526,581.665 C 631.626,
+  620.496 607.29,654.898 576.193,683.919 C 514.724,741.283 432.086,
+  772.875 343.5,772.875 C 299.674,772.875 256.668,764.504 215.676,
+  747.993 C 175.413,731.776 139.129,708.555 107.833,678.974 C 41.923,
+  616.678 5.625,532.696 5.625,442.5 C 5.625,362.164 31.701,290.78 83.128,
+  230.333 C 122.417,184.153 164.783,158.559 181.175,149.699 C 189.133,
+  145.358 196.598,141.527 203.818,137.822 C 226.448,126.207 247.823,
+  115.236 277.222,92.177 C 292.899,80.263 309.599,61.392 316.711,
+  13.475 C 341.485,42.941 370.233,76.054 392.201,90.227 C 411.701,
+  103.097 431.702,112.115 451.045,120.837 C 469.343,129.087 488.264,
+  137.618 506.987,149.5 C 507.019,149.521 507.689,149.938 507.689,
+  149.938 C 562.421,184.11 591.581,220.566 601.164,232.547 z ',
+    '#fill' => '#004976',
+  );
+  $canvas['group']['path9'] = array(
+    '#type' => 'path',
+    '#explicit' => TRUE,
+    '#points' => 'M 599.25,235.5 C 614.25,281.25 600,322.5 590.25,348 C 580.5,
+  373.5 530.25,484.5 258.75,606 C 208.5,628.5 198,638.25 141,639 C 93,
+  639.75 68.25,623.25 52.5,609 L 45.063,609.266 C 105.763,712.467 220.46,
+  778.5 343.5,778.5 C 524.25,778.5 681,647.25 681,448.5 C 681,339.354 636.668,
+  263.012 592.72,213.87 C 594.244,219.576 596.354,226.668 599.25,235.5 z ',
+    '#fill' => 'none',
+  );
+  $canvas['group']['path1'] = array(
+    '#type' => 'path',
+    '#explicit' => FALSE, // this is not obligatory
+    '#fill' => '#00598e',
+    '#points' => array(
+      '1' => array(
+        '#modifier' => 'M',
+        '#cx' => '510.167',
+        '#cy' => '144.833',
+      ),
+      '2' => array(
+        '#modifier' => 'C',
+        '#cx' => '470.417',
+        '#cy' => '120.083',
+      ),
+      '3' => array(
+        '#cx' => '432.917',
+        '#cy' => '110.333',
+      ),
+      '4' => array(
+        '#cx' => '395.417',
+        '#cy' => '85.583 ',
+      ),
+      '5' => array(
+        '#modifier' => 'C',
+        '#cx' => '372.167',
+        '#cy' => '69.833',
+      ),
+      '6' => array(
+        '#cx' => '339.917',
+        '#cy' => '32.333',
+      ),
+      '7' => array(
+        '#cx' => '312.917',
+        '#cy' => '0.083',
+      ),
+      '8' => array(
+        '#modifier' => 'C',
+        '#cx' => '307.667',
+        '#cy' => '51.833',
+      ),
+      '9' => array(
+        '#cx' => '291.917',
+        '#cy' => '72.833',
+      ),
+      '10' => array(
+        '#cx' => '273.917',
+        '#cy' => '87.833',
+      ),
+      '11' => array(
+        '#modifier' => 'C',
+        '#cx' => '235.667',
+        '#cy' => '117.833',
+      ),
+      '12' => array(
+        '#cx' => '211.667',
+        '#cy' => '126.833',
+      ),
+      '13' => array(
+        '#cx' => '178.667',
+        '#cy' => '144.833',
+      ),
+      14 => array(
+        '#modifier' => 'C',
+        '#cx' => '150.917',
+        '#cy' => '159.083',
+      ),
+      15 => array(
+        '#cx' => '0.167',
+        '#cy' => '249.083',
+      ),
+      16 => array(
+        '#cx' => '0.167',
+        '#cy' => '442.583',
+      ),
+      17 => array(
+        '#modifier' => 'C',
+        '#cx' => '0.167',
+        '#cy' => '636.083',
+      ),
+      18 => array(
+        '#cx' => '162.917',
+        '#cy' => '778.583',
+      ),
+      19 => array(
+        '#cx' => '343.667',
+        '#cy' => '778.583',
+      ),
+      20 => array(
+        '#cx' => '524.417',
+        '#cy' => '778.583',
+      ),
+      21 => array(
+        '#cx' => '681.167',
+        '#cy' => '647.333',
+      ),
+      22 => array(
+        '#cx' => '681.167',
+        '#cy' => '448.583',
+      ),
+      23 => array(
+        '#modifier' => 'C',
+        '#cx' => '681.167',
+        '#cy' => '249.833',
+      ),
+      24 => array(
+        '#cx' => '534.167', 
+        '#cy' => '159.833',
+      ),
+      25 => array(
+        '#modifier' => 'z',
+        '#cx' => '510.167',
+        '#cy' => '144.833',
+      ),
+    ),
+  );
+  $canvas['text1'] = array(
+    '#type' => 'text',
+    '#value' => 'This drawing is defined by the Drawing demo module in the drawing package.',
+    '#cx' => 0,
+    '#cy' => 20,
+  );
+  $canvas['text2'] = array(
+    '#type' => 'text',
+    '#value' => 'Rendering done using the Drawing API, including fill and stroke.',
+    '#cx' => 0,
+    '#cy' => 40,
+  );
+  $canvas['text3'] = array(
+    '#type' => 'text',
+    '#value' => 'You have to be cautious with overlapping shapes, its difficult to find the correct elements order.',
+    '#cx' => 0,
+    '#cy' => 60,
+  );
+  return $canvas;
+}
+
+
+###############################################################################
+############################### GD DRAWING DEMO ###############################
+###############################################################################
+
+function drawing_demo_gd() {
+  return theme('image', drawing_get_canvas('drawing_demo_gd_canvas'));
+}
+
+function drawing_demo_gd_canvas() {
+  $canvas = array(
+    '#type' => 'canvas',
+    '#height' => '702px',
+    '#width' => '702px',
+    '#method' => 'gd',
+   // '#format' => 'gif',
+  );
+  $canvas['rectangle'] = array(
+    '#type' => 'rectangle',
+    '#fill' => 'orange',
+    '#cx' => 8,
+    '#cy' => 8,
+    '#height' => 100,
+    '#width' => 400,
+    '#stroke' => 'red',
+    '#opacity' => 0.75,
+    '#stroke-width' => 4,
+  );
+  $canvas['ellipse'] = array(
+    '#type' => 'ellipse',
+    '#fill' => 'maroon',
+    '#cx' => 222,
+    '#cy' => 222,
+    '#height' => 70,
+    '#width' => 70,
+    '#stroke' => 'blue',
+    '#stroke-width' => 2,
+    '#weight' => 100,
+  );
+  $canvas['line'] = array(
+    '#type' => 'line',
+    '#fill' => 'green',
+    '#points' => array(
+      '#cx1' => 40,
+      '#cy1' => 40,
+      '#cx2' => 600,
+      '#cy2' => 600,
+    ),
+    '#weight' => 1000,
+  );
+  return $canvas;
+}
+
+
+###############################################################################
+############################## SVG DRAWING DEMO ###############################
+###############################################################################
+
+function drawing_demo_svg() {
+  $output = drawing_get_canvas('drawing_demo_svg_canvas');
+  $output .= '<div>'.t('This SVG image was generated using the Drawing SVG toolkit.').'</div>';
+  return $output;
+}
+
+function drawing_demo_svg_canvas() {
+  // use the druplicon canvas and force using the svg method.
+  $canvas = drawing_demo_druplicon_canvas();
+  $canvas['#method'] = 'svg';
+  return $canvas;
+}
+
+
+###############################################################################
+############################# GRAPH DRAWING DEMO ##############################
+###############################################################################
+
+function drawing_demo_graph() {
+  return drawing_get_canvas('drawing_demo_graph_canvas');
+}
+
+function drawing_demo_graph_canvases() {
+  $canvases['drawing_graph_test']['callback'] = 'drawing_demo_graph_canvas';
+  return $canvases;
+}
+
+function drawing_demo_graph_canvas() {
+  $chart['points'][] = array(0, 0);
+  $chart['points'][] = array(40, 90);
+  $chart['points'][] = array(80, 90);
+  $chart['points'][] = array(120, 180);
+  $chart['points'][] = array(160, 300);
+  $chart['points'][] = array(200, 350);
+  $chart['points'][] = array(240, 300);
+  $chart['points'][] = array(280, 200);
+  $chart['points'][] = array(320, 200);
+  $chart['points'][] = array(360, 100);
+  $chart['points'][] = array(400, 110);
+  $chart['points'][] = array(440, 120);
+  $chart['points'][] = array(480, 140);
+  $chart['points'][] = array(520, 150);
+  $chart['points'][] = array(560, 170);
+  $chart['points'][] = array(600, 190);
+  $chart['points'][] = array(640, 130);
+  $chart['xlabel'] = 'xlabel';
+  $chart['ylabel'] = 'ylabel';
+  $config['type'] = 'bar';
+  $config['height'] = 400;
+  $config['width'] = 700;
+  $config['xtics_height'] = 10;
+  $config['ytics_height'] = 10;
+  $config['ytics_stepsize'] = 50;
+  $config['theme'] = array(
+    'text' => 'black',
+    'label' => 'black',
+    'fill' => '#0000ff',
+  );
+  return module_invoke('drawing_graph', 'histogram', $chart, $config);
+}
+
+
+###############################################################################
+########################### PIE CHART DRAWING DEMO ############################
+###############################################################################
+
+function drawing_demo_pie_chart() {
+  return drawing_get_canvas('drawing_demo_pie_chart_canvas');
+}
+
+function drawing_demo_pie_chart_canvas() {
+  $chart = array();
+  $chart['points'][] = array(40, 90);
+  $chart['points'][] = array(80, 90);
+  $chart['points'][] = array(120, 180);
+  $chart['points'][] = array(160, 300);
+  $config['height'] = 150;
+  $config['width'] = 150;
+  $config['labels'] = array(
+    'inside' => TRUE,
+  );
+  $config['theme'] = array(
+    'text' => 'black',
+    'label' => 'black',
+    'fill' => '#0000ff',
+    'fill_0' => '#0000ff',
+    'fill_1' => '#3333ff',
+    'fill_2' => '#6666ff',
+    'fill_3' => '#9999ff',
+    'fill_4' => '#ccccff',
+    'fill_5' => '#eeeeff',
+  );
+  return module_invoke('drawing_graph', 'piechart', $chart, $config);
+}
+
+
+###############################################################################
+########################### STACK BAR DRAWING DEMO ############################
+###############################################################################
+
+function drawing_demo_stackbar() {
+  return drawing_get_canvas('drawing_demo_stackbar_canvas');
+}
+
+function drawing_demo_stackbar_canvas() {
+  $chart = array();
+  $chart['points'][] = array('value1', 5);
+  $chart['points'][] = array('value2', 20);
+  $chart['points'][] = array('value3', 10);
+  $chart['points'][] = array('value4', 30);
+  $config['canvas_height'] = 600;
+  $config['canvas_width'] = 100;
+  $config['height'] = 600;
+  $config['width'] = 10;
+  $config['theme'] = array(
+    'text' => 'black',
+    'label' => 'black',
+    'fill' => '#0000ff',
+    'fill_0' => '#0000ff',
+    'fill_1' => '#3333ff',
+    'fill_2' => '#6666ff',
+    'fill_3' => '#9999ff',
+    'fill_4' => '#ccccff',
+    'fill_5' => '#eeeeff',
+  );
+  return module_invoke('drawing_graph', 'stackbar', $chart, $config);
+}
+
+
+###############################################################################
+########################### TAG STACK DRAWING DEMO ############################
+###############################################################################
+
+function drawing_demo_tagstack() {
+  if (!module_exists('tagadelic')) {
+    drupal_set_message(
+      t('You need the !tag module to view this demo.', array(
+          '!tag' => l(t('Tagadelic'), 'http://drupal.org/project/tagadelic'))
+        ), 'warning');
+    return '';
+  }
+  return drawing_get_canvas('drawing_demo_tagstack_canvas');
+}
+
+function drawing_demo_tagstack_canvas() {
+  $config = array();
+  $config['height'] = 400;
+  $config['width'] = 700;
+  $config['labels'] = array(
+    'inside' => TRUE,
+  );
+  $config['theme'] = array(
+    'text' => 'black',
+    'label' => 'black',
+    'fill' => '#0000ff',
+    'fill_0' => '#0000ff',
+    'fill_1' => '#2222ff',
+    'fill_2' => '#4444ff',
+    'fill_3' => '#6666ff',
+    'fill_4' => '#8888ff',
+    'fill_5' => '#aaaaff',
+    'fill_6' => '#ddddff',
+  );
+  $data = module_invoke('tagadelic', 'get_weighted_tags', array(1,5));
+  $chart = array();
+  $n = 0;
+  foreach($data as $tag) {
+    $chart['points'][$n] = array($tag->name, $tag->number_of_posts);
+    $n++;
+  }
+  return module_invoke('drawing_graph', 'piechart', $chart, $config);
+}

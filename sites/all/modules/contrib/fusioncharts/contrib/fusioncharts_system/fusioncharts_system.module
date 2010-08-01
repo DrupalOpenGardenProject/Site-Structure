@@ -1,0 +1,124 @@
+<?php
+// $Id: fusioncharts_system.module,v 1.2.2.1 2008/12/16 07:33:43 aaron1234nz Exp $
+
+/**
+* Implementation of hook_menu().
+*/  
+function fusioncharts_system_menu(){
+  $items = array();
+  $items['admin/reports/fusioncharts'] = array(
+    'title' => 'System Charts',
+    'page callback' => 'system_admin_menu_block_page',
+    'description' => "See system information charted using 3D charts",
+    'access arguments' => array('access system charts'),
+    'file' => 'system.admin.inc',
+    'file path' => drupal_get_path('module', 'system'),
+  ); 
+  $sections = fusioncharts_system_infomation();   
+  foreach($sections as $section => $pages) {
+    $lc_section = strtolower($section);
+    $items["admin/reports/fusioncharts/$lc_section"] = array(
+      'title' => $section,
+      'page callback' => 'system_admin_menu_block_page',
+      'access arguments' => array('access system charts'),
+      'file' => 'system.admin.inc',
+      'file path' => drupal_get_path('module', 'system'),
+    );
+    foreach($pages as $type => $title){
+      $items["admin/reports/fusioncharts/$lc_section/$type"] = array(
+        'title' => $title,
+        'page callback' => 'fusioncharts_render',
+        'page arguments' => array('system_charts', 'system', $type),
+        'access arguments' => array('access system charts'),
+        'type' => MENU_LOCAL_TASK,
+      );
+    }
+  }
+  return $items;
+}
+
+function fusioncharts_system_infomation(){
+  $info = array(
+    'Users' => array( 
+      'users_per_role' => t('Users per role'), 
+      'user_status' => t('User status'),
+    ),
+    'Nodes' => array(
+      'node_counts' => t('Node Counts'),
+      'node_counts_published' => t('Node counts published'),
+      'node_counts_unpublished' => t('Node counts unpublished'),
+    ),
+    'Watchdog' => array(
+      'watchdog_counts' => t('Watchdog counts'),
+      'watchdog_severity' => t('Watchdog severity'),
+    )
+  );
+  return $info;
+}
+
+function system_charts_fusionchart_callback($type = NULL) {
+  switch($type[0]) {
+    case 'node_counts':
+      $query = "SELECT COUNT(*) AS value, type AS name FROM {node} GROUP BY type ORDER BY type";
+      $title = t('Number of nodes by type');
+      $xaxis = t('Node type');
+      break;
+    case 'node_counts_published':
+      $query = "SELECT COUNT(*) AS value, type AS name FROM {node} WHERE status = '1' GROUP BY type ORDER BY type";
+      $title = t('Number of nodes by type');
+      $subcaption = t('(published only)');
+      $xaxis = t('Node type');
+      break;
+    case 'node_counts_unpublished':
+      $query = "SELECT COUNT(*) AS value, type AS name FROM {node} WHERE status = '0' GROUP BY type ORDER BY type";
+      $title = t('Number of nodes by type');
+      $subcaption = t('(unpublished only)');
+      $xaxis = t('Node type');
+      break;
+    case 'watchdog_counts':                 
+      $query = "SELECT COUNT(*) AS value, type AS name FROM {watchdog} GROUP BY type ORDER BY type";
+      $title = t('Number of errors by type');
+      $xaxis = t('Error type');
+      break;
+    case 'watchdog_severity':
+      $query = "SELECT COUNT(*) AS value, 
+                  case severity
+                    when 0 then 'emergency'
+                    when 1 then 'alert'
+                    when 2 then 'critical'
+                    when 3 then 'error'
+                    when 4 then 'warning'
+                    when 5 then 'notice'
+                    when 6 then 'info'
+                    when 7 then 'debug'
+                  end as name
+                FROM {watchdog} GROUP BY severity ORDER BY severity";
+      $title = t('Number of errors by severity');
+      $xaxis = t('Severity');
+        break;
+    case 'users_per_role':
+      $query = "SELECT COUNT(*) AS value, r.name AS name FROM {users_roles} ur JOIN {role} r ON r.rid = ur.rid GROUP BY r.name ORDER BY r.name";                     
+      $title = t('Number of users by role');
+      $xaxis = t('Role');
+      break;
+    case 'user_status':
+      $query = "SELECT COUNT(*) AS value, case status when 0 then 'disabled' when 1 then 'enabled' end AS name FROM {users} WHERE uid != 0 GROUP BY status ORDER BY status";
+      $title = t('Number of users by status');
+      $xaxis = t('Status');
+      break;
+  }  
+
+  $info->query = $query;
+  $info->chart_type = 'Column 3D';
+  $info->settings = array('Caption' => $title,
+                    'subCaption' => $subcaption,
+                    'decimalPrecision' => '0',
+                    'rotateNames' => '1',
+                    'XaxisName' => $xaxis,
+                    'YaxisName' => 'number',
+              );
+  $info->attributes = array();
+  $info->width = 500;
+  $info->height = 300;
+  return $info;  
+}

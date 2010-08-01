@@ -1,0 +1,11 @@
+; $Id: drawing_gd.info,v 1.1.2.1 2009/05/09 05:56:28 danielb Exp $
+name = Drawing GD toolkit
+description = Enables the PHP GD drawing method
+package = Drawing
+core = 6.x
+; Information added by drupal.org packaging script on 2010-07-11
+version = "6.x-2.x-dev"
+core = "6.x"
+project = "drawing"
+datestamp = "1278833979"
+

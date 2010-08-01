@@ -1,0 +1,12 @@
+; $Id: drawing_graph.info,v 1.1.2.2 2009/05/09 05:54:53 danielb Exp $
+name = Drawing graph
+description = Graph plotting package, providing easy-to-use functions for graphs.
+package = Drawing
+dependencies[] = drawing
+core = 6.x
+; Information added by drupal.org packaging script on 2010-07-11
+version = "6.x-2.x-dev"
+core = "6.x"
+project = "drawing"
+datestamp = "1278833979"
+

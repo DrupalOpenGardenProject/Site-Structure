@@ -1,0 +1,133 @@
+<?php
+// $Id: embed_widgets.install,v 1.9.2.6 2009/08/02 04:44:59 jtsnow Exp $
+
+/**
+ * @file embed_widgets.install
+ *
+ * Contains install and update functions for Embed Widgets.
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function embed_widgets_install() {
+  // Create tables.
+  drupal_install_schema('embed_widgets');
+}
+
+/**
+* Implementation of hook_schema().
+*/
+function embed_widgets_schema() {
+  $schema = embed_widgets_table_embed_widgets();
+  return $schema;
+}
+
+function embed_widgets_table_embed_widgets() {
+  $schema['embed_widgets'] = array(
+    'description' => t('Stores the data for a widget.'),
+    'fields' => array(
+      'wid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => t('The ID of the field, defined by the database.'),
+      ),
+      'hash' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Whether the source is a block, node, or view.'),
+      ),
+      'type' => array(
+        'type' => 'varchar',
+        'length' => '20',
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Whether the source is a block, node, or view.'),
+      ),
+      'foreign_id' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('The id or name of a block, node, or view.'),
+      ),
+      'delta' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('An additional identifier.'),
+      ),
+      'title' => array(
+        'type' => 'varchar',
+        'length' => '128',
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('The title of the widget.'),
+      ),
+      'description' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('A description of the widget.'),
+      ),
+      'status' => array(
+        'type' => 'int',
+        'length' => '1',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 1,
+        'description' => t('1 if enabled, 0 if disabled.'),
+      ),
+      'settings' => array(
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => TRUE,
+        'description' => t('An array of settings used to configure the widget.'),
+      ),
+    ),
+    'primary key' => array('wid'),
+  );
+  return $schema;
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function embed_widgets_uninstall() {
+  drupal_uninstall_schema('embed_widgets');
+  db_query("DELETE FROM {variable} WHERE name LIKE 'embed_widgets%'");
+}
+
+/**
+ * Implementation of hook_update_N().
+ */
+function embed_widgets_update_6200() {
+  $ret = array();
+  $tables = array(
+    'embed_widgets_sources_relation',
+    'embed_widgets_source_map',
+    'embed_widgets_instances',
+    'embed_widgets_sources',
+    'embed_widgets_placement',
+    'embed_widgets',
+  );
+  foreach ($tables as $table) {
+    if (db_table_exists($table)) {
+      db_drop_table($ret, $table);
+    }
+  }
+  
+  $schema = embed_widgets_table_embed_widgets();
+  db_create_table($ret, 'embed_widgets', $schema['embed_widgets']);
+  return $ret;
+}
+
+//function embed_widgets_update_last_removed() {
+//  return 6004;
+//}
+

@@ -1,0 +1,442 @@
+<?php
+// $Id: fusioncharts_test.module,v 1.4.2.3 2009/02/22 07:00:48 aaron1234nz Exp $
+/**
+ * Implementation of hook_menu().
+ */
+function fusioncharts_test_menu() {
+  $items = array();
+  $items['fusioncharts'] = array(
+    'title' => 'Fusion Charts Demo',
+    'page callback' => 'system_admin_menu_block_page',
+    'access arguments' => array('access fusioncharts test'),
+    'file' => 'system.admin.inc',
+    'file path' => drupal_get_path('module', 'system'),
+  );
+  $items['fusioncharts/single_series'] = array(
+    'title' => 'Single Series Charts',
+    'page callback' => 'fusioncharts_single_series',
+    'access arguments' => array('access fusioncharts test'),
+  );
+  $items['fusioncharts/multi_series'] = array(
+    'title' => 'Multi Series Charts',
+    'page callback' => 'fusioncharts_multi_series',
+    'access arguments' => array('access fusioncharts test'),
+  );
+  $items['fusioncharts/stacked_charts'] = array(
+    'title' => 'Stacked Charts',
+    'page callback' => 'fusioncharts_stacked_series',
+    'access arguments' => array('access fusioncharts test'),
+  );
+  $items['fusioncharts/combination_charts'] = array(
+    'title' => 'Combination Charts',
+    'page callback' => 'fusioncharts_combination',
+    'access arguments' => array('access fusioncharts test'),
+  );
+  $items['fusioncharts/other_charts'] = array(
+    'title' => 'Other Charts',
+    'page callback' => 'fusioncharts_other',
+    'access arguments' => array('access fusioncharts test'),
+  );
+  $items['fusioncharts/links'] = array(
+    'title' => 'Charts with links',
+    'page callback' => 'fusioncharts_links',
+    'access arguments' => array('access fusioncharts test'),
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function fusioncharts_test_perm() {
+  return array('access fusioncharts test');
+}
+
+/*
+ * Fusioncharts sample data
+ */
+function fusioncharts_single_series() {
+  $row[0][0] = theme('fusionchart', 'Column_3D');
+  $row[0][1] = theme('fusionchart', 'Column_2D');
+  $row[1][0] = theme('fusionchart', 'Line_2D');
+  $row[1][1] = theme('fusionchart', 'Area_2D');
+  $row[2][0] = theme('fusionchart', 'Bar_2D');
+  $row[2][1] = theme('fusionchart', 'Pie_2D');
+  $row[3][0] = theme('fusionchart', 'Pie_3D');
+  $row[3][1] = theme('fusionchart', 'Doughnut_2D');
+  
+  $header = array('', '');
+  return theme('table', $header, $row);
+}
+function fusioncharts_multi_series() {
+  $row[0][0] = theme('fusionchart', 'Multi_series_Column_2D');
+  $row[0][1] = theme('fusionchart', 'Multi_series_Column_3D');
+  $row[1][0] = theme('fusionchart', 'Multi_series_Line_2D');
+  $row[1][1] = theme('fusionchart', 'Multi_series_Bar_2D'); 
+  $row[2][0] = theme('fusionchart', 'Multi_series_Area_2D');  
+  $header = array('', '');
+  return theme('table', $header, $row);
+}
+function fusioncharts_stacked_series() {
+  $row[0][0] = theme('fusionchart', 'Stacked_Column_3D');
+  $row[0][1] = theme('fusionchart', 'Stacked_Column_2D');
+  $row[1][0] = theme('fusionchart', 'Stacked_Bar_2D');
+  $row[1][1] = theme('fusionchart', 'Stacked_Area_2D'); 
+  $header = array('', '');
+  return theme('table', $header, $row);
+}
+function fusioncharts_combination() {
+  $row[0][0] = theme('fusionchart', 'Multi_series_Column_2D_Line_Dual_Y_Axis');
+  $row[1][0] = theme('fusionchart', 'Multi_series_Column_3D_Line_Dual_Y_Axis');
+  $header = array('');
+  return theme('table', $header, $row);
+}
+function fusioncharts_other() {
+  return theme('fusionchart', 'Funnel_Chart');
+  //$row[1] = theme('fusionchart', 'Candlestick_Chart');
+  //$row[2] = theme('fusionchart', 'Gantt_Chart');
+  //$header = array('');
+  //return theme('table', $header, $row);
+}
+
+function fusioncharts_links() {
+  $row[0][0] = theme('fusionchart', 'link_single_series');
+  $row[1][0] = theme('fusionchart', 'link_multi_series');
+  $row[0][1] = theme('fusionchart', 'link_stacked_series');
+  $row[1][1] = theme('fusionchart', 'link_combination_series');
+  $header = array('');
+  return theme('table', $header, $row);
+}
+
+/**
+ * Single Series
+ */
+function Column_3D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_single_series_data();
+  $info->settings['Caption'] = 'Column 3D';
+  $info->attributes['callback'] = 'Column_3D';
+  $info->chart_type = 'Column 3D';
+  return $info;
+}
+function Column_2D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_single_series_data();
+  $info->settings['Caption'] = 'Column 2D';
+  $info->attributes['callback'] = 'Column_2D';
+  $info->chart_type = 'Column 2D';
+  return $info;
+}
+function Line_2D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_single_series_data();
+  $info->settings['Caption'] = 'Line 2D';
+  $info->attributes['callback'] = 'Line_2D';
+  $info->chart_type = 'Line 2D';
+  return $info;
+}
+function Area_2D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_single_series_data();
+  $info->settings['Caption'] = 'Area 2D';
+  $info->attributes['callback'] = 'Area_2D';
+  $info->chart_type = 'Area 2D';
+  return $info;
+}
+function Bar_2D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_single_series_data();
+  $info->settings['Caption'] = 'Bar 2D';
+  $info->attributes['callback'] = 'Bar_2D';
+  $info->chart_type = 'Bar 2D';
+  return $info;
+}
+function Pie_2D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_single_series_data();
+  $info->settings['Caption'] = 'Pie 2D';
+  $info->attributes['callback'] = 'Pie_2D';
+  $info->chart_type = 'Pie 2D';
+  return $info;
+}
+function Pie_3D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_single_series_data();
+  $info->settings['Caption'] = 'Pie 3D';
+  $info->attributes['callback'] = 'Pie_3D';
+  $info->chart_type = 'Pie 3D';
+  return $info;
+}
+function Doughnut_2D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_single_series_data();
+  $info->settings['Caption'] = 'Doughnut 2D';
+  $info->attributes['callback'] = 'Doughnut_2D';
+  $info->chart_type = 'Doughnut 2D';
+  return $info;
+}
+function fusioncharts_test_single_series_data() {
+  $info->data = array(array('Jan', rand(1, 100)),
+                array('Feb', rand(1, 100)),
+                array('Mar', rand(1, 100)),
+                array('Apr', rand(1, 100)),
+                );
+  $info->settings = array('Caption' => '',
+                    'DecimalPrecision' => 0
+                    );
+  for ($i=1; $i<5; $i++) {
+    $info->attributes['color'][] = dechex(rand(0, 255)) . dechex(rand(0, 255)) . dechex(rand(0, 255));
+  }
+  $info->width = 300;
+  $info->height = 300;
+  return $info;
+}
+/**
+ * Single Series
+ */
+function Multi_series_Column_2D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_multi_series_data();
+  $info->settings['Caption'] = 'Multi-series Column 2D';
+  $info->attributes['callback'] = 'Multi_series_Column_2D';
+  $info->chart_type = 'Multi-series Column 2D';
+  return $info;
+}
+function Multi_series_Column_3D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_multi_series_data();
+  $info->settings['Caption'] = 'Multi-series Column 3D';
+  $info->attributes['callback'] = 'Multi_series_Column_3D';
+  $info->chart_type = 'Multi-series Column 3D';
+  return $info;
+}
+function Multi_series_Line_2D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_multi_series_data();
+  $info->settings['Caption'] = 'Multi-series Line 2D';
+  $info->attributes['callback'] = 'Multi_series_Line_2D';
+  $info->chart_type = 'Multi-series Line 2D';
+  return $info;
+}
+function Multi_series_Bar_2D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_multi_series_data();
+  $info->settings['Caption'] = 'Multi-series Bar 2D';
+  $info->attributes['callback'] = 'Multi_series_Bar_2D';
+  $info->chart_type = 'Multi-series Bar 2D';
+  return $info;
+}
+function Multi_series_Area_2D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_multi_series_data();
+  $info->settings['Caption'] = 'Multi-series Area 2D';
+  $info->attributes['callback'] = 'Multi_series_Area_2D';
+  $info->chart_type = 'Multi-series Area 2D';
+  return $info;
+}
+
+function fusioncharts_test_multi_series_data() {
+  $info->data = array(array('2007', 'Jan', rand(1, 100)),
+                array('2007', 'Feb', rand(1, 100)),
+                array('2007', 'Mar', rand(1, 100)),
+                array('2007', 'Apr', rand(1, 100)),
+                array('2008', 'Jan', rand(1, 100)),
+                array('2008', 'Feb', rand(1, 100)),
+                array('2008', 'Mar', rand(1, 100)),
+                array('2008', 'Apr', rand(1, 100)),
+                );
+  $info->settings = array('Caption' => '',
+                    'DecimalPrecision' => 0
+                    );
+  for ($i=1; $i<5; $i++) {
+    $info->attributes['color'][] = dechex(rand(0, 255)) . dechex(rand(0, 255)) . dechex(rand(0, 255));
+  }
+  $info->width = 300;
+  $info->height = 300;
+  return $info;
+}
+/**
+ * Stacked Charts
+ */
+function Stacked_Column_3D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_stacked_series_data();
+  $info->settings['Caption'] = 'Stacked Column 3D';
+  $info->attributes['callback'] = 'Stacked_Column_3D';
+  $info->chart_type = 'Stacked Column 3D';
+  return $info;
+}
+function Stacked_Column_2D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_stacked_series_data();
+  $info->settings['Caption'] = 'Stacked Column 2D';
+  $info->attributes['callback'] = 'Stacked_Column_2D';
+  $info->chart_type = 'Stacked Column 2D';
+  return $info;
+}
+function  Stacked_Bar_2D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_stacked_series_data();
+  $info->settings['Caption'] = 'Stacked Bar 2D';
+  $info->attributes['callback'] = 'Stacked_Bar_2D';
+  $info->chart_type = 'Stacked Bar 2D';
+  return $info;
+}
+function  Stacked_Area_2D_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_stacked_series_data();
+  $info->settings['Caption'] = 'Stacked Area 2D';
+  $info->attributes['callback'] = 'Stacked_Area_2D';
+  $info->chart_type = 'Stacked Area 2D';
+  return $info;
+}
+function fusioncharts_test_stacked_series_data() {
+  $info->data = array(array('2007', 'Jan', rand(1, 100)),
+                array('2007', 'Feb', rand(1, 100)),
+                array('2007', 'Mar', rand(1, 100)),
+                array('2007', 'Apr', rand(1, 100)),
+                array('2008', 'Jan', rand(1, 100)),
+                array('2008', 'Feb', rand(1, 100)),
+                array('2008', 'Mar', rand(1, 100)),
+                array('2008', 'Apr', rand(1, 100)),
+                );
+  $info->settings = array('Caption' => '',
+                    'DecimalPrecision' => 0
+                    );
+  for ($i=1; $i<5; $i++) {
+    $info->attributes['color'][] = dechex(rand(0, 255)) . dechex(rand(0, 255)) . dechex(rand(0, 255));
+  }
+  $info->width = 300;
+  $info->height = 300;
+  return $info;
+}
+/**
+ * Combination Charts
+ */
+function Multi_series_Column_2D_Line_Dual_Y_Axis_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_combination_data();
+  $info->settings['Caption'] = 'Multi-series Column 2D + Line - Dual Y Axis';
+  $info->attributes['callback'] = 'Multi_series_Column_2D_Line_Dual_Y_Axis';
+  $info->chart_type = 'Multi-series Column 2D + Line - Dual Y Axis';
+  return $info;
+}
+function Multi_series_Column_3D_Line_Dual_Y_Axis_fusionchart_callback($args=NULL) {
+  $info = fusioncharts_test_combination_data();
+  $info->settings['Caption'] = 'Multi-series Column 3D + Line - Dual Y Axis';
+  $info->attributes['callback'] = 'Multi_series_Column_3D_Line_Dual_Y_Axis';
+  $info->chart_type = 'Multi-series Column 3D + Line - Dual Y Axis';
+  return $info;
+}
+function fusioncharts_test_combination_data() {
+  $info->data = array(array('2007', 'Jan', 'P', rand(1, 100)),
+                array('2007', 'Feb', 'P', rand(1, 100)),
+                array('2007', 'Mar', 'P', rand(1, 100)),
+                array('2008', 'Jan', 'P', rand(1, 100)),
+                array('2008', 'Feb', 'P', rand(1, 100)),
+                array('2008', 'Mar', 'P', rand(1, 100)),
+                array('Sales', 'Jan', 'S', rand(1, 100)),
+                array('Sales', 'Feb', 'S', rand(1, 100)),
+                array('Sales', 'Mar', 'S', rand(1, 100)),
+                );
+  $info->settings = array('Caption' => '',
+                    'DecimalPrecision' => 0
+                    );
+  for ($i=1; $i<5; $i++) {
+    $info->attributes['color'][] = dechex(rand(0, 255)) . dechex(rand(0, 255)) . dechex(rand(0, 255));
+  }
+  $info->width = 600;
+  $info->height = 300;
+  return $info;
+}
+/**
+ * Other Charts
+ */
+function Candlestick_Chart_fusionchart_callback($args=NULL) {
+  $info->data = array(array('2007', 'Jan', rand(1, 100)),
+                array('2007', 'Feb', rand(1, 100)),
+                array('2007', 'Mar', rand(1, 100)),
+                array('2007', 'Apr', rand(1, 100)),
+                array('2008', 'Jan', rand(1, 100)),
+                array('2008', 'Feb', rand(1, 100)),
+                array('2008', 'Mar', rand(1, 100)),
+                array('2008', 'Apr', rand(1, 100)),
+                );
+  $info->settings = array('Caption' => 'Candlestick Chart',
+                    'DecimalPrecision' => 0
+                    );
+  for ($i=1; $i<5; $i++) {
+    $info->attributes['color'][] = dechex(rand(0, 255)) . dechex(rand(0, 255)) . dechex(rand(0, 255));
+  }
+  $info->width = 600;
+  $info->height = 300;
+  $info->chart_type = 'Candlestick Chart';
+  return $info;
+}
+function Funnel_Chart_fusionchart_callback($args=NULL) {
+  $info->data = array(array('Jan', rand(1, 100)),
+                array('Feb', rand(1, 100)),
+                array('Mar', rand(1, 100)),
+                array('Apr', rand(1, 100)),
+                );
+  $info->settings = array('Caption' => 'Funnel Chart',
+                    'DecimalPrecision' => 0
+                    );
+  for ($i=1; $i<5; $i++) {
+    $info->attributes['color'][] = dechex(rand(0, 255)) . dechex(rand(0, 255)) . dechex(rand(0, 255));
+  }
+  $info->width = 600;
+  $info->height = 300;
+  $info->chart_type = 'Funnel Chart';
+  return $info;
+}
+function Gantt_Chart_fusionchart_callback($args=NULL) {
+  $info->data = array(array('2007', 'Jan', rand(1, 100)),
+                array('2007', 'Feb', rand(1, 100)),
+                array('2007', 'Mar', rand(1, 100)),
+                array('2007', 'Apr', rand(1, 100)),
+                array('2008', 'Jan', rand(1, 100)),
+                array('2008', 'Feb', rand(1, 100)),
+                array('2008', 'Mar', rand(1, 100)),
+                array('2008', 'Apr', rand(1, 100)),
+                );
+  $info->settings = array('Caption' => 'Gantt Chart',
+                    'DecimalPrecision' => 0
+                    );
+  for ($i=1; $i<5; $i++) {
+    $info->attributes['color'][] = dechex(rand(0, 255)) . dechex(rand(0, 255)) . dechex(rand(0, 255));
+  }
+  $info->width = 600;
+  $info->height = 300;
+  $info->chart_type = 'Gantt Chart';
+}
+/**
+ * Callbacks using the link facility
+ */
+function link_single_series_fusionchart_callback() {
+  $info = fusioncharts_test_single_series_data();
+  $info->settings['Caption'] = 'Column 3D';
+  $info->attributes['link'] = array('Jan' => 'http://example.com',
+                                    'Feb' => 'http://drupal.org',
+                                    'Mar' => 'http://yahoo.com',
+                                    'Apr' => 'http://google.com'
+                                   );
+  $info->chart_type = 'Column 3D';
+  return $info;
+}
+function link_multi_series_fusionchart_callback() {
+  $info = fusioncharts_test_multi_series_data();
+  $info->settings['Caption'] = 'Multi-series Bar 2D';
+  $info->attributes['link']['2007']['Jan'] = 'http://example.com';
+  $info->attributes['link']['2007']['Feb'] = 'http://drupal.org';
+  $info->attributes['link']['2007']['Mar'] = 'http://yahoo.com';
+  $info->attributes['link']['2007']['Apr'] = 'http://google.com';
+  $info->attributes['link']['2008'] = 'http://bible.org';
+  $info->chart_type = 'Multi-series Bar 2D';
+  return $info;
+}
+function link_stacked_series_fusionchart_callback() {
+  $info = fusioncharts_test_multi_series_data();
+  $info->settings['Caption'] = 'Stacked Column 3D';
+  $info->attributes['link']['2007']['Jan'] = 'http://example.com';
+  $info->attributes['link']['2007']['Feb'] = 'http://drupal.org';
+  $info->attributes['link']['2007']['Mar'] = 'http://yahoo.com';
+  $info->attributes['link']['2007']['Apr'] = 'http://google.com';
+  $info->attributes['link']['2008'] = 'http://bible.org';
+  $info->chart_type = 'Stacked Column 3D';
+  return $info;
+}
+function link_combination_series_fusionchart_callback() {
+  $info = fusioncharts_test_combination_data();
+  $info->settings['Caption'] = 'Multi-series Column 2D + Line - Dual Y Axis';
+  $info->width = 300;
+  $info->attributes['link']['2007']['Jan'] = 'http://example.com';
+  $info->attributes['link']['2007']['Feb'] = 'http://drupal.org';
+  $info->attributes['link']['2007']['Mar'] = 'http://yahoo.com';
+  $info->attributes['link']['2007']['Apr'] = 'http://google.com';
+  $info->attributes['link']['2008'] = 'http://bible.org';
+  $info->chart_type = 'Multi-series Column 2D + Line - Dual Y Axis';
+  return $info;
+}

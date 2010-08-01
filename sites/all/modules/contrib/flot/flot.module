@@ -1,0 +1,210 @@
+<?php
+// $Id: flot.module,v 1.2.2.5 2009/09/21 19:52:25 yhahn Exp $
+
+/**
+ * Implementation of hook_views_api().
+ */
+function flot_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'flot') .'/views',
+  );
+}
+
+/**
+ * Implementation of hook_theme.
+ */
+function flot_theme() {
+  return array(
+    'flot_graph' => array(
+      'arguments' => array('element' => array(), 'data' => array(), 'options' => array()),
+    ),
+  );
+}
+
+/**
+ * Main flot graphing function
+ *
+ * @param $element
+ *   An associative array to define a placeholder element. If an 'id' is 
+ *   omitted one will be generated, If no 'style' is specified and width and
+ *   height style will be added. In short you can just pass an empty array and
+ *   everything will still work. This argument is essentially optional and has
+ *   been kept as the first argument to remain consistant with flots own api.
+ * @param $data
+ *   The data series for the graph. Optional. See flot's API.txt for more 
+ *   details. This module defines the flotData class which can  be used or
+ *   extended to make generating data objects simpler.
+ * @param $options
+ *   Options to pass to flot. Optional. See flot's API.txt for more details.
+ * @param $loader
+ *   Allows alterative loading of flot data. If 'false' data will passed 
+ *   directly to an invocation of $.plot(). Otherwise the contents of $loader
+ *   should be js.
+ *
+ * @return
+ *   The placeholder element
+ */
+function theme_flot_graph($element, $data = array(), $options = array(), $loader = false) {
+  static $n;
+  if (!isset($element['id'])) {
+    $n++;
+    $element['id'] = 'flot-auto-identifier-'. $n;
+  }
+
+  if (!isset($element['style'])) {
+    $element['style'] = "width:100%;height:200px";
+  }
+
+  flot_add_js();
+
+  if (count($data)) {
+    $extra = '';
+    if ($loader) {
+      $extra = 'Drupal.flot.'. str_replace('-', '_', $element['id']) .'_data = '. drupal_to_js($data) .';';
+      $extra .= "$loader";
+      $data = array();
+    }
+
+    $data = 'if (Drupal.jsEnabled) {
+      $(document).ready(function() {
+        Drupal.flot.'. str_replace('-', '_', $element['id']).' = $.plot($("#'.$element['id'].'"), '. drupal_to_js($data). ', '. drupal_to_js($options) .');
+        '. $extra .'
+      });
+    }';
+    drupal_add_js($data, 'inline');
+  }
+  return '<div '. drupal_attributes($element) .'> </div>';
+}
+
+/**
+ * Helper to add flot's js
+ */
+function flot_add_js() {
+  static $added;
+  if ($added !== true) {
+    if (module_exists('libraries') && libraries_get_path('flot')) {
+      $path = libraries_get_path('flot');
+    }
+    if (!isset($path)) {
+      $path = drupal_get_path('module', 'flot') .'/flot';
+    }
+    drupal_set_html_head('<!--[if IE]><script language="javascript" type="text/javascript" src="'. base_path() . $path . '/excanvas.pack.js"></script><![endif]-->');
+    drupal_add_js($path . '/jquery.flot.js');
+    drupal_add_js('if (Drupal.jsEnabled) { Drupal.flot = {}; }', 'inline');
+
+    $added = true;
+  }
+}
+
+/**
+* Data class for the flot API.
+*
+* Make some nested objects to keep things simple when creating a data series.
+*/
+class flotData {
+
+  public $data;
+  public $lines;
+  public $bars;
+  public $points;
+
+  function __construct($data) {
+    $this->data = $data;
+    $this->lines = new stdClass();
+    $this->bars = new stdClass();
+    $this->points = new stdClass();
+    $this->grid = new StdClass();
+  }
+}
+
+/**
+ * Style class for the flot API.
+ *
+ * Provides some sensible defaults and helper methods for managing axes.
+ */
+class flotStyle {
+  public $colors;
+  public $grid;
+  public $lines;
+  public $bars;
+  public $points;
+
+  function __construct() {
+    $this->lines = new StdClass();
+    $this->bars = new StdClass();
+    $this->points = new StdClass();
+
+    $this->lines->show = FALSE;
+    $this->bars->show = FALSE;
+    $this->points->show = FALSE;
+
+    $this->colors = array('#666', '#999', '#ccc');
+    $this->shadowSize = 0;
+
+    $this->grid = new StdClass();
+    $this->grid->labelMargin = 0;
+    $this->grid->tickColor = '#eee';
+    $this->grid->backgroundColor = '#f8f8f8';
+    $this->grid->borderWidth = 0;
+    $this->grid->hoverable = true;
+    $this->grid->autoHighlight = true;
+    $this->grid->clickable = false;
+  }
+
+  function axis_ticks($axis = 'yaxis', $ticks = array()) {
+    if (count($ticks)) {
+      $this->{$axis} = new StdClass();
+      $this->{$axis}->ticks = $ticks;
+    }
+  }
+
+  function axis_range($axis = 'yaxis', $range = array(), $granularity = 0) {
+    if (count($range)) {
+      $this->{$axis} = new StdClass();
+      $this->{$axis}->min = min($range);
+      $this->{$axis}->max = max($range);
+
+      if (is_numeric($granularity) && $granularity != 0) {
+        $tickSize = ($this->{$axis}->max - $this->{$axis}->min) / $granularity;
+        $this->{$axis}->tickSize = floor($tickSize);
+      }
+    }
+  }
+}
+
+/**
+ * Basic line style class for the flot.
+ */
+class flotStyleLine extends flotStyle {
+  function __construct() {
+    parent::__construct();
+    $this->lines->show = TRUE;
+    $this->lines->lineWidth = 1;
+    $this->lines->fill = .1;
+  }
+}
+
+/**
+ * Basic bar style class for the flot.
+ */
+class flotStyleBar extends flotStyle {
+  function __construct() {
+    parent::__construct();
+    $this->bars->show = TRUE;
+    $this->bars->lineWidth = 0;
+    $this->bars->fill = .5;
+  }
+}
+
+/**
+ * Points style class for the flot.
+ */
+class flotStylePoint extends flotStyle {
+  function __construct() {
+    parent::__construct();
+    $this->points->show = TRUE;
+    $this->points->lineWidth = 1;
+    $this->points->fill = .1;
+  }
+}

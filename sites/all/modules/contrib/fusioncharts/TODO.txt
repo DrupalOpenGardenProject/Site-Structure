@@ -1,0 +1,8 @@
+TODO:
+
+This is a brief list of the things that may still need to be done.
+
+* Add support for Financial,and Gantt charts
+* Postgres SQL support
+* Add trendline support to the UI
+

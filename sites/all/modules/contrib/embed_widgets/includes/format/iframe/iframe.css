@@ -1,0 +1,43 @@
+/* $Id: iframe.css,v 1.4.2.3 2009/08/02 02:30:06 jtsnow Exp $ */
+
+/**
+ * @file widgets.css
+ 
+ * Template for widget CSS.
+ */
+
+body {
+  background-color: transparent !important;
+}
+
+.widget-title {
+  display:block;
+}
+
+#widget-tabs-wrapper {
+  border-bottom:1px solid #E9EFF3;
+  margin:0;
+  padding:0;
+}
+
+.widget-container {
+  background: #FFFFFF;
+  border: 1px solid #D9EAF5;
+  margin: 0 0;
+  padding:5px;
+  overflow: auto;
+}
+
+.embed-widget .node {
+  border-bottom:medium none;
+  margin:0;
+  padding:0.2em;
+}
+
+#share-container {
+  background-color: #FFFFFF;
+  border: 1px solid #D9EAF5;
+  bottom: 0;
+  padding: 2px 5px;
+  position: fixed;
+}

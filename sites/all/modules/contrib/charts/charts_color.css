@@ -1,0 +1,63 @@
+/* $Id: charts_color.css,v 1.2 2008/07/07 08:04:15 brmassa Exp $ */
+
+/* Farbtastic placement */
+#farbtastic {
+  float: right;
+}
+
+/* All color-related */
+#charts_color .form-item {
+  height: 2em;
+  line-height: 2em;
+  padding-left: 1em;
+  margin: 0.5em 0;
+}
+#charts_color label {
+  float: left;
+  clear: left;
+  width: 10em;
+}
+#charts_color .form-text, #charts_color .form-select {
+  float: left;
+}
+#charts_color .form-text {
+  text-align: center;
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+/* Palette */
+#palette .hook {
+  float: left;
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+}
+#palette .down, #palette .up, #palette .both {
+  background: url(images/hook.png) no-repeat 100% 0;
+}
+#palette .up {
+  background-position: 100% -27px;
+}
+#palette .both {
+  background-position: 100% -54px;
+}
+#palette .lock {
+  float: left;
+  position: relative;
+  top: -1.4em;
+  left: -10px;
+  width: 20px;
+  height: 25px;
+  background: url(images/lock.png) no-repeat 50% 2px;
+  cursor: pointer;
+}
+#palette .unlocked {
+  background-position: 50% -22px;
+}
+#palette .form-item {
+  width: 20em;
+}
+#palette .item-selected {
+  background: #eee;
+}

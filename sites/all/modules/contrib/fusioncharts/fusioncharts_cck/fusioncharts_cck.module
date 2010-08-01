@@ -1,0 +1,458 @@
+<?php
+// $Id: fusioncharts_cck.module,v 1.1.2.7 2009/04/24 10:51:05 aaron1234nz Exp $
+
+/**
+ * @file
+ * Provides integration between the Fusion Charts main module and CCK
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+function fusioncharts_cck_menu() {
+  $items['fusioncharts/js/cckchartsettings'] = array(
+    'title' => 'Javascript chart settings form',
+    'page callback' => 'fusioncharts_form_ccksettings_js',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+ 
+/**
+ * Menu callback for AHAH form().
+ */
+function fusioncharts_form_ccksettings_js() {
+  include_once(drupal_get_path('module', 'fusioncharts') .'/settings.inc');
+  $form = _fusioncharts_settings_subform($_POST['chart_type'], $node);
+  $form = array_merge_recursive($form, _fusioncharts_cck_matrix_headings($_POST['chart_type']));
+  $output = ahah_render($form, "chart_settings");
+  $output .= '<script>var t=setTimeout(colorpicker_init, "100");</script>'; //reinitialise the colorpickers
+  print drupal_to_js(array('data' => $output, 'status' => true));
+  exit();
+}
+
+/**
+ * Implmentation of hook_form_alter()
+ */
+function fusioncharts_cck_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'content_field_edit_form' && $form['#field']['type'] == 'fusioncharts_cck') {
+    $form['field']['#type'] = 'hidden'; //hide the multiple values form.  It does not work with this module!
+  }
+}
+
+/**
+ * Implementation of hook_field_info().
+ */
+function fusioncharts_cck_field_info() {
+  return array(
+    'fusioncharts_cck' => array(
+      'label' => t('FusionChart'),
+      'description' => t('Store chart in the database.'),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_field().
+ */
+function fusioncharts_cck_field($op, &$node, $field, &$items, $teaser, $page) {
+  switch ($op) {
+    case 'load':
+      $fc_cck_data = db_fetch_object(db_query("SELECT data FROM {fusionchart_cck_node_field} WHERE vid = %d and field_name = '%s'", $node->vid, $field['field_name']));
+      $chart_defaults = db_fetch_object(db_query("SELECT * FROM {fusioncharts_cck_fields} WHERE field_name = '%s'", $field['field_name']));
+      $values['chart_type'] = $chart_defaults->chart_type;
+      $values['settings'] = unserialize($chart_defaults->settings);
+      $values['attributes'] = unserialize($chart_defaults->attributes);
+      $values['width'] = $chart_defaults->width;
+      $values['height'] = $chart_defaults->height;
+      $values['data'] = unserialize($fc_cck_data->data);
+      $values['cols'] = $chart_defaults->cols;
+      $additions = array($field['field_name'] => $values);
+      return $additions;
+      break;
+    case 'insert':
+      db_query("INSERT INTO {fusionchart_cck_node_field} (nid, vid, field_name, delta, data) VALUES (%d, %d, '%s', %d, '%s')", $node->nid, $node->vid, $field['field_name'], 0, serialize($items[0]['matrix']));
+      break;
+    case 'update':
+      db_query("UPDATE {fusionchart_cck_node_field} SET data = '%s' where vid = %d AND field_name = '%s' AND delta = %d", serialize($items[0]['matrix']), $node->vid, $field['field_name'], 0);
+      break;
+    case 'delete':
+      db_query("DELETE FROM {fusionchart_cck_node_field} WHERE nid = %d", $node->nid);
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_content_is_empty().
+ */
+function fusioncharts_cck_content_is_empty($item, $field) {
+  return FALSE;
+  
+  if (empty($item['value']) && (string)$item['value'] !== '0') {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function fusioncharts_cck_theme() {
+  return array(
+    'fusioncharts_cck_formatter_default' => array(
+      'arguments' => array('element' => NULL),
+    ),
+    'fusioncharts_cck_formatter_table' => array(
+      'arguments' => array('element' => NULL),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_field_formatter_info().
+ */
+function fusioncharts_cck_field_formatter_info() {
+  return array(
+    'default' => array(
+      'label' => t('Chart'),
+      'field types' => array('fusioncharts_cck'),
+    ),
+    'table' => array(
+      'label' => t('Data in table form'),
+      'field types' => array('fusioncharts_cck'),
+    ),
+  );
+}
+
+/**
+ * Theme function for 'default'  field formatter.
+ *
+ * @param $element The whole node, containing extra information relating to this field
+ * @return HTML to be outputed.
+ */
+function theme_fusioncharts_cck_formatter_default($element) {
+  static $rendered; //since we are rendering the whole thing in one go, we don't want to rerender for each row
+  if ($rendered[$element['#field_name']] != TRUE) {
+    $rendered[$element['#field_name']] = TRUE;
+    $field_info = $element['#node']->$element['#field_name'];
+    //strip out the # symbols from the colors
+    foreach ($field_info['settings'] as $key => $value) {
+      if (substr($value, 0, 1) == '#' && strlen($value) == 7) { //remove the # from the color
+        $field_info['settings'][$key] = substr($value, 1);
+      }
+    }
+    foreach ($field_info['attributes'] as $key => $value) {
+      if (substr($value, 0, 1) == '#' && strlen($value) == 7) { //remove the # from the color
+        $field_info['attributes']['color'][] = substr($value, 1);
+        unset ($field_info['attributes'][$key]);
+      }
+    }
+    $chart->data = fusionchart_cck_data_process($field_info['chart_type'], $field_info['data'], $field_info['cols']);
+    $chart->chart_type = $field_info['chart_type'];
+    $chart->settings = $field_info['settings'];
+    $chart->attributes = $field_info['attributes'];
+    $chart->width = $field_info['width'];
+    $chart->height = $field_info['height'];
+
+    return theme('fusionchart', $chart);
+  }
+}
+
+/**
+ * Theme function for 'table'  field formatter.
+ *
+ * @param $element The whole node, containing extra information relating to this field
+ * @return HTML to be outputed.
+ */
+function theme_fusioncharts_cck_formatter_table($element) {
+  static $rendered; //since we are rendering the whole thing in one go, we don't want to rerender for each row
+  if ($rendered != 'rendered') {
+    $rendered = 'rendered';
+    $field_info = $element['#node']->$element['#field_name'];
+    $header = explode("\n", $field_info['cols']);
+    array_unshift($header, t('Label'));
+    return theme('table', $header, $field_info['data']); //this is currently only good for single series charts
+  }
+}
+
+/**
+ * Process the data into the correct form for fusioncharts core to handle
+ */
+function fusionchart_cck_data_process($chart_type, $raw_data, $cols) {
+  $cols = explode("\n", $cols);
+  switch ($chart_type) {
+    case 'Column 3D':
+    case 'Column 2D':
+    case 'Line 2D':
+    case 'Area 2D':
+    case 'Bar 2D':
+    case 'Pie 2D':
+    case 'Pie 3D':
+    case 'Doughnut 2D':
+    case 'Funnel Chart':
+      $data = $raw_data;
+      break;
+      
+    case 'Multi-series Column 2D':
+    case 'Multi-series Column 3D':
+    case 'Multi-series Line 2D':
+    case 'Multi-series Bar 2D':
+    case 'Multi-series Area 2D':
+    case 'Stacked Column 3D':
+    case 'Stacked Column 2D':
+    case 'Stacked Bar 2D':
+    case 'Stacked Area 2D':
+      $no_of_rows = count($raw_data);
+      $no_of_cols = count($cols);
+      for ($i=0; $i<$no_of_cols; $i++) {
+        for ($j=0; $j<$no_of_rows; $j++) {
+          if ($raw_data[$j][$i] != '') {
+            $data[] = array($raw_data[$j][0], $cols[$i], $raw_data[$j][$i+1]);
+          }
+        }           
+      }
+      break;
+   
+    case 'Multi-series Column 2D + Line - Dual Y Axis':
+    case 'Multi-series Column 3D + Line - Dual Y Axis':
+      $no_of_rows = count($raw_data);
+      $no_of_cols = count($cols);
+      for ($i=0; $i<$no_of_cols; $i++) {
+        for ($j=0; $j<$no_of_rows; $j++) {
+          if ($raw_data[$j][$i] != '') {
+            list($axis, $heading) = explode("|", $cols[$i]);
+            $data[] = array($heading, $raw_data[$j][0], strtoupper($axis), $raw_data[$j][$i+1]);
+          }
+        }           
+      }
+      break;
+      
+    case 'Candlestick Chart':
+      //not implemented yet
+      break;
+
+    case 'Gantt Chart':
+      //not implemented yet
+      break;
+  }
+  return $data;
+}
+
+/**
+ * Implementation of hook_widget_info().
+ */
+function fusioncharts_cck_widget_info() {
+  return array(
+    'fusioncharts_cck' => array(
+      'label' => t('Chart'),
+      'field types' => array('fusioncharts_cck'),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_widget_settings().
+ */
+function fusioncharts_cck_widget_settings($op, $widget) {
+  include_once(drupal_get_path('module', 'fusioncharts') .'/settings.inc');
+  //load the css and javascript now becasue it won't get included with the ahah
+  drupal_add_css('misc/farbtastic/farbtastic.css');
+  drupal_add_js('misc/farbtastic/farbtastic.js');
+  drupal_add_js(drupal_get_path('module', 'colorpicker'). '/js/colorpicker.js');
+  drupal_add_css(drupal_get_path('module', 'colorpicker'). '/css/colorpicker.css');
+  
+  switch ($op) {
+    case 'form':
+      $field_name = arg(5);
+      $default_values = db_fetch_object(db_query("SELECT * FROM {fusioncharts_cck_fields} WHERE field_name = '%s'", $field_name));
+      $chart_type = !empty($default_values->chart_type) ? $default_values->chart_type : 'Column 3D';
+      $form = array();
+      $form['width'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Width'),
+        '#default_value' => !empty($default_values->width) ? $default_values->width : 300,
+        '#element_validate' => array('_fusioncharts_cck_widget_settings_width_validate'),
+        '#required' => TRUE,
+      );
+      $form['height'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Height'),
+        '#default_value' => !empty($default_values->height) ? $default_values->height : 300,
+        '#element_validate' => array('_fusioncharts_cck_widget_settings_height_validate'),
+        '#required' => TRUE,
+      );
+      $form['rows'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Number of rows'),
+        '#default_value' => !empty($default_values->rows) ? $default_values->rows : 10,
+        '#element_validate' => array('_fusioncharts_cck_widget_settings_rows_validate'),
+        '#required' => TRUE,
+      );
+      $chart_types = fusioncharts_settings('fusioncharts'); 
+      $form['chart_type'] = array(
+        '#type' => 'select',
+        '#title' => t('Chart type'),
+        '#default_value' => $chart_type,
+        '#options' => $chart_types,
+        '#description' => t('The is the type of chart to build.  The chart options and data required depend on the type of chart.'),
+        '#required' => TRUE,
+        '#ahah' => array(
+          'path' => 'fusioncharts/js/cckchartsettings',
+          'wrapper' => 'chart-settings',
+          'method' => 'replace',
+          'effect' => 'fade',
+        ),
+      );
+      $form['chart_settings_a'] = array(
+        '#type' => 'markup',
+        '#value' => '<div id="chart-settings">',
+      );
+      $settings->settings = unserialize($default_values->settings);
+      $settings->attributes = unserialize($default_values->attributes);
+      $form = array_merge_recursive($form, _fusioncharts_settings_subform($default_values->chart_type, $settings));
+      $form = array_merge_recursive($form, _fusioncharts_cck_matrix_headings($default_values->chart_type, $default_values->cols));
+      $form['chart_settings_b'] = array(
+        '#type' => 'markup',
+        '#value' => '</div>',
+      );
+      return $form;
+      
+    case 'save':
+      //When the display settings are changed this save hook gets called and as the data is not loaded right, deletes the data.
+      //so we check that we are on the manage fields screen and only fire then
+      if ($widget['op'] != 'Save field settings') {
+        return;
+      }
+      
+      // prepare settings data for saving.  Unfortunatly CCK stores all fields flat, not in a tree structure, so we ignore the ones we don't want to save and assume the rest are settings/attributes
+      $dont_save_settings = array('field_name', 'type_name', 'display_settings', 'widget_active', 'type', 'required', 'multiple', 'db_storage', 'module', 'active', 'locked', 'columns', 'change', 'width', 'height', 'rows', 'chart_type',
+        'default_value_widget', 'group', 'previous_field', 'op', 'submit', 'form_build_id', 'form_token', 'form_id', 'widget_settings', 'widget_type', 'weight', 'label', 'description', 'widget_module',
+        'color1_colorpicker', 'color2_colorpicker', 'color3_colorpicker', 'color4_colorpicker', 'color5_colorpicker', 'color6_colorpicker', 'color7_colorpicker', 'color8_colorpicker', 'color9_colorpicker',
+        'color10_colorpicker', 'color11_colorpicker', 'color12_colorpicker', 'parent', 'hidden_name', 'cols', 'field'); 
+      $dont_save_attributes = array('color1', 'color2', 'color3', 'color4', 'color5', 'color6', 'color7', 'color8', 'color9', 'color10','color11', 'color12');
+      foreach($widget as $item => $stuff) {
+        if (!in_array($item, $dont_save_settings) && !in_array($item, $dont_save_attributes)){
+          $settings[$item] = $stuff;
+        }
+        if (in_array($item, $dont_save_attributes)){
+          $attributes[$item] = $stuff;
+        }
+      }
+      $exists = db_fetch_object(db_query("SELECT field_name FROM {fusioncharts_cck_fields} WHERE field_name = '%s'", $widget['field_name']));
+      $default_values = $widget['default_value_widget'][$widget['field_name']][0]['matrix'];
+      if (isset($exists->field_name)) {
+        db_query("UPDATE {fusioncharts_cck_fields} SET width = %d, height = %d, rows = %d, cols = '%s', chart_type = '%s', settings = '%s', attributes = '%s', default_values = '%s' WHERE field_name = '%s'",
+              $widget['width'], $widget['height'], $widget['rows'], $widget['cols'], $widget['chart_type'], serialize($settings), serialize($attributes), serialize($default_values), $widget['field_name']);
+      }
+      else {
+        db_query("INSERT INTO {fusioncharts_cck_fields} (field_name, width, height, rows, cols, chart_type, settings, attributes, default_values) VALUES ('%s', %d, %d, %d, '%s', '%s', '%s', '%s', '%s')",
+               $widget['field_name'], $widget['width'], $widget['height'], $widget['rows'], $widget['cols'], $widget['chart_type'], serialize($settings), serialize($attributes), serialize($default_values));
+      }
+  }
+}
+
+function _fusioncharts_cck_matrix_headings($chart_type, $cols = NULL) {
+  $form = array();
+  switch ($chart_type) {
+    case 'Column 3D':
+    case 'Column 2D':
+    case 'Line 2D':
+    case 'Area 2D':
+    case 'Bar 2D':
+    case 'Pie 2D':
+    case 'Pie 3D':
+    case 'Doughnut 2D':
+    case 'Funnel Chart':
+      $form['settings']['cols'] = array(
+        '#type' => 'hidden',
+        '#value' => t('Value'), //'Label' is prepended to this list
+        '#required' => TRUE,
+      );
+      break;
+    case 'Multi-series Column 2D':
+    case 'Multi-series Column 3D':
+    case 'Multi-series Line 2D':
+    case 'Multi-series Bar 2D':
+    case 'Multi-series Area 2D':
+    case 'Stacked Column 3D':
+    case 'Stacked Column 2D':
+    case 'Stacked Bar 2D':
+    case 'Stacked Area 2D':
+      $form['settings']['cols'] = array(
+        '#type' => 'textarea',
+        '#default_value' => isset($cols) ? $cols : t('Value'), //'Label' is prepended to this list
+        '#title' => t('Series names'),
+        '#description' => t('Enter the names of each series, one per line'),
+        '#required' => TRUE,
+        '#weight' => 0,
+      );   
+      break;
+    case 'Multi-series Column 2D + Line - Dual Y Axis':
+    case 'Multi-series Column 3D + Line - Dual Y Axis':
+      $form['settings']['cols'] = array(
+        '#type' => 'textarea',
+        '#default_value' => isset($cols) ? $cols : t("P|Volume\nS|Dollars"), //'Label' is prepended to this list
+        '#title' => t('Series names'),
+        '#description' => t('Enter the names of each series, one per line.  start each line with P| to plot this on the primary axis and S| to plot this on the secondary axis.'),
+        '#weight' => 0,
+      );   
+      break;
+    case 'Candlestick Chart':
+    //not yet implemented
+      break;
+    case 'Gantt Chart':
+    //not yet implemented
+      break;
+  }
+  return $form;
+}
+
+function _fusioncharts_cck_widget_settings_width_validate($element, &$form_state) {
+  $value = $form_state['values']['width'];
+  if (!is_numeric($value) || intval($value) != $value || $value <= 0) {
+    form_error($element, t('"Width" must be a positive integer.'));
+  }
+}
+
+function _fusioncharts_cck_widget_settings_height_validate($element, &$form_state) {
+  $value = $form_state['values']['height'];
+  if (!is_numeric($value) || intval($value) != $value || $value <= 0) {
+    form_error($element, t('"Height" must be a positive integer.'));
+  }
+}
+
+function _fusioncharts_cck_widget_settings_rows_validate($element, &$form_state) {
+  $value = $form_state['values']['rows'];
+  if (!is_numeric($value) || intval($value) != $value || $value <= 0) {
+    form_error($element, t('"Rows" must be a positive integer.'));
+  }
+}
+
+function _fusioncharts_cck_widget_settings_columns_validate($element, &$form_state) {
+  $value = $form_state['values']['columns'];
+  if (!is_numeric($value) || intval($value) != $value || $value <= 0) {
+    form_error($element, t('"Columns" must be a positive integer.'));
+  }
+}
+
+/**
+ * Implementation of hook_widget().
+ */
+function fusioncharts_cck_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+  $field_presets = db_fetch_object(db_query("SELECT * FROM {fusioncharts_cck_fields} WHERE field_name = '%s'", $field['field_name']));
+  for ($i=1; $i<=$field_presets->rows; $i++) {
+    $rows[] = $i;
+  }
+  $cleaned = preg_replace('/[pPsS]+\|/', '', $field_presets->cols); //remove P| and S|
+  $header = explode("\n", $cleaned);
+  array_unshift($header, t('Label'));
+  $element = array(
+    '#type' => 'fc_matrixfield',
+    '#tree' => TRUE,
+    '#cols' => (array)$header,
+    '#rows' => (array)$rows,
+    '#default_value' => !empty($items['data']) ? $items['data'] : unserialize($field_presets->default_values),
+  );
+  return $element;
+}

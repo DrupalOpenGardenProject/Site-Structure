@@ -1,0 +1,11 @@
+.multi-series-dual #edit-matrix-matrix-0-0, 
+.multi-series-dual #edit-matrix-matrix-1-0,
+.multi-series-dual #edit-matrix-matrix-0-0-1, 
+.multi-series-dual #edit-matrix-matrix-1-0-1 {
+  display:none;
+}
+
+.multi-series #edit-matrix-matrix-0-0,
+.multi-series #edit-matrix-matrix-0-0-1 {
+  display:none;
+}

@@ -1,0 +1,13 @@
+; $Id: charts_system.info,v 1.4 2008/07/07 11:12:46 brmassa Exp $
+core            = "6.x"
+dependencies[]  = charts
+description     = "Use Charts for Drupal administration"
+name            = "Charts System"
+package         = "Charts"
+
+; Information added by drupal.org packaging script on 2010-07-02
+version = "6.x-1.0"
+core = "6.x"
+project = "charts"
+datestamp = "1278033305"
+

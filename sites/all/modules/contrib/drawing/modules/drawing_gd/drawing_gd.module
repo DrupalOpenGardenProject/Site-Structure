@@ -1,0 +1,474 @@
+<?php
+// $Id: drawing_gd.module,v 1.1.2.1 2009/05/09 05:56:28 danielb Exp $
+
+/**
+ * @file
+ * The GD toolkit module.
+ */
+
+/**
+ * Implementation of hook_drawing_method().
+ */
+function drawing_gd_drawing_method() {
+  return array('drawing_gd' => t('GD toolkit'));
+}
+
+/**
+ * A list of GD element types the drawing module should theme.
+ */
+function drawing_gd_element_list() {
+  return array(
+    'canvas',
+    'group',
+    'file',
+    'ellipse',
+    'circle',
+    'rectangle',
+    'line',
+    'polyline',
+    'polygon',
+    'path',
+    'text',
+  );
+}
+
+/**
+ * Implementation of hook_drawing_theme_alter().
+ */
+function drawing_gd_drawing_theme_alter(&$themes) {
+  $drawing_themes = drawing_gd_element_list();
+  foreach ($drawing_themes as $theme_name) {
+    $themes[] = 'drawing_'. $theme_name;
+  }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function drawing_gd_theme() {
+  $drawing_gd_themes = array();
+  $themes = drawing_gd_element_list();
+  foreach ($themes as $theme_name) {
+    $drawing_gd_themes['drawing_gd_drawing_'. $theme_name] = array(
+      'arguments' => array(
+        'element' => NULL,
+      ),
+    );
+  }
+  return $drawing_gd_themes;
+}
+
+/**
+ * Set and get the image using static caching.
+ */
+function drawing_gd_image($gd_id, $image = NULL) {
+  static $images;
+  if (!is_null($image)) {
+    $images[$gd_id] = $image;
+  }
+  elseif ($image === FALSE) {
+    imagedestroy($images[$gd_id]);
+  }
+  return $images[$gd_id];
+}
+
+/**
+ * Recursively pre render the canvas elements.
+ *
+ * @param $canvas
+ *   The canvas to process
+ * @return
+ *   The updated canvas.
+ */
+function drawing_gd_pre_render_canvas($canvas) {
+  foreach (element_children($canvas) as $child) {
+    // pass down #gd_id to all the child elements.
+    $canvas[$child]['#gd_id'] = $canvas['#gd_id'];
+    $canvas[$child] = drawing_gd_pre_render_canvas($canvas[$child]);
+  }
+  return $canvas;
+}
+
+/**
+ * Recursively transform the canvas elements.
+ *
+ * @param $elements
+ *   The elements to process
+ * @return
+ *   The updated elements.
+ */
+function drawing_gd_transform($elements) {
+  foreach (element_children($elements) as $child) {
+    // transform it here
+    $elements[$child] = drawing_gd_transform($elements[$child]);
+  }
+  return $elements;
+}
+
+/**
+ * Root canvas drawing function.
+ */
+function drawing_gd_drawing_canvas($element) {
+  // Include Drupal's GD functions for this request
+  include_once './includes/image.gd.inc';
+  // Include the color functions.
+  module_load_include('inc', 'drawing_gd', 'drawing_gd_color');
+  // Check for an existing image for this $canvas
+  $element['#rendered'] = db_fetch_array(db_query("SELECT gd_id, file FROM {drawing_gd_image} WHERE data = '%s'", serialize($element)));
+  // If there is no existing image, create one.
+  if (!$element['#rendered']) {
+    unset($element['#rendered']);
+    // Create an $image array for insertion into the database
+    $image['data'] = $element;
+    // If there is no #format set, default it to 'png'.
+    if (!$element['#format']) {
+      $element['#format'] = 'png';
+    }
+    // If there is no #directory and no #file, set the #directory because we will need it.
+    if (!$element['#directory'] && !$element['#file']) {
+      $element['#directory'] = file_directory_path() .'/drawing_gd';
+      // confirm the existence of directory
+      file_check_directory($element['#directory'], FILE_CREATE_DIRECTORY);
+    }
+    // If we can calculate the file already, do it, and add it to the $image
+    if ($element['#file'] || $element['#filename']) {
+      $element['#file'] = $element['#file'] ? $element['#file'] : $element['#directory'] .'/'. $element['#filename'];
+      $image['file'] = $element['#file'];
+    }
+    // Write an entry into the table, to get a 'gd_id'.
+    drupal_write_record('drawing_gd_image', $image);
+    $element['#gd_id'] = $image['gd_id'];
+    // Remove the $image['data'] to avoid writing it back to the database again.
+    unset($image['data']);
+    // Create gd image
+    $img = imagecreatetruecolor($element['#width'], $element['#height']);
+    // Fill gd image with blank image
+    imagealphablending($img, FALSE);
+    imagesavealpha($img, TRUE);
+
+    $blank = imagecreatefromstring(base64_decode(drawing_gd_blank()));
+    imagecopyresized($img, $blank, 0, 0, 0, 0, $element['#width'], $element['#height'], imagesx($blank), imagesy($blank));
+    /*
+    $new_image = ImageCreateTruecolor($element['#width'], $element['#height']);  
+    // Set a White & Transparent Background Color  
+    $bg = ImageColorAllocateAlpha($new_image, 255, 255, 255, 127); // (PHP 4 >= 4.3.2, PHP 5)  
+    ImageFill($new_image, 0, 0 , $bg);  
+    // Copy and merge  
+    ImageCopyMerge($img, $new_image, 0, 0, 0, 0, $element['#width'], $element['#height'], 100);
+    */
+
+    // Store gd image in a static cache
+    drawing_gd_image($element['#gd_id'], $img);
+    // Compose the file path if not done so already, and update the database with it.
+    if (!$element['#file']) {
+      $element['#filename'] = $element['#filename'] ? $element['#filename'] : $element['#gd_id'] .'.'. $element['#format'];
+      $element['#file'] = $element['#file'] ? $element['#file'] : $element['#directory'] .'/'. $element['#filename'];
+      $image['file'] = $element['#file'];
+      drupal_write_record('drawing_gd_image', $image, 'gd_id');
+    }
+    // Recursively pre_render the elements
+    $element = drawing_gd_pre_render_canvas($element);
+
+  }
+  else {
+    $element['#file'] = $element['#rendered']['file'];
+    unset($element['#pre_render']);
+    $element['#defaults_loaded'] = TRUE;
+    $element['#sorted'] = TRUE;
+    $element['#children'] = TRUE;
+  }
+  return $element;
+}
+
+/**
+ * Root canvas drawing theme function.
+ */
+function theme_drawing_gd_drawing_canvas($element) {
+  drupal_set_message("Warning: The Drawing GD toolkit is in development.", 'warning');
+  // if this element is already rendered, avoid creating a duplicate
+  if (!$element['#rendered']) {
+    // Read the GD resource from the static cache
+    $img = drawing_gd_image($element['#gd_id']);
+    // Use Drupal's GD toolkit functions to write it to file
+    image_gd_close($img, $element['#file'], $element['#format']);
+    // Destroy the GD resource from the static cache
+    drawing_gd_image($element['#gd_id'], FALSE);
+  }
+  // Output the file path of the saved file
+  return $element['#file'];
+}
+
+/**
+ * Group canvas drawing function.
+ */
+function drawing_gd_drawing_group($element) {
+  return drawing_gd_transform($element);
+}
+
+/**
+ * Standalone image embedding.
+
+function theme_drawing_gd_drawing_file($element) {
+  $dimensions = (isset($element['#height']) && ($element['#width'])) ?
+    ' width="'. $element['#width'] .'" height="'. $element['#height'] .'"' : '';
+  return '<object data="'. $element['#location'] .'" type="image/gd+xml" '. $dimensions .' >
+    <embed src="'. $element['#location'] .'" type="image/gd+xml" '. $dimensions .' /></object>';
+} */
+
+/**
+ * Return an ellipse.
+ */
+function theme_drawing_gd_drawing_ellipse($shape) {
+  $img = drawing_gd_image($shape['#gd_id']);
+  $cx1 = $shape['#cx1'] ? $shape['#cx1'] : $shape['#cx'];
+  $cy1 = $shape['#cy1'] ? $shape['#cy1'] : $shape['#cy'];
+  $width = $shape['#width'] ? $shape['#width'] : 2 * $shape['#rx'];
+  $height = $shape['#height'] ? $shape['#height'] : 2 * $shape['#ry'];
+  if ($shape['#stroke-width'] > 1) {
+    $shape['#stroke_func'] = $shape['#stroke_func'] ? $shape['#stroke_func'] : 'drawing_gd_stroked_ellipse';
+    $shape['#stroke_args'] = $shape['#stroke_args'] ? $shape['#stroke_args'] : array($shape['#stroke-width'] ? $shape['#stroke-width'] : 1);
+  }
+  $img = drawing_gd_shape($img, $shape, 'ellipse', array($cx1, $cy1, $width, $height));
+  drawing_gd_image($shape['#gd_id'], $img);
+}
+
+/**
+ * Return a circle.
+ */
+function theme_drawing_gd_drawing_circle($shape) {
+  $shape['#rx'] = $shape['#rx'] ? $shape['#rx'] : $shape['#r'];
+  $shape['#ry'] = $shape['#ry'] ? $shape['#ry'] : $shape['#r'];
+  return theme('drawing_gd_drawing_ellipse', $shape);
+}
+
+/**
+ * Return a rectangle
+ */
+function theme_drawing_gd_drawing_rectangle($shape) {
+  $img = drawing_gd_image($shape['#gd_id']);
+  $cx1 = $shape['#cx1'] ? $shape['#cx1'] : $shape['#cx'];
+  $cy1 = $shape['#cy1'] ? $shape['#cy1'] : $shape['#cy'];
+  $cx2 = $shape['#cx2'] ? $shape['#cx2'] : $cx1 + $shape['#width'];
+  $cy2 = $shape['#cy2'] ? $shape['#cy2'] : $cx2 + $shape['#height']; 
+  $img = drawing_gd_shape($img, $shape, 'rectangle', array($cx1, $cy1, $cx2, $cy2));
+  drawing_gd_image($shape['#gd_id'], $img);
+}
+
+/**
+ * Return a line
+ * obligatory elements: #cx1, #cy1, #cx2, #cy2.
+ */
+function theme_drawing_gd_drawing_line($shape) {
+  $img = drawing_gd_image($shape['#gd_id']);
+  $opacity = drawing_gd_opacity($shape['#opacity']);
+  $fill = drawing_gd_color($shape['#fill']);
+  $color = imagecolorallocatealpha($img, $fill['r'], $fill['g'], $fill['b'], $opacity);
+  imageline($img, $shape['#points']['#cx1'], $shape['#points']['#cy1'], $shape['#points']['#cx2'], $shape['#points']['#cy2'], $color);
+  drawing_gd_image($shape['#gd_id'], $img);
+}
+
+/**
+ * Return a polyline
+ * Shape has a special element: $shape['#points'] = array(),
+ * this contains the coordinate pairs for each point.
+
+function theme_drawing_gd_drawing_polyline($shape) {
+  $points = '';
+  $polyline['id'] = drawing_gd_get_value('#id', 'id', $shape);
+  $polyline['class'] = drawing_gd_get_value('#class', 'class', $shape);
+  $attributes = implode($polyline, ' ');
+  foreach ($shape['#points'] as $point => $crds) {
+    // output form: cx1,cy1 cx2,cy2 cx3,cx3 ... 
+    $points .= $crds['#cx'] .','. $crds['#cy'] .' '; // the number of the point is $point
+  }
+  $output = '<gd:polyline points="'. $points .'" '. $attributes . drawing_gd_style($shape) .'/>';
+  $output = drawing_gd_anchor($shape, $output);
+  return $output;
+} */
+
+/**
+ * Return a polygon
+ * $shape['#points'] = array( int N => array( '#cx' => 'int', '#cy' => 'int')); where N
+ * is the number of the given point.
+
+function theme_drawing_gd_drawing_polygon($shape) {
+  $polygon['id']  = drawing_gd_get_value('#id', 'id', $shape);
+  $polygon['class']  = drawing_gd_get_value('#class', 'class', $shape);
+  $attributes = implode($polygon, ' ');
+
+  $points = '';
+  foreach ($shape['#points'] as $point => $crds) {
+    // output form: cx1,cy1 cx2,cy2 cx3,cx3 ... 
+    $points .= $crds['#cx'] .','. $crds['#cy'] .' '; // the number of the point is $point
+  }
+  $output = '<gd:polygon points="'. $points .'" '. $attributes . drawing_gd_style($shape) .'/>';
+  $output = drawing_gd_anchor($shape, $output);
+  return $output;
+} */
+
+/**
+ * Return a path
+ * point definition can be explicit or implicit.
+
+function theme_drawing_gd_drawing_path($shape) {
+  $points = '';
+  $output = '';
+  $id = drawing_gd_get_value('#id', 'id', $shape);
+  $class = drawing_gd_get_value('#class', 'class', $shape);
+  if (!isset($shape['#explicit']) || $shape['#explicit'] == FALSE) {
+    // not having '#explicit' set means we define the points via the API 
+    foreach ($shape['#points'] as $point => $attributes) { // $points = int N
+      $modifier = $attributes['#modifier'];
+      $points .= ((isset($modifier) && $modifier != 'z') ? $modifier : '' ) .
+        $attributes['#cx'] .','. $attributes['#cy'] .
+        (($modifier == 'z') ? $modifier : '') .' ';
+    }
+  }
+  else { // meaning we have explicit point declaration, e.g from a drawing program
+    // Warning, no validation checking here!
+    $points = $shape['#points'];
+  }
+  $output = drawing_gd_anchor($shape, $output);
+  $output = '<gd:path '. $id .' d="'. $points .'" '. drawing_gd_style($shape) .'/>';
+  return $output;
+} */
+
+/**
+ * Return text.
+
+function theme_drawing_gd_drawing_text($shape) {
+  $text = array();
+  $text['id'] = drawing_gd_get_value('#id', 'id', $shape);
+  $text['class'] = drawing_gd_get_value('#class', 'class', $shape);
+  $text['position'] = drawing_gd_get_position($shape);
+  $text['rotation'] = drawing_gd_get_value('#rotate', 'rotate', $shape);
+  $text['textlength'] = drawing_gd_get_value('#width', 'textLength', $shape);
+  $attributes = implode($text, ' ');
+  $attributes = $attributes . drawing_gd_get_transformation($shape);
+  $output = '<gd:text '. $attributes . drawing_gd_style($shape) .'>'. $shape['#value'] .'</gd:text>';
+  $output = drawing_gd_anchor($shape, $output);
+  return $output;
+} */
+
+
+/**
+ *  Get a string reprenstation of a blank PNG image.
+ *
+ *  @return
+ *    String representing a blank image in PNG format.
+ */
+function drawing_gd_blank() {
+  return "iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29m"
+        ."dHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAADqSURBVHjaYvz//z/DYAYAAcTEMMgBQAANegcCBNCg"
+        ."dyBAAA16BwIE0KB3IEAADXoHAgTQoHcgQAANegcCBNCgdyBAAA16BwIE0KB3IEAADXoHAgTQoHcgQAAN"
+        ."egcCBNCgdyBAAA16BwIE0KB3IEAADXoHAgTQoHcgQAANegcCBNCgdyBAAA16BwIE0KB3IEAADXoHAgTQ"
+        ."oHcgQAANegcCBNCgdyBAAA16BwIE0KB3IEAADXoHAgTQoHcgQAANegcCBNCgdyBAAA16BwIE0KB3IEAA"
+        ."DXoHAgTQoHcgQAANegcCBNCgdyBAgAEAMpcDTTQWJVEAAAAASUVORK5CYII=";
+}
+
+/**
+ *  Create and write an animated gif to the file system based on source gifs.
+ *
+ *  @param $file
+ *    Output path.
+ *  @param $sources
+ *     Array of filenames or binary data for gif frames.
+ *  @param $delays
+ *     Array of integers indicating delay times for each
+ *     Leave blank to default each frame to 5 miliseconds.
+ *  @param $loops
+ *     Number of times to loop the animation (integer).
+ *  @param $disposal
+ *     Method of frame removal.
+ *  @param $transparent
+ *    A color to use for transparency when composing animation.
+ *    Can be english html/x11 color, hex color, or rgb(r, g, b) string.
+ *  @param $mode
+ *    'url' if supplying filenames in $sources, 'bin' if supplying binary data.
+ *  @return
+ *    TRUE or FALSE whether the file was created successfully.
+ */
+function drawing_gd_animated_gif($file, $sources, $delays = NULL, $loops = NULL, $disposal = NULL, $transparent = NULL, $mode = NULL) {
+  module_load_include('inc', 'drawing_gd', 'drawing_gd_gif89a');
+  if (is_null($delays)) {
+    for ($i = 0; $i <= count($sources); $i++) {
+      $delays[] = 5;
+    }
+  }
+  $loops = is_null($loops) ? 0 : $loops;
+  $disposal = is_null($disposal) ? 2 : $disposal;
+  if (is_null($transparent)) {
+    // ???
+  }
+  $mode = is_null($mode) ? 'url' : $mode;
+  $trans = drawing_gd_color($transparent);
+  $gif89a = new drawing_gd_gif98a(
+    $sources,
+    $delays,
+    $loops,
+    $disposal,
+    $trans['r'], 
+    $trans['g'], 
+    $trans['b'],
+    $mode
+  );
+  if (!$gif89a->error) {
+    if (fwrite(fopen($file, "wb"), $gif89a->get_animation())) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ *  Convert opacity in the range 0-1 to opacity in the range 127-0.
+ *
+ */
+function drawing_gd_opacity($opacity) {
+  return !is_null($opacity) ? (1 - $opacity) * 127 : 0;
+}
+
+/**
+ * Helps draw shapes.
+ */
+function drawing_gd_shape($img, $shape, $shape_type, $args) {
+  $opacity = drawing_gd_opacity($shape['#opacity']);
+  $fill_func = $shape['#fill_func'] ? $shape['#fill_func'] : 'imagefilled'. $shape_type;
+  if ($shape['#fill'] && function_exists($fill_func)) {
+    $fill_opacity = $shape['#fill-opacity'] ? drawing_gd_opacity($shape['#fill-opacity']) : $opacity;
+    $fill = drawing_gd_color($shape['#fill']);
+    $fill_color = imagecolorallocatealpha($img, $fill['r'], $fill['g'], $fill['b'], $fill_opacity);
+    $fill_args = array_merge(array($img), $args, array($fill_color));
+    if ($shape['#fill_args']) {
+      $fill_args = array_merge($fill_args, $shape['#fill_args']);
+    }
+    call_user_func_array($fill_func, $fill_args);
+  }
+  $stroke_func = $shape['#stroke_func'] ? $shape['#stroke_func'] : 'image'. $shape_type;
+  if ($shape['#stroke'] && function_exists($stroke_func)) {
+    $stroke_opacity = $shape['#stroke-opacity'] ? drawing_gd_opacity($shape['#stroke-opacity']) : $opacity;
+    $stroke = drawing_gd_color($shape['#stroke']);
+    $stroke_color = imagecolorallocatealpha($img, $stroke['r'], $stroke['g'], $stroke['b'], $stroke_opacity);
+    $stroke_width = $shape['#stroke-width'] ? $shape['#stroke-width'] : 1;
+    imagesetthickness($img, $stroke_width);
+    $stroke_args = array_merge(array($img), $args, array($stroke_color));
+    if ($shape['#stroke_args']) {
+      $stroke_args = array_merge($stroke_args, $shape['#stroke_args']);
+    }
+    call_user_func_array($stroke_func, $stroke_args);
+  }
+  return $img;
+}
+
+/**
+ * Helps draw stroked ellipses.
+ */
+function drawing_gd_stroked_ellipse($img, $cx, $cy, $width, $height, $color, $stroke_width) {
+  $line = 0;
+  while ($line < $stroke_width) {
+    imageellipse($img, $cx, $cy, $width, $height, $color);
+    $line++;
+    $width--;
+    $height--;
+  }
+} 

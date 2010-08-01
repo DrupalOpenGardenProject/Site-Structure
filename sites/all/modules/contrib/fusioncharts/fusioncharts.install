@@ -1,0 +1,24 @@
+<?php
+// $Id: fusioncharts.install,v 1.5.2.3 2009/03/05 08:03:39 aaron1234nz Exp $ 
+
+/**
+ * @file
+ * Installation of the Fusion Charts module
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function fusioncharts_install() {    
+
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function fusioncharts_uninstall() {
+  //these are historical
+  variable_del('fusioncharts');
+  variable_del('fusioncharts-defset');
+  variable_del('fusioncharts-defattr');
+}

@@ -1,0 +1,252 @@
+<?php
+//$Id: fusioncharts_webform.module,v 1.1.2.2 2008/12/16 07:33:43 aaron1234nz Exp $
+ 
+/**
+* Implementation of hook_menu().
+*/  
+function fusioncharts_webform_menu(){
+  $items = array();
+  $items['node/%webform_menu/webform-results/chart'] = array(
+    'title' => 'Chart',
+    'page callback' => 'webform_results_chart',
+    'page arguments' => array(1),
+    'access callback' => 'user_access',
+    'access arguments' => array('access webform results'),
+    'weight' => 8,
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+/**
+ * Create a table containing all submitted values for a webform node.
+ */
+function webform_results_chart($node) {
+  include_once(drupal_get_path('module', 'webform') .'/webform_submissions.inc');
+  // Load Components.
+  webform_load_components();
+
+  // Get all the submissions for the node.
+  $submissions = webform_get_submissions($node->nid, $header);
+
+  return theme('webform_results_chart', $node, $node->webform['components'], $submissions);
+}
+
+/**
+ * Theme the results table displaying all the submissions for a particular node.
+ *
+ * @param $node
+ *   The node whose results are being displayed.
+ * @param $components
+ *   An associative array of the components for this webform.
+ * @param $submissions
+ *   An array of all submissions for this webform.
+ */
+function theme_webform_results_chart($node, $components, $submissions) {
+  module_load_include('module', 'fusioncharts');
+  foreach ($submissions as $sid => $submission) {
+    // Generate a cell for each component.
+    foreach ($node->webform['components'] as $component) {
+      $chart_function = "_webform_chart_data_". $component['type'];
+      if (function_exists($chart_function) ) {
+        $submission_output = $chart_function($submission->data[$component['cid']], $component);
+        if ($submission_output !== NULL) {
+          $titles[$component['cid']] = $component['name'];
+          if (is_array($submission_output)) {
+            $multiseries[$component['cid']] = TRUE;
+            foreach ($submission_output as $group => $value) {
+               $data[$component['cid']][$group][] = $value;
+            }
+          }
+          else {
+            $data[$component['cid']][] = $submission_output;
+          }
+        }
+      }
+    }
+  }
+  // count uniques values and create a chart
+  foreach ($data as $cid => $set) {
+    unset($result);
+    if ($multiseries[$cid]) {
+      foreach ($set as $key => $value) {
+        foreach ($value as $this_value) {
+          $combined[$key][$this_value]++;
+        }
+      }
+      foreach ($combined as $group => $value) {
+        foreach ($value as $series => $amount) {
+          $result[] = array($series, $group, $amount);
+        }
+      }
+      $object->data = $result;
+      $object->chart_type = 'Multi-series Column 3D';
+      $object->settings  = array('caption' => $titles[$cid], 'decimalPrecision' => 0);
+      $object->attributes = array();
+      $object->width = 300;
+      $object->height = 300;
+      $output .= fusioncharts_render($object);    
+    }
+    else {
+      $combined = array_count_values($set);
+      foreach ($combined as $series => $amount) {
+        $result[] = array($series, $amount);
+      }
+      $object->data = $result;
+      $object->chart_type = 'Column 3D';
+      $object->settings  = array('caption' => $titles[$cid], 'decimalPrecision' => 0);
+      $object->attributes = array();
+      $object->width = 300;
+      $object->height = 300;
+      $output .= fusioncharts_render($object);
+    }
+  }
+  
+  if (count($data) == 0) {
+    return t('There are no submissions for this form. <a href="!url">View this form</a>.', array('!url' => url('node/'. $node->nid)));
+  }
+  return $output;
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function fusioncharts_webform_theme() {
+  $theme = array(
+    'webform_results_chart' => array(
+      'arguments' => array('node' => NULL, 'components' => NULL, 'submissions' => NULL, 'node' => NULL),
+    ),
+  );
+  return $theme;
+}
+
+
+/**
+ * Return the result of this component's submission for display in a chart. The
+ * output of this function will be displayed under the "results" tab then "chart".
+ * @param $data
+ *   An array of information containing the submission result, directly
+ *   correlating to the webform_submitted_data database schema
+ * @return
+ *   Textual output formatted for human reading.
+ */
+function _webform_chart_data_date($data) {
+  if (strlen($data['value']['0']) > 0 && strlen($data['value']['1']) > 0 && strlen($data['value']['2']) > 0) {
+    return check_plain($data['value']['0'] ."/". $data['value']['1'] ."/". $data['value']['2']);
+  }
+  else {
+    return "";
+  }
+}
+
+/**
+ * Return the result of this component's submission for display in a chart. The
+ * output of this function will be displayed under the "results" tab then "chart".
+ * @param $data
+ *   An array of information containing the submission result, directly
+ *   correlating to the webform_submitted_data database schema
+ * @return
+ *   Textual output formatted for human reading.
+ */
+function _webform_chart_data_email($data) {
+  return check_plain(empty($data['value']['0']) ? "" : $data['value']['0']);
+}
+
+
+/**
+ * Return the result of this component's submission for display in a chart. The
+ * output of this function will be displayed under the "results" tab then "chart".
+ * @param $data
+ *   An array of information containing the submission result, directly
+ *   correlating to the webform_submitted_data database schema
+ * @return
+ *   Textual output formatted for human reading.
+ */
+function _webform_chart_data_hidden($data) {
+  return check_plain(empty($data['value']['0']) ? "" : $data['value']['0']);
+}
+
+/**
+ * Return the result of this component's submission for display in a chart. The output of this function will be displayed under the "results" tab then "chart"
+ * @param $data An array of information containing the submission result, directly correlating to the webform_submitted_data database schema
+ * @returns Textual output formatted for human reading.
+ **/
+function _webform_chart_data_grid($data, $component) {
+  $questions = array_values(_webform_grid_options($component['extra']['questions']));
+  // Set the value as a single string.
+  if (is_array($data['value'])) {
+    foreach ($data['value'] as $item => $value) {
+      if ($value !== '0') {
+        $output[$questions[$item]] = check_plain($value);
+      }
+    }
+  }
+  else {
+    $output = check_plain($value);
+  }
+  return $output;
+}
+
+
+
+/**
+ * Return the result of this component's submission for display in a chart. The
+ * output of this function will be displayed under the "results" tab then "chart".
+ * @param $data
+ *   An array of information containing the submission result, directly
+ *   correlating to the webform_submitted_data database schema
+ * @return
+ *   Textual output formatted for human reading.
+ */
+function _webform_chart_data_select($data) {
+  // Set the value as a single string.
+  if (is_array($data['value'])) {
+    foreach ($data['value'] as $value) {
+      if ($value !== '0') {
+        $output .= check_plain($value) .' ';
+      }
+    }
+  }
+  else {
+    $output = check_plain(empty($data['value']['0']) ? "" : $data['value']['0']);
+  }
+  return $output;
+}
+
+/**
+ * Return the result of this component's submission for display in a chart. The
+ * output of this function will be displayed under the "results" tab then "chart".
+ * @param $data
+ *   An array of information containing the submission result, directly
+ *   correlating to the webform_submitted_data database schema
+ * @return
+ *   Textual output formatted for human reading.
+ */
+function _webform_chart_data_textfield($data) {
+  return check_plain(empty($data['value']['0']) ? "" : $data['value']['0']);
+}
+
+
+/**
+ * Return the result of this component's submission for display in a chart. The
+ * output of this function will be displayed under the "results" tab then "chart".
+ * @param $data
+ *   An array of information containing the submission result, directly
+ *   correlating to the webform_submitted_data database schema.
+ * @return
+ *   Textual output formatted for human reading.
+ */
+function _webform_chart_data_time($data, $component) {
+  if (strlen($data['value']['0']) > 0 && strlen($data['value']['1']) > 0) {
+    $timestamp = strtotime($data['value']['0'] .":". $data['value']['1'] . $data['value']['2']);
+    if ($component['extra']['hourformat'] == '24-hour') {
+      return check_plain(date("H:i", $timestamp));
+    }
+    else {
+      return check_plain(date("g:i a", $timestamp));
+    }
+  }
+  else {
+    return "";
+  }
+}

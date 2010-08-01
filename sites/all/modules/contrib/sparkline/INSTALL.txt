@@ -1,0 +1,6 @@
+INSTALL REQUIREMENTS
+--------------------
+1.  Requires the PHP Sparkline graphic library to be somewhere in the PHP
+    include path - http://sparkline.org/.
+2.  Requires the PHP binary to have been built with the GD library, which is
+    used by the PHP Sparkline library for generating the sparklines images.

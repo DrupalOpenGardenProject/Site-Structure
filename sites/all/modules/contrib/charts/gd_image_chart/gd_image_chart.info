@@ -1,0 +1,14 @@
+; $Id: gd_image_chart.info,v 1.1.2.1 2010/07/01 07:10:58 brmassa Exp $
+core            = "6.x"
+dependencies[]  = charts
+description     = "Use GD library to draw charts on your site. This provider generates images and stores them in your sites default path, be sure to consult the admin page after installation"
+name            = "GD Image Chart"
+package         = "Charts"
+
+
+; Information added by drupal.org packaging script on 2010-07-02
+version = "6.x-1.0"
+core = "6.x"
+project = "charts"
+datestamp = "1278033305"
+

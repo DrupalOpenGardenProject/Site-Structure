@@ -1,0 +1,713 @@
+<?php
+// $Id: fusioncharts.module,v 1.14.2.11 2009/04/21 10:19:23 aaron1234nz Exp $ 
+/**
+ * @file
+ * Provides integration between the Fusion Charts free package and Drupal
+ * For this module to work, the SWF files need to be downloaded from infosoft
+ * as per the readme.txt
+ *
+ * This module contains up the API and chart generation functions.
+ * To create a chart call theme('fusioncharts', $info); where $info
+ * Is an object of settings.  See API.txt for further instructions.
+ */
+
+//Create a new element type for grid-based data
+include_once(drupal_get_path('module', 'fusioncharts') .'/matrix.inc');
+
+/**
+ * Implementation of hook_menu().
+ */
+function fusioncharts_menu() {
+  $items['fusioncharts/data'] = array(
+    'page callback' => 'fusioncharts_data_jscallback',
+    'type' => MENU_CALLBACK,
+    'access arguments' => array('access content'),
+  ); 
+  return $items;
+}
+
+/**
+ * XML generation from data
+ * This function is called by fusioncharts_render and by fusioncharts_data_jscallback initiated by the javascript onclick action.
+ *
+ * @param string $jsid Name to be used for the id attribute in the DOM (used for javascript manipulation)
+ * @param string $callbackfn The name of the function which holds the chart definition or object of the callback data
+ * @param array $args Any further arguments recieved by the function.  These arguments will be passed to the callback function. optional
+ * @return the XML data to draw the chart
+ */
+
+function fusioncharts_data() {
+  $args = func_get_args();
+  $jsid = array_shift($args);
+  $param = array_shift($args);
+  if (is_object($param)) {
+    $callback_data = $param;
+  }
+  else {
+    $callbackfn = strtolower($param);
+    $callback_data = call_user_func($callbackfn .'_fusionchart_callback', $args);
+  }
+  
+  if (isset($callback_data->query)) {
+    $data = fusioncharts_prepare_data_query($callback_data);
+  }
+  else {
+    $data = $callback_data->data;
+  }
+  $data = (array)$data;
+  
+  //populate some colors into attributes if none are set
+  if (!isset($callback_data->attributes['color'])) {
+    $attributes  = fusioncharts_settings('fusioncharts-defattr');
+    $colors = array_values($attributes['color']);
+    foreach ($colors as $color) {
+      if (substr($color, 0, 1) == '#' && strlen($color) == 7) { //remove the # from the color
+        $callback_data->attributes['color'][] =  substr($color, 1);
+      }
+    }
+  }
+  
+  $str_xml = "\n<graph";
+  foreach ((array)$callback_data->settings as $key => $value) {
+    if ($value === '') { //exclude unset keys
+    }
+    else {
+      $str_xml .= " ". $key ."='". fusioncharts_entities($value) ."'";
+    }
+  }
+  $str_xml .= ">\n";
+  //build the data structure
+  switch ($callback_data->chart_type) {
+    case 'Column 3D':
+    case 'Column 2D':
+    case 'Line 2D':
+    case 'Area 2D':
+    case 'Bar 2D':
+    case 'Pie 2D':
+    case 'Pie 3D':
+    case 'Doughnut 2D':
+    case 'Funnel Chart':
+      $str_xml .= _fusioncharts_data_single($data, $callback_data->attributes, $jsid);
+      break;
+      
+    case 'Multi-series Column 2D':
+    case 'Multi-series Column 3D':
+    case 'Multi-series Line 2D':
+    case 'Multi-series Bar 2D':
+    case 'Multi-series Area 2D':
+    case 'Stacked Column 3D':
+    case 'Stacked Column 2D':
+    case 'Stacked Bar 2D':
+    case 'Stacked Area 2D':
+      $str_xml .= _fusioncharts_data_multi($data, $callback_data->attributes, $jsid);
+      break;
+      
+    case 'Multi-series Column 2D + Line - Dual Y Axis':
+    case 'Multi-series Column 3D + Line - Dual Y Axis':
+      $str_xml .= _fusioncharts_data_combination($data, $callback_data->attributes, $jsid);
+      break;
+      
+    case 'Candlestick Chart':
+      break;
+           
+    case 'Gantt Chart':
+      break;
+  }
+  if (isset($callback_data->attributes['trendline'])) {
+    $str_xml .= "<trendlines>\n";
+    if (is_array($callback_data->attributes['trendline'][0])) {
+      foreach ($callback_data->attributes['trendline'] as $line) {
+        $attrs = '';
+        foreach ($line as $atrib => $value) {
+          $attrs .= "$atrib='$value'";
+        }
+        $str_xml .= "<line $attrs />\n";
+      }
+    }
+    else {
+      foreach ($callback_data->attributes['trendline'] as $atrib => $value) {
+        $attrs .= "$atrib='$value' ";
+      }
+      $str_xml .= "<line $attrs />\n";
+    }
+    $str_xml .= "</trendlines>\n";
+  }
+  $str_xml .= "</graph>\n";
+  $callback_data->xml = $str_xml;
+  return $callback_data;
+}
+
+/**
+ *  Menu callback for the javascript onclick action (AJAX)
+ * This function passes values into fusioncharts_data and echos back the result
+ *
+ * @param string $jsid Name to be used for the id attribute in the DOM (used for javascript manipulation)
+ * @param string $callbackfn The name of the function which holds the chart definition
+ * @param args $args Data returned by the onclick action - this can be used to identify which bar was clicked.
+ * @return string the XML data to the AJAX call
+ */
+function fusioncharts_data_jscallback() {
+  $args = func_get_args();
+  $jsid = array_shift($args);
+  $callbackfn = array_shift($args);
+  $callback_data = fusioncharts_data($jsid, $callbackfn, $args);
+  echo $callback_data->xml;
+}
+
+/**
+ *  Translate data from a query into an array
+ *
+ * @param object $callback data
+ * @return array data
+ */
+function fusioncharts_prepare_data_query($callback_data) {
+  $result = db_query($callback_data->query);
+  if (!$result) {
+    drupal_set_message("No data returned from the query '{$callback_data->query}'");
+    exit();
+  }
+  $i=0;
+  switch ($callback_data->chart_type) {
+    case 'Column 3D':
+    case 'Column 2D':
+    case 'Line 2D':
+    case 'Area 2D':
+    case 'Bar 2D':
+    case 'Pie 2D':
+    case 'Pie 3D':
+    case 'Doughnut 2D':
+    case 'Funnel Chart':
+      while ($row = db_fetch_object($result)) {
+        $data[$i][0] = $row->name;
+        $data[$i][1] = $row->value;
+        $i++;
+      }
+      break;
+  
+    case 'Multi-series Column 2D':
+    case 'Multi-series Column 3D':
+    case 'Multi-series Line 2D':
+    case 'Multi-series Bar 2D':
+    case 'Multi-series Area 2D':
+    case 'Stacked Column 3D':
+    case 'Stacked Column 2D':
+    case 'Stacked Bar 2D':
+    case 'Stacked Area 2D':
+      while ($row = db_fetch_object($result)) {
+        $data[$i][0] = $row->category;
+        $data[$i][1] = $row->series;
+        $data[$i][2] = $row->value;
+        $i++;
+      }
+      break;
+  
+    case 'Multi-series Column 2D + Line - Dual Y Axis':
+    case 'Multi-series Column 3D + Line - Dual Y Axis':
+      while ($row = db_fetch_object($result)) {
+        $data[$i][0] = $row->category;
+        $data[$i][1] = $row->series;
+        $data[$i][2] = $row->axis;
+        $data[$i][3] = $row->value;
+        $i++;
+      }
+      break;
+  
+    case 'Candlestick Chart':
+      //probably too complex for a simple query
+      break;
+
+    case 'Gantt Chart':
+      //probably too complex for a simple query
+      break;
+  }     
+  return (array)$data;
+}
+
+/**
+ * Data generation for single series charts
+ * This function is called by fusioncharts_data
+ *
+ * @param array $data Data to be converted to XML
+ * @param array $attributes See api.txt for details
+ * @param string $jsid javascript id
+ * @return string XML 
+ */
+function _fusioncharts_data_single($data, $attributes = array(), $jsid = NULL) {
+  //validate and reform the data as necessary
+  //for single series charts the validation needed is:
+  // * that the value column is numeric
+  // * that there is a value for each series
+  
+  foreach ($data as $column) {
+    if ($column[0] != '' && is_numeric($column[1])) {
+      $clean_data[] = $column;
+    } 
+    elseif ($column[0] != '' && !is_numeric($column[1])) {
+      drupal_set_message(t('Data row @row did not validate.  Please check it', array('@row' => $column[0])));
+    }
+  }
+  //build the xml
+  $c = 0;
+  $str_xml = '';
+  foreach ($clean_data as $column) {
+    unset($link);
+    if (isset($attributes['callback'])) {
+      $link = "link='JavaScript:fusioncharts_clickbar(&quot;$jsid&quot;, &quot;{$attributes['callback']}&quot;,&quot;{$column[0]}&quot;)'";
+    }
+    if (isset($attributes['link'][$column[0]])) {
+      $link = "link='". urlencode($attributes['link'][$column[0]]) ."'";
+    }
+    if (isset($attributes['color'][$c])) {
+      $color = "color='{$attributes['color'][$c]}'";
+    }
+    if (isset($attributes['hoverText'][$c])) {
+      $hovertext = "hoverText='". fusioncharts_entities(trim($attributes['hoverText'][$c])). "'";
+    }
+    if (isset($attributes['alpha'][$column[0]])) {
+      $alpha = "alpha='{$attributes['alpha'][$column[0]]}'";
+    }
+    if (isset($attributes['showName'][$column[0]])) {
+      $showname = "showName='{$attributes['showName'][$column[0]]}'";
+    }
+    $str_xml .= "<set name='". fusioncharts_entities(trim($column[0])) ."' value='{$column[1]}' $color $link $hovertext $alpha $showname />\n";
+    $c++;
+  }
+  return $str_xml;
+}
+/**
+ * Data generation for multi series charts
+ * This function is called by fusioncharts_data
+ *
+ * @param array $data Data to be converted to XML
+ * @param array $attributes See api.txt for details
+ * @param string $jsid javascript id
+ * @return string XML 
+ */
+function _fusioncharts_data_multi($data, $attributes = array(), $jsid=NULL) {
+  //validate and reform the data as necessary
+  //for multi series charts the validation needed:
+  // * that the value column is numeric
+  // * that there is a value for each series
+  // * that there is the same number of series for each category.
+  foreach ($data as $column) {
+    $series[$column[0]]++;
+    $categories[$column[1]]++;
+    $value[$column[1]][$column[0]] = $column[2];
+    $value_count++;
+    if (!is_numeric($column[2])) {
+      $numeric_error = TRUE;
+    }
+  }
+  if ((count($series) * count($categories)) != $value_count || $numeric_error == TRUE) {
+    drupal_set_message(t('The data for this chart is incomplete or contains an error.  Graph cannot be drawn.'), 'error');//error - some data missing
+    return;
+  }
+  else {
+    //reconstruct the data so its in the right form
+    foreach($series as $s => $d) {
+      foreach($categories as $category => $d)  {
+        $clean_data[] = array($s, $category, $value[$category][$s]);
+      }
+    }
+  }
+  unset($series, $categories, $value);
+  //build the xml
+  $c=0;
+  $str_xml = '';
+    foreach ($clean_data as $column) {
+      $series[] = $column[0];
+      $categories[] = $column[1];
+      $value[] = $column[2];
+    }
+    $str_xml .= "<categories>\n";
+    $category = array_unique($categories);
+    if (end($category) == '') {
+      array_pop($category);
+    }
+    $category_count = count($category);
+    $total_results = count($value);
+    foreach ($category as $this_category) {
+      $str_xml .= "<category name='". fusioncharts_entities(trim($this_category)) ."' />\n";
+    }
+    $str_xml .= "</categories>\n"; 
+    for ($i=0; $i<$total_results; $i+=$category_count) {
+      if ($series[$i] != '') {
+        if (isset($attributes['color'][$c])) {
+          $color = "color='{$attributes['color'][$c]}'";
+        }
+        $str_xml .= "<dataset seriesName='". fusioncharts_entities(trim($series[$i])) ."' $color>\n";
+        for ($j=$i; $j<($i+$category_count); $j++) {
+          unset($link);
+          if ($value[$j] != '') {
+            if (isset($attributes['callback'])) {
+              $link = "link='JavaScript:fusioncharts_clickbar(&quot;$jsid&quot;, &quot;{$attributes['callback']}&quot;, &quot;{$series[$j]}&quot;, &quot;{$categories[$j]}&quot;)'";
+            }            
+            if (is_string($attributes['link'][$series[$j]])) {
+              $link = "link='". urlencode($attributes['link'][$series[$j]]) ."'";
+            }
+            elseif (isset($attributes['link'][$series[$j]][$categories[$j]])) {
+              $link = "link='". urlencode($attributes['link'][$series[$j]][$categories[$j]]) ."'";
+            }
+            $str_xml .= "<set value='{$value[$j]}' $link />\n";
+          }
+        }
+      $str_xml .= "</dataset>\n";
+      $c++;
+      }
+    }
+  return $str_xml;
+}
+
+/**
+ * Data generation for combination charts
+ * This function is called by fusioncharts_data
+ *
+ * @param array $data Data to be converted to XML
+ * @param array $attributes See api.txt for details
+ * @param string $jsid javascript id
+ * @return string XML 
+ */
+function _fusioncharts_data_combination($data, $attributes = array(), $jsid=NULL) {
+  //validate and reform the data as necessary
+  //for multi combination charts the validation needed is:
+  // * that the value column is numeric
+  // * that there is a value for each series
+  // * that the axis contains either P or S
+  // * that the axis must not cross over between categories
+  // * that there is the same number of series for each category.
+  foreach ($data as $column) {
+    $series[$column[0]]++;
+    $categories[$column[1]]++;
+    $axis[$column[1]][$column[0]] = strtoupper($column[2]);
+    $value[$column[1]][$column[0]] = $column[3];
+    $value_count++;
+    $axis_crossover[strtoupper($column[2]) .'-'. $column[0]]++;
+    if (!is_numeric($column[3])) {
+      $numeric_error = TRUE;
+    }
+    if (!(strtoupper($column[2]) == 'S' || (strtoupper($column[2]) == 'P'))) {
+      $axis_error = TRUE;
+    }
+    if (count($axis_crossover) != count($series)) {
+      $axis_error = TRUE;
+    }
+  }
+
+  if ((count($series) * count($categories)) != $value_count || $numeric_error == TRUE || $axis_error == TRUE) {
+    drupal_set_message(t('The data for this chart is incomplete or contains an error.  Graph cannot be drawn.'), 'error');//error - some data missing
+    return;
+  }
+  else {
+    //reconstruct the data so its in the right form
+    foreach ($series as $s => $d)  {
+      foreach ($categories as $category => $d){
+        $clean_data[] = array($s, $category, $axis[$category][$s], $value[$category][$s]);
+      }
+    }
+  }
+  unset($series, $categories, $axis, $value, $category);
+  //build xml
+  $c=0;
+  $str_xml = '';
+    foreach ($clean_data as $column) {
+      if ($column[2] == 'S') {
+        $category[] = $column[1];
+      }
+      else {
+        $categories[] = $column[1];
+        $category[] = $column[1];
+      }
+      $series[] = $column[0];
+      $axis[] = $column[2];
+      $value[] = $column[3];
+    }
+    $str_xml .= "<categories>\n";
+    $categories = array_unique($categories);
+    if (end($categories) == '') {
+      array_pop($categories);
+    }
+    $category_count = count($categories);
+    $dataset_count = count(array_unique($category));
+    $total_results = count($value);
+    foreach ($categories as $this_category) {
+      $str_xml .= "<category name='". fusioncharts_entities(trim($this_category)) ."' />\n";
+    }
+    $str_xml .= "</categories>\n"; 
+    for ($i=0; $i<$total_results; $i+=$dataset_count) {
+      if ($series[$i] != '') {
+        if (isset($attributes['color'][$c])) {
+          $color = "color='{$attributes['color'][$c]}'";
+        }
+        $str_xml .= "<dataset seriesName='". fusioncharts_entities(trim($series[$i])) ."' $color parentYAxis='$axis[$i]'>\n";
+        for ($j=$i; $j<($i+$category_count); $j++) {
+          if ($value[$j] != '') {
+          unset($link);
+            if (isset($attributes['callback'])) {
+              $link = "link='JavaScript:fusioncharts_clickbar(&quot;$jsid&quot;, &quot;{$attributes['callback']}&quot;, &quot;{$series[$j]}&quot;, &quot;{$category[$j]}&quot;)'";
+            }
+            if (is_string($attributes['link'][$series[$j]])) {
+              $link = "link='". urlencode($attributes['link'][$series[$j]]). "'";
+            }
+            elseif (isset($attributes['link'][$series[$j]][$categories[$j]])) {
+              $link = "link='". urlencode($attributes['link'][$series[$j]][$categories[$j]]) ."'";
+            }
+            $str_xml .= "<set value='{$value[$j]}' $link />\n";
+          }
+        }
+      $str_xml .= "</dataset>\n";
+      $c++;
+      }
+    }
+  return $str_xml;
+}
+
+/**
+ * Chart rendering function
+ * This is the core function to Fusion Charts.  It handles all of rendering actions.  This function should be the one that is called to initiate a chart
+ *
+ * @param string $param The callback function or an object containing the data
+ * @param string $jsid Name to be used for the id attribute in the DOM (used for javascript manipulation) optional
+ * @param array $args Any further parameters that get passed to the callback function (in the case of $param being a callback function)  optional
+ * @return string the HTML to render the chart
+ */
+function theme_fusionchart($param, $jsid = NULL, $args = array()) {  
+  static $fusioncharts_id; //incremental ID of each chart (static in case there is more then one chart on a page)
+  if (!isset($fusioncharts_id)) {
+    $fusioncharts_id = 1;
+  }
+  if (!isset($jsid)) {
+    $jsid = "DrupalFusionChart_". $fusioncharts_id++;
+  }
+  $fc_data = fusioncharts_data($jsid, $param, $args);
+  
+  $chart_file = array(
+    'Column 3D' => 'FCF_Column3D.swf',
+    'Column 2D' => 'FCF_Column2D.swf',
+    'Line 2D' => 'FCF_Line.swf',
+    'Area 2D' => 'FCF_Area2D.swf',
+    'Bar 2D' => 'FCF_Bar2D.swf',
+    'Pie 2D' => 'FCF_Pie2D.swf',
+    'Pie 3D' => 'FCF_Pie3D.swf',
+    'Doughnut 2D' => 'FCF_Doughnut2D.swf',
+    'Multi-series Column 2D' => 'FCF_MSColumn2D.swf',
+    'Multi-series Column 3D' => 'FCF_MSColumn3D.swf',
+    'Multi-series Line 2D' => 'FCF_MSLine.swf',
+    'Multi-series Bar 2D' => 'FCF_MSBar2D.swf',
+    'Multi-series Area 2D' => 'FCF_MSArea2D.swf',
+    'Stacked Column 3D' => 'FCF_StackedColumn3D.swf',
+    'Stacked Column 2D' => 'FCF_StackedColumn2D.swf',
+    'Stacked Bar 2D' => 'FCF_StackedBar2D.swf',
+    'Stacked Area 2D' => 'FCF_StackedArea2D.swf',
+    'Multi-series Column 2D + Line - Dual Y Axis' => 'FCF_MSColumn2DLineDY.swf',
+    'Multi-series Column 3D + Line - Dual Y Axis' => 'FCF_MSColumn3DLineDY.swf',
+    'Candlestick Chart' => 'FCF_Candlestick.swf',
+    'Funnel Chart' => 'FCF_Funnel.swf',
+    'Gantt Chart' => 'FCF_Gantt.swf'
+  );
+
+  include_once(drupal_get_path('module', 'fusioncharts') ."/FusionChartsFree/Code/PHP/Includes/FusionCharts.php");
+  //check that the fusioncharts free package was installed
+  if (!function_exists('renderChart')) {
+    return t('Please install the Fusion Charts Free package from InfoSoft as per instructions in the readme.');
+  }
+  $flashsource = base_path() . drupal_get_path('module', 'fusioncharts') ."/FusionChartsFree/Charts/". $chart_file[$fc_data->chart_type];
+  drupal_add_js(drupal_get_path('module', 'fusioncharts') .'/FusionChartsFree/JSClass/FusionCharts.js', 'module');
+  drupal_add_js(drupal_get_path('module', 'fusioncharts') .'/fusioncharts.js', 'module');
+  return renderChartHTML($flashsource, "", $fc_data->xml, $jsid, $fc_data->width, $fc_data->height);  
+}
+
+/**
+ * Backwards compatability function
+ */
+function fusioncharts_render($param, $jsid = NULL, $args = array()) {  
+  return theme('fusionchart', $param, $jsid, $args);
+}
+
+/**
+ * Implementation of hook_theme
+ */
+function fusioncharts_theme($existing, $type, $theme, $path) {
+  return array(
+    'fusionchart' => array(
+      'arguments' => array($param, $jsid = NULL, $args = array()),
+    ),
+    'fusioncharts_matrix_table_form' => array(
+      'arguments' => array($form = array()),
+    ),
+    'fc_matrixfield' => array(
+      'arguments' => array('element' => NULL),
+    ),
+  );
+}
+
+/**
+ * Fusioncharts Settings
+ * Returns an array of setting.  This used to be a drupal variable but some people reported issues so it now a function
+ * @param string $type The name of the setting to retrieve
+ * @result array the data
+ */
+function fusioncharts_settings($type) {
+  switch ($type) {
+    case 'fusioncharts': 
+      return array(
+        'Single Series Charts' => array(
+          'Column 3D' => 'Column 3D',
+          'Column 2D' =>  'Column 2D',
+          'Line 2D' => 'Line 2D',
+          'Area 2D' => 'Area 2D',
+          'Bar 2D' =>  'Bar 2D',
+          'Pie 2D' => 'Pie 2D',
+          'Pie 3D' =>  'Pie 3D',
+          'Doughnut 2D' => 'Doughnut 2D',
+        ),
+        'Multi-series Charts' => array(
+          'Multi-series Column 2D' => 'Multi-series Column 2D',
+          'Multi-series Column 3D' => 'Multi-series Column 3D',
+          'Multi-series Line 2D' => 'Multi-series Line 2D',
+          'Multi-series Bar 2D' => 'Multi-series Bar 2D',
+          'Multi-series Area 2D' => 'Multi-series Area 2D'
+        ),
+        'Stacked Charts' => array(
+          'Stacked Column 3D' => 'Stacked Column 3D',
+          'Stacked Column 2D' => 'Stacked Column 2D',
+          'Stacked Bar 2D' => 'Stacked Bar 2D',
+          'Stacked Area 2D' => 'Stacked Area 2D'
+        ),
+        'Combination Charts' => array(
+          'Multi-series Column 2D + Line - Dual Y Axis' => 'Multi-series Column 2D + Line - Dual Y Axis',
+          'Multi-series Column 3D + Line - Dual Y Axis' => 'Multi-series Column 3D + Line - Dual Y Axis'
+        ),
+        //  'Financial Charts' => array(
+        //    'Candlestick Chart' => 'Candlestick Chart'
+        //  ),
+        'Funnel Chart' => array(
+          'Funnel Chart' => 'Funnel Chart'
+        ),
+         // 'Gantt Chart' => array(
+         //   'Gantt Chart' => 'Gantt Chart'
+         // )
+      );
+
+    case 'fusioncharts-defset':
+      return array(
+        'bgcolor' => '#f3f3f3',
+        'bgAlpha' => '70',
+        'canvasBgColor' => '#f3fff3',
+        'canvasBorderColor' => '#000000',
+        'canvasBorderThickness' => '1',
+        'showCanvasBg' => '1',
+        'showCanvasBase' => '1',
+        'shownames' => '1',
+        'showValues' => '1',
+        'animation' => '1',
+        'showLimits' => '0',
+        'showLegend' => '1',
+        'rotateNames' => '0',
+        'showColumnShadow' => '1',
+        'baseFont' => 'Arial',
+        'baseFontSize' => '10',
+        'baseFontColor' => '#000000',
+        'outCnvBaseFont' => 'Arial',
+        'outCnvBaseFontSze' => '14',
+        'outCnvBaseFontColor' => '#000000',
+        'showhovercap' => '1',
+        'hoverCapBgColor' => '#ffffff',
+        'hoverCapBorderColor' => '#000000',
+        'zeroPlaneColor' => '#000000',
+        'formatNumber' => '1',
+        'formatNumberScale' => '1',
+        'decimalSeparator' => '.',
+        'thousandSeparator' => ',',
+        'decimalPrecision' => '0',
+        'divLineDecimalPrecision' => '0',
+        'limitsDecimalPrecision' => '0',
+        'divlinecolor' => '#000000',
+        'showDivLineValue' => '1',
+        'showAlternateHGridColor' => '0',
+        'alternateHGridColor' => '#000000',
+        'VDivlinecolor' => '#000000',
+        'showAlternateVGridColor' => '0',
+        'alternateVGridColor' => '#000000',
+      );
+      
+      case 'fusioncharts-defattr':
+        return array(
+          'color' => array(
+            'color1' => '#AFD8F8',
+            'color2' => '#F6BD0F',
+            'color3' => '#8BBA00',
+            'color4' => '#FF8E46',
+            'color5' => '#008E8E',
+            'color6' => '#D64646',
+            'color7' => '#8E468E',
+            'color8' => '#588526',
+            'color9' => '#B3AA00',
+            'color10' => '#008ED6',
+            'color11' => '#9D080D',
+            'color12' => '#A186BE'
+          )
+        );
+    }
+}
+ 
+/**
+ * Implementation of hook_requirements().
+ */
+function fusioncharts_requirements($phase) {
+  $requirements = array();
+  if ($phase == 'runtime') {
+    // Fusionchart SWF files
+    $swf = glob(drupal_get_path('module', 'fusioncharts') .'/FusionChartsFree/Charts/*.swf');
+    if (!empty($swf)) {
+      $requirements['fusioncharts']['severity'] = REQUIREMENT_OK;
+      $requirements['fusioncharts']['value'] = t('The FusionCharts SWF files found.');
+    }
+    else {
+      $requirements['fusioncharts']['severity'] = REQUIREMENT_ERROR;
+      $requirements['fusioncharts']['value'] = t('The FusionCharts SWF files not found.');
+      $requirements['fusioncharts']['description'] = t('Please download these files from <a href="@url">http://www.fusioncharts.com/free</a> and copy them into the fusioncharts module directory as per instructions in the readme.txt file.', array('@url' => 'http://www.fusioncharts.com/free'));
+    }
+    $requirements['fusioncharts']['title'] = t('FusionCharts');
+  }
+  return $requirements;
+}
+
+/*
+  * Helper function for ahah forms.  Something like this should be in core!!!!!
+  * http://www.nicklewis.org/node/967
+  */
+if (!function_exists('ahah_render')) {
+  function ahah_render($fields, $name) {
+    $form_state = array('submitted' => FALSE);
+    $form_build_id = $_POST['form_build_id'];
+    // Add the new element to the stored form. Without adding the element to the
+    // form, Drupal is not aware of this new elements existence and will not
+    // process it. We retreive the cached form, add the element, and resave.
+    $form = form_get_cache($form_build_id, $form_state);
+
+    $form[$name] = $fields;
+    form_set_cache($form_build_id, $form, $form_state);
+    $form += array(
+      '#post' => $_POST,
+      '#programmed' => FALSE,
+    );
+    // Rebuild the form.
+    $form = form_builder($_POST['form_id'], $form, $form_state);
+    // Render the new output.
+    $new_form = $form[$name];
+    return drupal_render($new_form); 
+  }
+}
+
+/**
+ * Convert all non-safe characters to their safe equivilents
+ *
+ * @param $string string to translate
+ * @return $string
+ */
+function fusioncharts_entities($string) {
+  $original = array("%", "&", "'", ":", "/", "@");
+  $entities = array("%25", "%26", "%27", "%3A", "%2F", "%40");
+  $string = htmlentities($string, ENT_QUOTES, 'UTF-8');
+  return str_replace($original, $entities, $string);
+}
