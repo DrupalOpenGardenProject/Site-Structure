@@ -24,36 +24,52 @@ git checkout DRUPAL-6-17
 
 
 
-* This will checkout the most current version of Drupal 6 
-(Drupal 6.17) as a new branch
+* This will checkout the most current version of Drupal 6 (Drupal 6.17) based on a tag.
 
-* This creates a 'branch' from a 'tag' 
+* This replaces all your files in the /drupal directory with the proper version of Drupal.
 
 * DRUPAL-6-17 is a 'tag'
+
 * To see which versions of Drupal are in the repository, do
 git tag
 
-What is happening here:
+* A tag is a point in the history of the code which was declared by the community to be
+an official release of Drupal.
 
+
+What is happening here:
 
 * When you first clone the repository, you will be on a branch called 'CVS' 
 (as opposed to 'master' which is normal for git repositories.)
 
-* The repository comes with no actual branches. So to save any changes you 
-make to the Drupal repository, you would commit them to your custom branch.
+* The repository comes with no actual branches except 'CVS'
+
+* To see the list of branches
+git branch
+
+* CVS
+is what it should look like by default.
 
 
+* When you check out the 'tag' it is not on a branch, and you should see 
+'Note: moving to 'DRUPAL-6-17' which isn't a local branch'
 
+This is OK. We are about to make a working branch.
 
 3. Make a brand new branch to store all your own customizations (such as
  deleting the sites folder):
 
 git checkout -b master
 
-* This will create a working branch. You shouldn't have to do much 
-customization to Drupal core for this project, but you can version the fact 
-that you may replace your 'sites' folder with a symbolic link to our shared 
-'sites' folder.
+* This will create a new working branch based on the current state of your files. 
+
+* You shouldn't have to do much customization to Drupal core for this project,
+but you can version the fact that you may replace your 'sites' folder with a
+symbolic link to our shared 'sites' folder.
+
+* If you were actually working on modifying/contributing to Drupal core, you might create 
+branches as you work.
+
 
 4. set up .gitignore
 
