@@ -32,7 +32,10 @@ What we need to build:
 * Create settings form in the view that allows user to chose the icon set.
 * Make theme work with selected icon set.
 
-
+Advanced Tasks
+* Make a Views Summary handle Titles in the format
+  * A is for
+  * "A" is for
 
 Problems that Chach needs to work on:
 * Launch demo site.
