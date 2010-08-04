@@ -79,6 +79,7 @@ function theme_views_view_summary_alphabet_icons(&$vars) {
 
 function views_summary_alphabet_icons_links($row) {
   $output = '';
+  // @TODO Add imagecache setting in here (AARON!)
   $output .= '<a href="' . $row->url . '">' . $row->title_truncated . '</a>';
   // @TODO See why the l() function is double encoding the url.
   return $output;

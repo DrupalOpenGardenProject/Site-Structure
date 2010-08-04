@@ -40,12 +40,15 @@ function views_summary_alphabet_icons_views_plugins() {
  * Implementation of hook_views_handlers() to register all of the basic handlers
  * views uses.
  */
+/*
 function views_summary_alphabet_icons_views_handlers() {
   return array(
     'info' => array(
       'path' => drupal_get_path('module', 'views_summary_alphabet_icons') . '/includes/views',
     ),
-    'handlers' => array(
+    'views_handler_argument_string_alphabet_icons' => array(
+      'parent' => 'views_handler_argument_string',
     ),
   );
 }
+*/
