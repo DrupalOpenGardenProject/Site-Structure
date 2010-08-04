@@ -15,8 +15,28 @@ Things to see:
 
 * Getting Site-structure cloned with git.
 * Get drupal 6 set up with correct database.
+* Create a symbolic link to sites folder.
 * Database includes site with alphabet feed view.
 * See where/what Views Style plugin is/does.
+* Learn how to get a current database using backup & migrate.
+* Advanced: edit code & share it back to github (may require special authorization.)
+* Drupal l() function.
+* Views has theme functions.
+* Module created theme functions can be overriden in site theme.
+* Our theme has a base theme (it's just an extension of garland for now.)
+* Default view.
 
 What we need to build: 
-* 
+* Theme output to use an icon set.
+* Create another alphabet icon set.
+* Create settings form in the view that allows user to chose the icon set.
+* Make theme work with selected icon set.
+
+
+
+Problems that Chach needs to work on:
+* Launch demo site.
+
+* We need to separate out the theme function from the preprocess function.
+Views should let us make a preprocess function if we provide it with a template.
+This may be out of the scope of the class (at least for the next few weeks due to time.)
