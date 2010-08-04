@@ -1,0 +1,495 @@
+<?php
+// $Id: nws_weather.install,v 1.1 2010/01/22 21:21:03 dwaine Exp $
+/*
+ * Copyright C 2009 DND COMMUNICATIONS LLC
+ *
+ * This file is part of the Drupal NWS_Weather module.
+ *
+ * NWS_Weather is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * NWS_Weather is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with NWS_Weather; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+ */
+
+
+/**
+ * @file
+ * Installation hooks for nws_weather module.
+ */
+
+
+/**
+ * Implementation of hook_requirements().
+ */
+function nws_weather_requirements($phase) {
+  $t = get_t();
+  $requirements = array();
+  switch ($phase) {
+    case 'install':
+      $requirements['nws_weather']['title'] = $t('NWS_weather module');
+      $havesoap = FALSE;
+      $havesimplexml = FALSE;
+      if (class_exists('SoapClient')) {
+        $havesoap = TRUE;
+      }
+      if (extension_loaded('simplexml')) {
+        $havesimplexml = TRUE;
+      }
+      if ($havesoap && $havesimplexml) { 
+        $requirements['nws_weather']['severity'] = REQUIREMENT_OK; 
+        $requirements['nws_weather']['description'] = $t('The SOAP and SimpleXML extensions are enabled.');
+      } 
+      else {
+        $requirements['nws_weather']['severity'] = REQUIREMENT_ERROR;
+        $requirements['nws_weather']['description'] = $t('The NWS_weather module requires SOAP and SimpleXML PHP extensions. ');
+        $requirements['nws_weather']['description'] .= ($havesoap) ? '' : $t('The SOAP extension for PHP is not available. Please check the <a href="@url">PHP SOAP documentation</a> for information on how to correct this. ', array('@url' => 'http://www.php.net/manual/en/soap.setup.php'));
+        $requirements['nws_weather']['description'] .= ($havesimplexml) ? '' : $t('The PHP SimpleXML extension in not available.');
+      }
+    break;
+  }
+  return $requirements;
+}
+
+
+/**
+ * Implementation of hook_install().
+ */
+function nws_weather_install() {
+  drupal_install_schema('nws_weather');
+  // Populate image map table.
+  $nwp = 'http://www.nws.noaa.gov/weather/images/fcicons/';
+  $image_mappings = array(
+    $nwp . 'bkn.jpg' => 'mostly_clear-day.png',
+    $nwp . 'blizzard.gif' => 'blizzard_winter_storm.png', 
+    $nwp . 'blizzard.jpg' => 'blizzard_winter_storm.png', 
+    $nwp . 'blizzard.png' => 'blizzard_winter_storm.png', 
+    $nwp . 'blizzard10.jpg' => 'blizzard_winter_storm.png', 
+    $nwp . 'blizzard100.jpg' => 'blizzard_winter_storm.png', 
+    $nwp . 'blizzard20.jpg' => 'blizzard_winter_storm.png', 
+    $nwp . 'blizzard30.jpg' => 'blizzard_winter_storm.png', 
+    $nwp . 'blizzard40.jpg' => 'blizzard_winter_storm.png', 
+    $nwp . 'blizzard50.jpg' => 'blizzard_winter_storm.png', 
+    $nwp . 'blizzard60.jpg' => 'blizzard_winter_storm.png', 
+    $nwp . 'blizzard70.jpg' => 'blizzard_winter_storm.png', 
+    $nwp . 'blizzard80.jpg' => 'blizzard_winter_storm.png', 
+    $nwp . 'blizzard90.jpg' => 'blizzard_winter_storm.png', 
+    $nwp . 'blowingsnow.gif' => 'snow.png', 
+    $nwp . 'blowingsnow.jpg' => 'snow.png', 
+    $nwp . 'blowingsnow.png' => 'snow.png', 
+    $nwp . 'br.jpg' => '', 
+    $nwp . 'cloudy.gif' => 'cloudy_overcast.png', 
+    $nwp . 'cloudy.jpg' => 'cloudy_overcast.png', 
+    $nwp . 'cloudy.png' => 'cloudy_overcast.png', 
+    $nwp . 'cloudynight.jpg' => 'mostly_cloudy-night.png', 
+    $nwp . 'cold.jpg' => 'cold.png', 
+    $nwp . 'cold1.jpg' => 'cold.png', 
+    $nwp . 'cold2.jpg' => 'cold.png',   
+    $nwp . 'drizzle.gif' => 'drizzle.png', 
+    $nwp . 'drizzle.jpg' => 'drizzle.png', 
+    $nwp . 'drizzle.png' => 'drizzle.png', 
+    $nwp . 'du.jpg' => 'hazy_smoke-day.png', 
+    $nwp . 'dust.jpg' => 'hazy_smoke-day.png',  
+    $nwp . 'fair.gif' => 'clear-day.png', 
+    $nwp . 'fair.jpg' => 'clear-day.png', 
+    $nwp . 'fair.png' => 'clear-day.png',  
+    $nwp . 'fdrizzle.gif' => 'freezing_rain_sleet.png', 
+    $nwp . 'fdrizzle.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'fdrizzle.png' => 'freezing_rain_sleet.png', 
+    $nwp . 'few.jpg' => 'mostly_clear-day.png', 
+    $nwp . 'fg.jpg' => 'fog.png', 
+    $nwp . 'flurries.gif' => 'snow_flurries.png', 
+    $nwp . 'flurries.jpg' => 'snow_flurries.png', 
+    $nwp . 'flurries.png' => 'snow_flurries.png', 
+    $nwp . 'fog.gif' => 'fog.png', 
+    $nwp . 'fog.jpg' => 'fog.png', 
+    $nwp . 'fog.png' => 'fog.png', 
+    $nwp . 'fogn.jpg' => 'fog.png', 
+    $nwp . 'freezingrain.gif' => 'freezing_rain_sleet.png', 
+    $nwp . 'freezingrain.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'freezingrain.png' => 'freezing_rain_sleet.png', 
+    $nwp . 'fu.jpg' => '', 
+    $nwp . 'fzra.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'fzra1.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'fzra10.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'fzra100.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'fzra20.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'fzra30.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'fzra40.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'fzra50.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'fzra60.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'fzra70.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'fzra80.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'fzra90.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'fzrara.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'hazy.gif' => 'hazy_smoke-day.png', 
+    $nwp . 'hazy.jpg' => 'hazy_smoke-day.png', 
+    $nwp . 'hazy.png' => 'hazy_smoke-day.png', 
+    $nwp . 'hi_bkn.jpg' => 'mostly_clear-day.png', 
+    $nwp . 'hi_clr.jpg' => 'clear-day.png', 
+    $nwp . 'hi_few.jpg' => 'mostly_clear-day.png', 
+    $nwp . 'hi_mocldy.jpg' => 'mostly_cloudy-day.png', 
+    $nwp . 'hi_moclr.jpg' => 'mostly_clear-day.png', 
+    $nwp . 'hi_nbkn.jpg' => 'mostly_clear-night.png', 
+    $nwp . 'hi_nclr.jpg' => 'clear-night.png', 
+    $nwp . 'hi_nfew.jpg' => 'mostly_clear-night.png', 
+    $nwp . 'hi_nmocldy.jpg' => 'mostly_cloudy-night.png', 
+    $nwp . 'hi_nmoclr.jpg' => 'mostly_clear-night.png', 
+    $nwp . 'hi_nptcldy.jpg' => 'mostly_cloudy-night.png', 
+    $nwp . 'hi_nsct.jpg' => 'mostly_clear-night.png', 
+    $nwp . 'hi_nshwrs.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_nshwrs10.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_nshwrs100.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_nshwrs20.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_nshwrs30.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_nshwrs40.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_nshwrs50.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_nshwrs60.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_nshwrs70.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_nshwrs80.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_nshwrs90.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_nskc.jpg' => 'clear-night.png', 
+    $nwp . 'hi_ntsra.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_ntsra10.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_ntsra100.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_ntsra20.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_ntsra30.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_ntsra40.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_ntsra50.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_ntsra60.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_ntsra70.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_ntsra80.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_ntsra90.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_ptcldy.jpg' => 'mostly_cloudy-day.png', 
+    $nwp . 'hi_sct.jpg' => 'mostly_cloudy-day.png', 
+    $nwp . 'hi_shwrs.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_shwrs10.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_shwrs100.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_shwrs20.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_shwrs30.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_shwrs40.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_shwrs50.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_shwrs60.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_shwrs70.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_shwrs80.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_shwrs90.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'hi_skc.jpg' => 'clear-day.png', 
+    $nwp . 'hi_tsra.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_tsra10.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_tsra100.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_tsra20.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_tsra30.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_tsra40.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_tsra50.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_tsra60.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_tsra70.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_tsra80.jpg' => 'thunderstorm.png', 
+    $nwp . 'hi_tsra90.jpg' => 'thunderstorm.png', 
+    $nwp . 'hiclouds.jpg' => 'mostly_clear-day.png', 
+    $nwp . 'hot.jpg' => 'hot.png', 
+    $nwp . 'hot1.jpg' => 'hot.png', 
+    $nwp . 'hurr.jpg' => 'hurricane.png', 
+    $nwp . 'ip.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'ip10.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'ip100.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'ip20.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'ip30.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'ip40.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'ip50.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'ip60.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'ip70.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'ip80.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'ip90.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'mcloudy.gif' => 'mostly_cloudy-day.png', 
+    $nwp . 'mcloudy.jpg' => 'mostly_cloudy-day.png', 
+    $nwp . 'mcloudy.png' => 'mostly_cloudy-day.png', 
+    $nwp . 'mcloudyn.gif' => 'mostly_cloudy-night.png', 
+    $nwp . 'mcloudyn.jpg' => 'mostly_cloudy-night.png', 
+    $nwp . 'mcloudyn.png' => 'mostly_cloudy-night.png', 
+    $nwp . 'mist.jpg' => 'drizzle.png', 
+    $nwp . 'mix.jpg' => 'mixed_precip.png', 
+    $nwp . 'mix10.jpg' => 'mixed_precip.png', 
+    $nwp . 'mix100.jpg' => 'mixed_precip.png', 
+    $nwp . 'mix20.jpg' => 'mixed_precip.png', 
+    $nwp . 'mix30.jpg' => 'mixed_precip.png', 
+    $nwp . 'mix40.jpg' => 'mixed_precip.png', 
+    $nwp . 'mix50.jpg' => 'mixed_precip.png', 
+    $nwp . 'mix60.jpg' => 'mixed_precip.png', 
+    $nwp . 'mix70.jpg' => 'mixed_precip.png', 
+    $nwp . 'mix80.jpg' => 'mixed_precip.png', 
+    $nwp . 'mix90.jpg' => 'mixed_precip.png', 
+    $nwp . 'na.gif' => 'nodata.png', 
+    $nwp . 'na.jpg' => 'nodata.png', 
+    $nwp . 'na.png' => 'nodata.png', 
+    $nwp . 'nbkn.jpg' => 'mostly_cloudy-night.png', 
+    $nwp . 'nbknfg.jpg' => 'mostly_cloudy-night.png', 
+    $nwp . 'nfew.jpg' => 'mostly_clear-night.png', 
+    $nwp . 'nfg.jpg' => 'fog.png', 
+    $nwp . 'nhiclouds.jpg' => 'mostly_clear-night.png', 
+    $nwp . 'nmix.jpg' => 'mixed_precip.png', 
+    $nwp . 'novc.jpg' => 'cloudy_overcast.png', 
+    $nwp . 'nra.jpg' => 'rain.png', 
+    $nwp . 'nra10.jpg' => 'rain.png', 
+    $nwp . 'nra100.jpg' => 'rain.png', 
+    $nwp . 'nra20.jpg' => 'rain.png', 
+    $nwp . 'nra30.jpg' => 'rain.png', 
+    $nwp . 'nra40.jpg' => 'rain.png', 
+    $nwp . 'nra50.jpg' => 'rain.png', 
+    $nwp . 'nra60.jpg' => 'rain.png', 
+    $nwp . 'nra70.jpg' => 'rain.png', 
+    $nwp . 'nra80.jpg' => 'rain.png', 
+    $nwp . 'nra90.jpg' => 'rain.png', 
+    $nwp . 'nraip.jpg' => 'mixed_precip.png', 
+    $nwp . 'nraip10.jpg' => 'mixed_precip.png', 
+    $nwp . 'nraip100.jpg' => 'mixed_precip.png', 
+    $nwp . 'nraip20.jpg' => 'mixed_precip.png', 
+    $nwp . 'nraip30.jpg' => 'mixed_precip.png', 
+    $nwp . 'nraip40.jpg' => 'mixed_precip.png', 
+    $nwp . 'nraip50.jpg' => 'mixed_precip.png', 
+    $nwp . 'nraip60.jpg' => 'mixed_precip.png', 
+    $nwp . 'nraip70.jpg' => 'mixed_precip.png', 
+    $nwp . 'nraip80.jpg' => 'mixed_precip.png', 
+    $nwp . 'nraip90.jpg' => 'mixed_precip.png', 
+    $nwp . 'nrasn.jpg' => 'mixed_precip.png', 
+    $nwp . 'nrasn10.jpg' => 'mixed_precip.png', 
+    $nwp . 'nrasn100.jpg' => 'mixed_precip.png', 
+    $nwp . 'nrasn20.jpg' => 'mixed_precip.png', 
+    $nwp . 'nrasn30.jpg' => 'mixed_precip.png', 
+    $nwp . 'nrasn40.jpg' => 'mixed_precip.png', 
+    $nwp . 'nrasn50.jpg' => 'mixed_precip.png', 
+    $nwp . 'nrasn60.jpg' => 'mixed_precip.png', 
+    $nwp . 'nrasn70.jpg' => 'mixed_precip.png', 
+    $nwp . 'nrasn80.jpg' => 'mixed_precip.png', 
+    $nwp . 'nrasn90.jpg' => 'mixed_precip.png', 
+    $nwp . 'nsct.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'nscttsra.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'nscttsra10.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'nscttsra100.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'nscttsra20.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'nscttsra30.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'nscttsra40.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'nscttsra50.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'nscttsra60.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'nscttsra70.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'nscttsra80.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'nscttsra90.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'nskc.jpg' => 'clear-night.png', 
+    $nwp . 'nsn.jpg' => 'snow.png', 
+    $nwp . 'nsn10.jpg' => 'snow.png', 
+    $nwp . 'nsn100.jpg' => 'snow.png', 
+    $nwp . 'nsn20.jpg' => 'snow.png', 
+    $nwp . 'nsn30.jpg' => 'snow.png', 
+    $nwp . 'nsn40.jpg' => 'snow.png', 
+    $nwp . 'nsn50.jpg' => 'snow.png', 
+    $nwp . 'nsn60.jpg' => 'snow.png', 
+    $nwp . 'nsn70.jpg' => 'snow.png', 
+    $nwp . 'nsn80.jpg' => 'snow.png', 
+    $nwp . 'nsn90.jpg' => 'snow.png', 
+    $nwp . 'nsvrtsra.jpg' => 'tornado.png', 
+    $nwp . 'ntor.jpg' => 'tornado.png', 
+    $nwp . 'ntsra.jpg' => 'thunderstorm.png', 
+    $nwp . 'ntsra1.jpg' => 'thunderstorm.png', 
+    $nwp . 'ntsra10.jpg' => 'thunderstorm.png', 
+    $nwp . 'ntsra100.jpg' => 'thunderstorm.png', 
+    $nwp . 'ntsra20.jpg' => 'thunderstorm.png', 
+    $nwp . 'ntsra3.jpg' => 'thunderstorm.png', 
+    $nwp . 'ntsra30.jpg' => 'thunderstorm.png', 
+    $nwp . 'ntsra40.jpg' => 'thunderstorm.png', 
+    $nwp . 'ntsra50.jpg' => 'thunderstorm.png', 
+    $nwp . 'ntsra60.jpg' => 'thunderstorm.png', 
+    $nwp . 'ntsra70.jpg' => 'thunderstorm.png', 
+    $nwp . 'ntsra80.jpg' => 'thunderstorm.png', 
+    $nwp . 'ntsra90.jpg' => 'thunderstorm.png', 
+    $nwp . 'ntsraold.jpg' => 'thunderstorm.png', 
+    $nwp . 'nwind.jpg' => 'windy.png', 
+    $nwp . 'ovc.jpg' => 'cloudy_overcast.png', 
+    $nwp . 'pcloudy.gif' => 'mostly_cloudy-day.png', 
+    $nwp . 'pcloudy.jpg' => 'mostly_cloudy-day.png', 
+    $nwp . 'pcloudy.png' => 'mostly_cloudy-day.png', 
+    $nwp . 'pcloudyn.gif' => 'mostly_cloudy-night.png', 
+    $nwp . 'pcloudyn.jpg' => 'mostly_cloudy-night.png', 
+    $nwp . 'pcloudyn.png' => 'mostly_cloudy-night.png', 
+    $nwp . 'ra.jpg' => 'rain.png', 
+    $nwp . 'ra1.jpg' => 'rain.png', 
+    $nwp . 'ra10.jpg' => 'rain.png', 
+    $nwp . 'ra100.jpg' => 'rain.png', 
+    $nwp . 'ra2.jpg' => 'rain.png', 
+    $nwp . 'ra20.jpg' => 'rain.png', 
+    $nwp . 'ra30.jpg' => 'rain.png', 
+    $nwp . 'ra4.jpg' => 'rain.png', 
+    $nwp . 'ra40.jpg' => 'rain.png', 
+    $nwp . 'ra50.jpg' => 'rain.png', 
+    $nwp . 'ra60.jpg' => 'rain.png', 
+    $nwp . 'ra70.jpg' => 'rain.png', 
+    $nwp . 'ra80.jpg' => 'rain.png', 
+    $nwp . 'ra90.jpg' => 'rain.png', 
+    $nwp . 'rain.gif' => 'rain.png', 
+    $nwp . 'rain.jpg' => 'rain.png', 
+    $nwp . 'rain.png' => 'rain.png', 
+    $nwp . 'rainandsnow.gif' => 'mixed_precip.png', 
+    $nwp . 'rainandsnow.jpg' => 'mixed_precip.png', 
+    $nwp . 'rainandsnow.png' => 'mixed_precip.png', 
+    $nwp . 'raip.jpg' => 'mixed_precip.png', 
+    $nwp . 'raip10.jpg' => 'mixed_precip.png', 
+    $nwp . 'raip100.jpg' => 'mixed_precip.png', 
+    $nwp . 'raip20.jpg' => 'mixed_precip.png', 
+    $nwp . 'raip30.jpg' => 'mixed_precip.png', 
+    $nwp . 'raip40.jpg' => 'mixed_precip.png', 
+    $nwp . 'raip50.jpg' => 'mixed_precip.png', 
+    $nwp . 'raip60.jpg' => 'mixed_precip.png', 
+    $nwp . 'raip70.jpg' => 'mixed_precip.png', 
+    $nwp . 'raip80.jpg' => 'mixed_precip.png', 
+    $nwp . 'raip90.jpg' => 'mixed_precip.png', 
+    $nwp . 'rasn.jpg' => 'mixed_precip.png', 
+    $nwp . 'rasn10.jpg' => 'mixed_precip.png', 
+    $nwp . 'rasn100.jpg' => 'mixed_precip.png', 
+    $nwp . 'rasn20.jpg' => 'mixed_precip.png', 
+    $nwp . 'rasn30.jpg' => 'mixed_precip.png', 
+    $nwp . 'rasn40.jpg' => 'mixed_precip.png', 
+    $nwp . 'rasn50.jpg' => 'mixed_precip.png', 
+    $nwp . 'rasn60.jpg' => 'mixed_precip.png', 
+    $nwp . 'rasn70.jpg' => 'mixed_precip.png', 
+    $nwp . 'rasn80.jpg' => 'mixed_precip.png', 
+    $nwp . 'rasn90.jpg' => 'mixed_precip.png',  
+    $nwp . 'sct.jpg' => 'mostly_clear-day.png', 
+    $nwp . 'sctfg.jpg' => 'fog.png', 
+    $nwp . 'scttsra.jpg' => 'thunderstorm.png', 
+    $nwp . 'scttsra10.jpg' => 'thunderstorm.png', 
+    $nwp . 'scttsra100.jpg' => 'thunderstorm.png', 
+    $nwp . 'scttsra20.jpg' => 'thunderstorm.png', 
+    $nwp . 'scttsra30.jpg' => 'thunderstorm.png', 
+    $nwp . 'scttsra40.jpg' => 'thunderstorm.png', 
+    $nwp . 'scttsra50.jpg' => 'thunderstorm.png', 
+    $nwp . 'scttsra60.jpg' => 'thunderstorm.png', 
+    $nwp . 'scttsra70.jpg' => 'thunderstorm.png', 
+    $nwp . 'scttsra80.jpg' => 'thunderstorm.png', 
+    $nwp . 'scttsra90.jpg' => 'thunderstorm.png',  
+    $nwp . 'showers.gif' => 'showers_scattered_rain.png', 
+    $nwp . 'showers.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'showers.png' => 'showers_scattered_rain.png', 
+    $nwp . 'shra.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'shra1.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'shra10.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'shra100.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'shra2.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'shra20.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'shra30.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'shra40.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'shra50.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'shra60.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'shra70.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'shra80.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'shra90.jpg' => 'showers_scattered_rain.png', 
+    $nwp . 'shsn.jpg' => 'snow_flurries.png', 
+    $nwp . 'skc.jpg' => 'clear-day.png', 
+    $nwp . 'sleet.gif' => 'freezing_rain_sleet.png', 
+    $nwp . 'sleet.jpg' => 'freezing_rain_sleet.png', 
+    $nwp . 'sleet.png' => 'freezing_rain_sleet.png', 
+    $nwp . 'smoke.gif' => 'hazy_smoke-day.png', 
+    $nwp . 'smoke.jpg' => 'hazy_smoke-day.png', 
+    $nwp . 'smoke.png' => 'hazy_smoke-day.png', 
+    $nwp . 'sn.jpg' => 'snow.png', 
+    $nwp . 'sn10.jpg' => 'snow.png', 
+    $nwp . 'sn100.jpg' => 'snow.png', 
+    $nwp . 'sn20.jpg' => 'snow.png', 
+    $nwp . 'sn30.jpg' => 'snow.png', 
+    $nwp . 'sn40.jpg' => 'snow.png', 
+    $nwp . 'sn50.jpg' => 'snow.png', 
+    $nwp . 'sn60.jpg' => 'snow.png', 
+    $nwp . 'sn70.jpg' => 'snow.png', 
+    $nwp . 'sn80.jpg' => 'snow.png', 
+    $nwp . 'sn90.jpg' => 'snow.png', 
+    $nwp . 'snow.gif' => 'snow.png', 
+    $nwp . 'snow.jpg' => 'snow.png', 
+    $nwp . 'snow.png' => 'snow.png', 
+    $nwp . 'snowshowers.gif' => 'snow_flurries.png', 
+    $nwp . 'snowshowers.jpg' => 'snow_flurries.png', 
+    $nwp . 'snowshowers.png' => 'snow_flurries.png', 
+    $nwp . 'snowshwrs.jpg' => 'snow_flurries.png', 
+    $nwp . 'sunny.gif' => 'clear-day.png', 
+    $nwp . 'sunny.jpg' => 'clear-day.png', 
+    $nwp . 'sunny.png' => 'clear-day.png', 
+    $nwp . 'sunnyn.gif' => 'clear-night.png', 
+    $nwp . 'sunnyn.jpg' => 'clear-night.png', 
+    $nwp . 'sunnyn.png' => 'clear-night.png', 
+    $nwp . 'tcu.jpg' => '', 
+    $nwp . 'tor.jpg' => 'tornado.png', 
+    $nwp . 'tsra.jpg' => 'thunderstorm.png', 
+    $nwp . 'tsra10.jpg' => 'thunderstorm.png', 
+    $nwp . 'tsra100.jpg' => 'thunderstorm.png', 
+    $nwp . 'tsra20.jpg' => 'thunderstorm.png', 
+    $nwp . 'tsra30.jpg' => 'thunderstorm.png', 
+    $nwp . 'tsra40.jpg' => 'thunderstorm.png', 
+    $nwp . 'tsra50.jpg' => 'thunderstorm.png', 
+    $nwp . 'tsra60.jpg' => 'thunderstorm.png', 
+    $nwp . 'tsra70.jpg' => 'thunderstorm.png', 
+    $nwp . 'tsra80.jpg' => 'thunderstorm.png', 
+    $nwp . 'tsra90.jpg' => 'thunderstorm.png', 
+    $nwp . 'tstorm.gif' => 'thunderstorm.png', 
+    $nwp . 'tstorm.jpg' => 'thunderstorm.png', 
+    $nwp . 'tstorm.png' => 'thunderstorm.png', 
+    $nwp . 'tstormn.gif' => 'thunderstorm.png', 
+    $nwp . 'tstormn.jpg' => 'thunderstorm.png', 
+    $nwp . 'tstormn.png' => 'thunderstorm.png', 
+    $nwp . 'wind.jpg' => 'windy.png', 
+    $nwp . 'wind1.jpg' => 'windy.png', 
+    $nwp . 'wind2.jpg' => 'windy.png', 
+    $nwp . 'wswarning.gif' => '', 
+    $nwp . 'wswarning.jpg' => '', 
+    $nwp . 'wswarning.png' => '', 
+    $nwp . 'wswatch.gif' => '', 
+    $nwp . 'wswatch.jpg' => '', 
+    $nwp . 'wswatch.png' => '', 
+  );
+  foreach ($image_mappings as $url => $img) {
+    db_query("INSERT INTO {nws_weather_config} (url,img) VALUES ('%s','%s')", $url, $img);
+  }
+}
+
+
+/**
+ * Implementation of hook_schema().
+ */
+function nws_weather_schema() {
+  $schema['nws_weather_config'] = array(
+    'description' => t('nws_weather custom image map that doesn\'t fit nicely in \'variables\'.'),
+    'fields' => array(
+      'url' => array(
+        'description' => t('NWS URL.'),
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'img' => array(
+        'description' => t('Override image.'),
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+    ), 
+    'indexes' => array('url' => array('url'), ),
+  );
+  return $schema;
+}
+
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function nws_weather_uninstall() {
+  drupal_uninstall_schema('nws_weather');
+  variable_del('nws_weather_override_bool');
+  variable_del('nws_weather_override_directory');
+  variable_del('nws_weather_lat');
+  variable_del('nws_weather_lon');
+  variable_del('nws_weather_location_name');
+  variable_del('nws_weather_daily_days');
+  variable_del('nws_weather_daily_display');
+  variable_del('nws_weather_units');  
+}

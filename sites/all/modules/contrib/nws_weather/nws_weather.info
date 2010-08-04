@@ -1,0 +1,12 @@
+; $Id: nws_weather.info,v 1.1 2010/01/22 21:21:03 dwaine Exp $ 
+name = nws_weather
+description = 'NWS Weather'
+package = Weather
+core = 6.x
+php = 5.0
+; Information added by drupal.org packaging script on 2010-04-10
+version = "6.x-1.0"
+core = "6.x"
+project = "nws_weather"
+datestamp = "1270918810"
+

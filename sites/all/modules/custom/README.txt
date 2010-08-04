@@ -1,1 +1,1 @@
-Modules custom to our project will live here.
+Modules custom to our shared projects will live here.

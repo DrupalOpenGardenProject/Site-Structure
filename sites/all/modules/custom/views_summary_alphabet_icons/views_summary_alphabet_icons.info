@@ -1,0 +1,8 @@
+; $Id$
+name = "Views Summary Alphabet Icons"
+description = "Provide \"Alphabet Icon\" sets for Views' summaries."
+package = "Views"
+core = 6.x
+
+
+

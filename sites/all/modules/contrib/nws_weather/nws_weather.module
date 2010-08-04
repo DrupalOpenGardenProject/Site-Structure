@@ -1,0 +1,965 @@
+<?php
+// $Id: nws_weather.module,v 1.1 2010/01/22 21:21:03 dwaine Exp $
+/*
+ *
+ * Copyright C 2009 DND COMMUNICATIONS LLC
+ *
+ * This file is part of the Drupal NWS_Weather module.
+ *
+ * NWS_Weather is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * NWS_Weather is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with NWS_Weather; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+ */
+
+
+/**
+ * @file
+ * nws_weather module.
+ *
+ * Uses SOAP call to access forecast data from The National Weather Service.
+ */
+
+//module configuration 
+define ('NWS_WEATHER_CACHE_TIME', 3600);
+define ('NWS_WEATHER_WSDL_URL', 'http://www.weather.gov/forecasts/xml/DWMLgen/wsdl/ndfdXML.wsdl');
+define ('SOCKET_TIMEOUT_SECONDS', 5);
+
+//user and location configuration
+define ('NWS_WEATHER_OVERRIDE_DIRECTORY_DEFAULT', drupal_get_path('module', 'nws_weather') . '/images');
+define ('NWS_WEATHER_LAT_DEFAULT', '47.53');
+define ('NWS_WEATHER_LON_DEFAULT', '-122.30');
+define ('NWS_WEATHER_LOCATION_NAME_DEFAULT', t('Seattle, WA'));
+define ('NWS_WEATHER_DAILY_DAYS_DEFAULT', 7);
+define ('NWS_WEATHER_TEMP_UNIT_DEFAULT', 'fahrenheit');
+
+
+/**
+ * Implementation of hook_perm().
+ */
+function nws_weather_perm() {
+  return array(
+    'administer nws_weather', 
+    'access nws_weather'
+  );
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function nws_weather_menu() {
+  $items['admin/settings/nws_weather'] = array(
+    'title' => 'NWS Weather',
+    'description' => 'NWS weather retrieves weather data from the National Weather Service via a SOAP interface.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('nws_weather_admin_settings'),
+    'access arguments' => array('administer nws_weather'),
+  );
+  return $items;
+}
+
+/**
+ * 
+ */
+function nws_weather_admin_settings() {
+  $form = array();
+  $form['default_location'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Default location'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#description' => t('The default location is used for the nws_weather block and is defined with a latitude and longitude. Only Lat/Lon pairs inside the U.S. will return data.'),
+  );
+  $form['default_location']['lat'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Latitude'),
+    '#default_value' => variable_get('nws_weather_lat', NWS_WEATHER_LAT_DEFAULT),
+    '#description' => t('The latitude of your default location.'),
+    '#weight' => -12,
+  );
+  $form['default_location']['lon'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Longitude'),
+    '#default_value' => variable_get('nws_weather_lon', NWS_WEATHER_LON_DEFAULT),
+    '#description' => t('The longitude of your default location. Please use negative values for longitudes West of zero (e.g., -122.654.'),
+    '#weight' => -11,
+  );
+  $form['default_location']['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Display name'),
+    '#default_value' => variable_get('nws_weather_location_name', NWS_WEATHER_LOCATION_NAME_DEFAULT),
+    '#description' => t('The name to display for this location.'),
+    '#size' => '30'
+  );
+  $form['display_options'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Daily forecast display options'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  ); 
+  $form['display_options']['daily_days'] = array(
+    '#type' => 'select',
+    '#title' => t('Number of days to display'),
+    '#default_value' => variable_get('nws_weather_daily_days', NWS_WEATHER_DAILY_DAYS_DEFAULT),
+    '#options' => array(1 => '1', 2 => '2', 3 => '3', 4 => '4', 5 => '5', 6 => '6', 7 => '7'),
+    '#description' => t('Select number of days of forecast to display. May require clearing Drupal cache to take effect.'),
+  );
+  $form['display_options']['daily_display_elements'] = array(
+  '#type' => 'checkboxes',
+  '#default_value' => variable_get('nws_weather_daily_display', array(
+    'Daily Maximum Temperature' => 'Daily Maximum Temperature',
+    'Daily Minimum Temperature' => 'Daily Minimum Temperature',
+    'Weather Type, Coverage, and Intensity' => 'Weather Type, Coverage, and Intensity',
+    'Conditions Icons' => 'Conditions Icons',
+  )),
+  '#title' => t('Forecast elements to display'),  
+  '#options' => array(
+    'Daily Maximum Temperature' => 'Daily maximum temperature',
+    'Daily Minimum Temperature' => 'Daily minimum temperature',
+    'Weather Type, Coverage, and Intensity' => 'Weather type, coverage, and intensity',
+    'Conditions Icons' => 'Conditions icons',    
+    ),
+  '#description' => t('Turn on or off display of forecast elements.'),
+  );
+
+
+  // Retrieve the stored unit preferences.
+  $default_units = variable_get('nws_weather_units', array('temperature' => NWS_WEATHER_TEMP_UNIT_DEFAULT));
+  $form['units'] = array(
+   '#type' => 'fieldset',
+   '#title' => t('Display units'),
+   '#description' => t('You can specify which units should be used for displaying the data.'),
+   '#collapsible' => TRUE,
+   '#collapsed' => FALSE,
+   '#tree' => TRUE,
+  );
+  $form['units']['temperature'] = array(
+    '#type' => 'select',
+    '#title' => t('Temperature'),
+    '#default_value' => $default_units['temperature'],
+    '#options' => array(
+      'fahrenheit' => t('Fahrenheit'),
+      'celsius' => t('Celsius'),
+    ),
+  );
+
+
+  $form['image_map'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Image override'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#tree' => TRUE,
+    '#description' => t('The default location can be defined with a latitude and longitude. Only Lat/Lon pairs inside the U.S. will return data. This configuration page also allows default National Weather Service icons to be overridden. Icon fields that are blank will not override default icons. Icons are limited to GIF, JPG, and PNG file formats.'),
+  );
+  $form['image_map']['replace'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Replace NWS weather images'),
+    '#default_value' => variable_get('nws_weather_override_bool', '0'),
+    '#description' => t('If enabled, the nws_weather module will use the files specified below instead of the icons provided by the National Weather Service.'),
+    '#weight' => -10,        
+  );
+  $form['image_map']['directory'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Image override directory'),
+    '#default_value' => variable_get('nws_weather_override_directory', NWS_WEATHER_OVERRIDE_DIRECTORY_DEFAULT),
+    '#description' => t('A file system path where override images are stored, e.g., "sites/all/modules/mymodule/images". All files specified as image overrides must reside in this directory in order to be located by the module.'),
+    '#weight' => -9,
+  );
+  $form['image_map']['file_map'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Image file overrides'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#tree' => TRUE,
+    '#description' => t('The default location can be defined with a latitude and longitude. Only Lat/Lon pairs inside the U.S. will return data. This configuration page also allows default National Weather Service icons to be overridden. Icon fields that are blank will not override default icons. Icons are limited to GIF, JPG, and PNG file formats.'),
+  );  
+  // Create a form field for each image defined.
+
+  $icons = array();
+  $result = db_query('SELECT url,img FROM {nws_weather_config}');
+  while ($row = db_fetch_array($result)) {
+    $icons[$row['url']] = $row['img'];
+  }
+
+  ksort($icons);
+  foreach ($icons as $nws => $override) {
+    preg_match('|[\.\w]*$|', $nws, $matches);
+    $form['image_map']['file_map'][$nws] = array(
+      '#type' => 'textfield',
+      '#title' => $nws,
+      '#default_value' => $override,
+      '#size' => 80,
+    );
+  }
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+  );
+  return  $form;
+}
+
+/**
+ *
+ */
+function nws_weather_admin_settings_validate($form, &$form_state) {
+  if (!is_numeric($form_state['values']['lat']) || $form_state['values']['lat'] > 90 || $form_state['values']['lat'] < -90) {
+    form_set_error('lat', t('Latitude value must be numeric and between 90 and -90.'));
+  }
+  if (!is_numeric($form_state['values']['lon']) || $form_state['values']['lon'] > 180 || $form_state['values']['lon'] < -180) {
+    form_set_error('lat', t('Latitude value must be numeric and between 180 and -180.'));
+  }
+}
+
+/**
+ *
+ */
+function nws_weather_admin_settings_submit($form, &$form_state) {
+  cache_clear_all('nws_weather_', $table = 'cache', TRUE);  
+  variable_set('nws_weather_lat', $form_state['values']['lat']);
+  variable_set('nws_weather_lon', $form_state['values']['lon']);
+  variable_set('nws_weather_location_name', $form_state['values']['name']);
+  variable_set('nws_weather_daily_days', $form_state['values']['daily_days']);
+  variable_set('nws_weather_units', $form_state['values']['units']);
+  variable_set('nws_weather_daily_display', $form_state['values']['daily_display_elements']);
+  // Image Override options.
+  variable_set('nws_weather_override_bool', $form_state['values']['image_map']['replace']);
+  if ($directory = $form_state['values']['image_map']['directory']) {
+    variable_set('nws_weather_override_directory', $directory);
+  }
+  foreach ($form_state['values']['image_map']['file_map'] as $url => $img) {
+    db_query("UPDATE {nws_weather_config} SET img = '%s' WHERE url = '%s'", $img, $url);
+  }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function nws_weather_theme($existing, $type, $theme, $path) {
+  $theme = array(
+    'nws_weather_forecast' => array(
+      'template' => 'nws-weather-forecast',
+      'arguments' => array(
+        'dataForecast' => array(),
+        'required' => array(),
+        'display' => array(),
+        'options' => array(),        
+        ),
+    ),
+    'nws_weather_forecast_period' => array(
+      'template' => 'nws-weather-forecast-period',
+      'arguments' => array(
+        'timeforecast' => array(),
+        'display' => array(),        
+        'dataForecast' => array(),
+        'options' => array(),
+        ),
+    ),
+    'nws_weather_forecast_element' => array(
+      'template' => 'nws-weather-forecast-element',
+      'arguments' => array(
+        'data' => array(),
+        'timeforecast' => array(),        
+        'options' => array(),
+        ),
+    ),
+  );
+  return $theme;
+}
+
+
+/**
+ * Implementation of hook_block().
+ */
+function nws_weather_block($op = 'list', $delta = 0, $edit = array()) {
+  global $user;
+  switch ($op) {
+    case 'list':
+      return array(
+        'table_out' => array(
+          'info'   => t('NWS weather forecast'),
+          'weight' => 10,
+          'cache'  => BLOCK_NO_CACHE,
+        ),
+      );
+    case 'view':
+      $block = array();
+      switch ($delta) {
+        case 'table_out':
+          $forecastdata = nws_weather_NDFDgenByDay(variable_get('nws_weather_lat', NWS_WEATHER_LAT_DEFAULT), variable_get('nws_weather_lon', NWS_WEATHER_LON_DEFAULT), '', variable_get('nws_weather_daily_days', NWS_WEATHER_DAILY_DAYS_DEFAULT));
+          $location = check_plain(variable_get('nws_weather_location_name', NWS_WEATHER_LOCATION_NAME_DEFAULT));
+          $block = array(
+            'subject' => $location ? t('Weather Forecast for !location', array('!location' => $location)) : t('Weather Forecast'),
+            'content' => $forecastdata 
+              ? theme('nws_weather_forecast', $forecastdata, array(
+                  'Daily Maximum Temperature',
+                  'Daily Minimum Temperature',
+                  'Conditions Icons',
+                  ), array(
+                  'Conditions Icons',
+                  'Weather Type, Coverage, and Intensity',
+                  'Daily Maximum Temperature',
+                  'Daily Minimum Temperature',
+                  ))
+              : '',
+          );
+      }
+      return $block;
+  }
+}
+
+/**
+ *
+ */
+function nws_weather_NDFDgenByDay($lat, $lon, $start = '', $days = 7, $format = '24 hourly') {
+  $cachename = 'nws_weather_ndfd_' . strtr($lat, '.', '_') . '_' . strtr($lon, '.', '_');
+  $now = time();
+  // If data is cached fetch it. Expire comparison honors expiration date.
+  if (!$reset && ($cache = cache_get($cachename)) && !empty($cache->data) && ($cache->expire > $now)) {
+    $result = $cache->data;
+  }
+  else {
+    $triesleft = 3; 
+    do {
+      try {
+        $timeout = ini_get('default_socket_timeout');
+        ini_set('default_socket_timeout', SOCKET_TIMEOUT_SECONDS); 
+        $soapclient = new SoapClient(NWS_WEATHER_WSDL_URL);
+        $result = $soapclient->NDFDgenByDay($lat, $lon, $start, $days, $format); 
+        ini_set('default_socket_timeout', $timeout);
+        $triesleft = 0;
+      }
+      catch (SoapFault $e) {
+        $triesleft--;
+        // Retry if is timeout or DNS issue.
+        if (!($e->faultcode == 'HTTP' || $e->faultcode == 'SERVER') || $e->faultstring == 'Point is not on NDFD grid') {
+          watchdog('SOAP', 'SoapFault :' . $e->faultcode . '. ' . $e->faultstring, array(), WATCHDOG_ERROR);
+          return;
+        }
+        else {
+          watchdog('SOAP', 'SoapFault :' . $e->faultcode . '. ' . $e->faultstring . '. triesleft = ' . $triesleft, array(), WATCHDOG_ERROR);
+        }
+      }
+      catch (Exception $e) {
+        watchdog('SOAP', $e, array(), WATCHDOG_ERROR);
+        return;
+      }
+    } while ($triesleft > 0);
+    // use SimpleXML to convert the Pear result to something we can work with.
+    if (is_string($result)) {
+      try{
+        $xml = new SimpleXMLElement($result);
+      }
+      catch (Exception $e) {
+        watchdog('nws_weather', $e, array(), WATCHDOG_ERROR);
+        return;
+      }
+    }
+    else {
+      return;
+    }
+    // Process the DWML and merge time periods together
+    $times = nws_weather_process_dwml($xml);
+    $result = nws_weather_merge_period_data($times);
+    // Sort the array and cache it.
+    ksort($result);
+    cache_set($cachename, $result, 'cache', $now + NWS_WEATHER_CACHE_TIME);
+  }
+  return $result;
+}
+
+/**
+ *
+ */
+function nws_weather_NDFDgen($lat, $lon, $elements = array(), $product = 'time-series', $start = '', $end = '') {
+  $cachename = 'nws_weather_NDFDgen_' . strtr($lat, '.', '_') . '_' . strtr($lon, '.', '_') . '_' . $product . '_' . $start . '_' . $end;
+  if (count($elements) > 0) {
+    $cachename .= '_' . implode('_', array_values($elements));
+  }
+  $cachename = drupal_substr($cachename, 0, 255);
+  $now = time();
+  // If data is cached fetch it. Expire comparison honors expiration date.
+  if (($cache = cache_get($cachename)) && !empty($cache->data) && ($cache->expire > $now)) {
+    $result = $cache->data;
+    return ($result);
+  }
+  else {
+    // This is the master list of weather elements from the NWS soap documentation.
+    $wxparams = array(
+      'icons' => FALSE, 'maxt' => FALSE, 'mint' => FALSE, 'temp' => FALSE, 'dew' => FALSE, 'appt' => FALSE, 'pop12' => FALSE, 'qpf' => FALSE, 'snow' => FALSE, 'sky' => FALSE, 'rh' => FALSE, 'wspd' => FALSE, 'wdir' => FALSE, 'wx' => FALSE, 'waveh' => FALSE, 'incw34' => FALSE, 'incw50' => FALSE, 'incw64' => FALSE, 'cumw34' => FALSE, 'cumw50' => FALSE, 'cumw64' => FALSE, 'wgust' => FALSE, 'conhazo' => FALSE, 'ptornado' => FALSE, 'phail' => FALSE, 'ptstmwinds' => FALSE, 'pxtornado' => FALSE, 'pxhail' => FALSE, 'pxtstmwinds' => FALSE, 'ptotsvrtstm' => FALSE, 'pxtotsvrtstm' => FALSE, 'tmpabv14d' => FALSE, 'tmpblw14d' => FALSE, 'tmpabv30d' => FALSE, 'tmpblw30d' => FALSE, 'tmpabv90d' => FALSE, 'tmpblw90d' => FALSE, 'prcpabv14d' => FALSE, 'prcpblw14d' => FALSE, 'prcpabv30d' => FALSE, 'prcpblw30d' => FALSE, 'prcpabv90d' => FALSE, 'prcpblw90d' => FALSE, 'precipa_r' => FALSE, 'sky_r' => FALSE, 'td_r' => FALSE, 'temp_r' => FALSE, 'wdir_r' => FALSE, 'wwa' => FALSE, 'wspd_r' => FALSE,  'tstmprb' => FALSE,  'tstmcat' => FALSE, 
+    );
+    // If no elements specified, turn all on.
+    if (count($elements) == 0) {
+      $elements = array_keys($wxparams);
+    }
+    // Loop through list of elements, setting correct values in the params array. If there are no elements specified in the parameter (array is empty), then all data will be returned from the NWS. Invalid element names are ignored.
+    foreach ($elements as $element) {
+      if (array_key_exists($element, $wxparams)) {
+        $wxparams[$element] = TRUE;
+      }  
+    }
+    // Query the National Weather Service for the forecast data using SOAP protocol. 
+    if ($xml = _nws_weather_NDFDgen($lat, $lon, $product, $start, $end, $wxparams)) {
+      $times = nws_weather_process_dwml($xml);
+      $result = nws_weather_merge_period_data($times);
+      ksort($result);
+      cache_set($cachename, $result, 'cache', $now + NWS_WEATHER_CACHE_TIME);
+      return ($result);
+    }
+  }  //end if cached
+}
+
+
+/**
+ *
+ */
+function _nws_weather_NDFDgen($lat, $lon, $product = 'time-series', $start = '', $end = '', $params = array()) {
+  // Try/catch the SOAP call. Make up to three attempts if failure looks timeout or connection related.
+  $triesleft = 3; 
+  do {
+    try {
+      $timeout = ini_get('default_socket_timeout');
+      ini_set('default_socket_timeout', SOCKET_TIMEOUT_SECONDS); 
+      $soapclient = new SoapClient(NWS_WEATHER_WSDL_URL);
+      $result = $soapclient->NDFDgen($lat, $lon, $product, $start, $end, $params); 
+      ini_set('default_socket_timeout', $timeout);
+      // Convert to XML using PHP 5 SimpleXML.
+      if (is_string($result)) {
+        try{
+          return new SimpleXMLElement($result);
+        }
+        catch (Exception $e) {
+          watchdog('nws_weather', $e, array(), WATCHDOG_ERROR);
+          return;
+        }
+      }
+      else {
+        return;
+      }
+    }
+    catch (SoapFault $e) {
+      $triesleft--;
+      // Retry if is timeout or DNS issue.
+      if (!($e->faultcode == 'HTTP' ) || $e->faultstring == 'Point is not on NDFD grid') {
+        watchdog('SOAP-nws_weather', 'SoapFault :' . $e->faultcode . '. ' . $e->faultstring, array(), WATCHDOG_ERROR);
+        return;
+      }
+      else {
+        watchdog('SOAP-nws_weather', 'SoapFault :' . $e->faultcode . '. ' . $e->faultstring . '. triesleft = ' . $triesleft, array(), WATCHDOG_ERROR);
+      }
+    }
+    catch (Exception $e) {
+      watchdog('SOAP-nws_weather', $e, array(), WATCHDOG_ERROR);
+      return;
+    }
+  } while ($triesleft > 0);
+}
+
+/**
+ *
+ */
+function nws_weather_merge_period_data($times) {
+  $result = array();
+  foreach ($times as $timekey => $data) {
+    foreach ($data as $time) {
+      $key = $time['start-valid-unix'] . '.' . $time['end-valid-unix'];
+      $merged = FALSE;
+      // if this is the first time through the list, assign.
+      if (empty($result)) {
+        $result[$key] = $time;
+        $merged = TRUE;
+      }
+      // It is possible that there's an exact match to the begin.end time, in which case we combine the weather data together into a single array.
+      elseif ($result[$key]) {
+        $result[$key]['data'] = array_merge($result[$key]['data'], $time['data']);
+        $merged = TRUE;
+      }
+      else {
+        // The following handles the case when a weather time element starts not exactly on the hour.
+        foreach ($result as $k => &$v) {
+          // We've found an insertion point, we can merge the data and then break this loop.
+          if ($diff = (abs($time['start-valid-unix'] - $v['start-valid-unix'])) <= 1799) {
+            // Note that the end time must be offset the exact amount.
+            if (abs($time['start-valid-unix'] - $v['start-valid-unix']) == $diff) {
+              $v['data'] = array_merge($v['data'], $time['data']);
+              $merged = TRUE;
+              break;
+            }
+          }
+        }
+      }
+      if (!$merged) {
+        $result[$key] = $time;
+      }
+    }
+  }
+  return $result;
+}
+
+/**
+ *
+ */
+function nws_weather_process_dwml($xml) {
+  $datamaps = array(
+    'climate-anomaly' => array(
+      'weekly' => array(
+        'types' => array(
+          'average temperature above normal' => 'value',
+          'average precipitation above normal' => 'value',
+          'average temperature below normal' => 'value',
+          'average precipitation below normal' => 'value',
+        ),
+      ),
+      'monthly' => array(
+        'types' => array(
+          'average temperature above normal' => 'value',
+          'average precipitation above normal' => 'value',
+          'average temperature below normal' => 'value',
+          'average precipitation below normal' => 'value',
+        ),
+      ),
+      'seasonal' => array(
+        'types' => array(
+          'average temperature above normal' => 'value',
+          'average precipitation above normal' => 'value',
+          'average temperature below normal' => 'value',
+          'average precipitation below normal' => 'value',
+        ),
+      ),
+    ),    
+    'cloud-amount' => array(
+      'types' => array(
+        'total' => 'value',
+        'rtma-total' => 'value',
+      ),
+    ),
+    'conditions-icon' => array(
+      'types' => array(
+        'forecast-NWS' => 'icon-link',
+      ),
+    ),
+    'convective-hazard' => array(
+      'severe-component' => array(
+        'types' => array(
+          'hail' => 'value',
+          'tornadoes' => 'value',
+          'damaging thunderstorm winds' => 'value',
+          'extreme hail' => 'value',
+          'extreme thunderstorm winds' => 'value',
+          'severe thunderstorms' => 'value',
+          'extreme severe thunderstorms' => 'value',
+          'extreme tornadoes' => 'value',
+        ),
+      ),
+      'outlook' => array(
+        'types' => 'value',
+      ),      
+    ),    
+    'direction' => array(
+      'types' => array(
+        'wind' => 'value',
+        'rtma-wind' => 'valueWithUncertainty/value',
+      ),
+    ),
+    'hazards' => array(
+      'types' => 'hazard-conditions'
+    ),    
+    'humidity' => array(
+      'types' => array(
+        'relative' => 'value',
+      ),
+    ),
+    'precipitation' => array(
+      'types' => array(
+        'snow' => 'value',
+        'liquid' => 'value',
+        'rtma-liquid' => 'value',
+      ),
+    ),
+    'probabilisticCondition' => array(
+      'types' => array(
+        'LAMP_TP2' => 'value',
+      ),
+    ),
+    'probability-of-precipitation' => array(
+      'types' => array(
+        '12 hour' => 'value',
+      ),
+    ),
+    'temperature' => array(
+      'types' => array(
+        'maximum' => 'value', // maxt
+        'minimum' => 'value', // mint
+        'hourly' => 'value',  // temp
+        'dew point' => 'value', // dew
+        'apparent' => 'value', // appt
+        'rtma-hourly' => 'valueWithUncertainty/value', // temp_r
+        'rtma-dew point' => 'valueWithUncertainty/value',
+      ),
+    ),    
+    'water-state' => array(
+      'time-layout' => '..',
+      'waves' => array(
+        'types' => array(
+          'significant' => 'value',
+        ),
+      ),      
+    ),
+    'weather' => array(
+      'types' => 'weather-conditions'
+    ),
+    'wind-speed' => array(
+      'types' => array(
+        'sustained' => 'value',
+        'gust' => 'value',
+        'rtma-sustained' => 'valueWithUncertainty/value',
+        'incremental34' => 'value',
+        'incremental50' => 'value',
+        'incremental64' => 'value',
+        'cumulative34' => 'value',
+        'cumulative50' => 'value',
+        'cumulative64' => 'value',
+      ),
+    ),
+  );
+  // all times in an associative array, the keys of which are time keys.
+  $times = array();
+  // get all the time layours.
+  foreach ($xml->xpath('//time-layout') as $timelayout) {
+    $layout_key = (string) $timelayout->{'layout-key'};
+    // starting times.
+    $start_valid_times = $timelayout->xpath('start-valid-time');
+    // ending times (if no ending time, then is a point in time).
+    $end_valid_times = $timelayout->xpath('end-valid-time');
+    // get the actual time.
+    for ($x = 0; $x < count($start_valid_times); $x++) {
+      $start_valid_time = $start_valid_times[$x];
+      // Create a container for the time elements associated with this time-layout.
+      $time = array(
+        'timekey' => $layout_key,
+        'start-valid-time' => (string) $start_valid_time,
+        'start-valid-unix' => strtotime((string) $start_valid_time),
+        'data' => array(),
+      );
+      // If were any end times returned, then we can assume there's a matching end time for every start time.
+      if (count($end_valid_times)) {
+        // record the string and unix time.
+        $time['end-valid-time'] = (string) $end_valid_times[$x];
+        $time['end-valid-unix'] = strtotime((string) $end_valid_times[$x]);
+      }
+      // store in the $times array.
+      $times[$layout_key][] = $time;
+    }
+  }
+  // If there are no time keys, then there is no way to accumulate data, so return null.
+  if (!isset($times)) {
+    return;
+  }
+  // Process each of the weather parameters.
+  foreach ($xml->xpath('data/parameters/*') as $param) {
+    // Param name is used at several points along the way, get once for performance.
+    $param_name = $param->getName();
+    // Get the data path associated with this parameter name
+    if ($datamap = $datamaps[$param_name]) {
+      // There is a type map at the top level of the datamap. This means that the type is assigned at the parameter level and can be looked up in the data map at this level, not at a child level.
+      if (array_key_exists('types', $datamap)) {
+        $type_map = $datamap['types'];
+      }
+      // There is no type map at the top level of the datamap. This means that the type association and specification of values takes place at (probably) the children level of the current parameter.
+      else {
+        // Get the children of the parameter
+        $children = $param->xpath('*');
+        // Reset the parameter to the child of the parameter -- move down the hierarchy.
+        $param = current($children);
+        // We've changed the param association, so have to get the name again.
+        $param_name .= '/' . $param->getName();
+        // Get the type map
+        $type_map = $datamap[$param->getName()]['types'];
+      }
+      // There's only one value specified as the type map, not an array, so the path to the values is the type_map value in the associative array. Probably needs to be specified in the map this way instead of assumed.
+      if (!is_array($type_map)) {
+        $valuepath = $type_map;
+      }
+      // Read the type attribute on the parameter and determine the path to the value cells by looking up in the type_map.
+      else {
+        $type = (string) $param['type'];
+        $valuepath = $type_map[$type];
+      }
+      // This will be the container for the extracted values.
+      $values = array();
+      // Exract the parameter name (may be pushed down a level)????
+      $wx_name = (string) $param->name;
+      // Retrieve the time-layout key. This may involve using xpath to search for a specific element (likely the parent of our parameter) or more liklely just getting the attribute on the parameter.
+      if ($datamap['time-layout']) {
+        $layout_key_element = $param->xpath($datamap['time-layout']);
+        $timekey = (string) $layout_key_element[0]['time-layout'];
+      }
+      else {      
+        $timekey = (string) $param['time-layout'];
+      }
+      // Retrieve the units attribute.
+      $units = (string) $param['units'];
+      // There must be a defined path to the set of value elements or we can't continue.
+      if ($valuepath) {
+        // Extract the values.
+        $i = 0;
+        foreach ($param->xpath($valuepath) as $value_cell) {
+          $value = '';
+          // Unfortunately need to special case for parsing structure weather summary objects. For weather, NWS sometimes summarizes the weather in an attribute, sometimes with or without the corresponding sub element 'value', and sometimes uses the subelement 'value' but not the attribute summary. So first look for the attribute summary, then if that fails look for the sub-element called 'value' and create our own weather string.
+          if ($wx_name == 'Weather Type, Coverage, and Intensity') {
+            // A summary string is available as an attribute of the toplevel element.
+            if (isset($value_cell['weather-summary'])) {
+              $value = (string) $value_cell['weather-summary'];
+            }
+            // Retrieve the value cell using XPath and grab the attributes and use them to construct a value based on DWML specification.
+            if ($value_cell = $value_cell->xpath('value')) {
+              if ($attributes = $value_cell[0]->attributes()) {
+                if ($combined = nws_weather_combine_weather_conditions($attributes)) {
+                  $value = $value ? $value : $combined;
+                }
+              }
+            }
+          }
+          else {
+            $value = (string) $value_cell;
+            $value = trim(ereg_replace("\n", " ", $value));
+          }
+          // Skip empty values.
+          if ($value == '') {
+            continue;
+          }
+          // Store the value in the time array, in the index position of the particular time array specified by the time key. Return the value and any units definition provided.
+          $value_array = array(
+            'name' => $wx_name,
+            'value' => $value,
+          );
+          // Assign the units into the value array. This comes from the parent node, but we specify on each value since the time arrays will be merged together.
+          if ($units) {
+            $value_array['units'] = $units;
+          }
+          if (is_object($value_cell)) {
+            // Merge in any attributes specified in the value cell.
+            foreach ($value_cell->attributes() as $a => $b) {
+              if (!isset($value_array[$a])) {
+                $value_array[$a] = (string) $b;
+              }
+            }
+          }
+          // Assign value array to appropriate index into the timekey.
+          $times[$timekey][$i++]['data'][$wx_name] = $value_array;
+        }
+      }
+      else {
+        watchdog('NWS_Weather', t('Unassigned datapath: <!name:!type>', array('!name' => $param_name, '!type' => $type, )), array(), WATCHDOG_ERROR);
+        continue;
+      }
+    }
+    else {
+      watchdog('NWS_Weather', t('Unassigned param: ' . $param->getName() . '/' . $param['type']), array(), WATCHDOG_ERROR);
+      continue;
+    }
+  }
+  return $times;
+}
+
+/**
+ *
+ */
+function nws_weather_combine_weather_conditions($data) {
+  $results = array();
+  if ($data['coverage'] != 'none') {
+    $results[] = (string) $data['coverage'];
+  }
+  if ($data['intensity'] != 'none') {
+    $results[] = (string) $data['intensity'];
+  }
+  if ($data['weather-type'] != 'none') {
+    $results[] = (string) $data['weather-type'];
+  }
+  if ($data['qualifier'] != 'none') {
+    $results[] = (string) $data['qualifier'];
+  }
+  return ucwords(implode(' ', $results));
+}
+
+/**
+ *
+ */
+function template_preprocess_nws_weather_forecast(&$vars) {
+  // Add in the css file for nws_weather.
+  drupal_add_css(drupal_get_path('module', 'nws_weather') . '/nws_weather.css');
+  // Collector for all of the forecast units that we're going to use.
+  $vars['forecast_units'] = array() ;
+  // There has to be data to work with to theme forecast output.
+  if (isset($vars['dataForecast'])) {
+    $vars['location_name'] = check_plain(variable_get('nws_weather_location_name', NWS_WEATHER_LOCATION_NAME_DEFAULT));
+    $vars['location_lat'] = variable_get('nws_weather_lat', NWS_WEATHER_LAT_CONFIG);
+    $vars['location_lon'] = variable_get('nws_weather_lon', NWS_WEATHER_LON_CONFIG);
+    // Retrieve the (optionally empty) list of weather elements to format.
+    foreach ($vars['dataForecast'] as $time => $value) {
+      // Ignore all non-array values.
+      if (!is_array($value)) {
+        continue;
+      }    
+      // Propose this time slice as a candidate for inclusion in themed output.
+      $candidate = $value;
+      // Look to see if all required fields are present, and if not, the time slice is not accepted as a candidate for display.
+      foreach ($vars['required'] as $required) {
+        if (!isset($value['data'][$required])) {
+          // If one required element is missing, we're done with this candidate.
+          $candidate = NULL;
+          break;
+        }
+      }
+      // If the candidate passed the test then assign the candidate into the list of forecast units to theme.
+      if ($candidate) {
+        $vars['forecast_units'][] = $candidate;
+      }
+    }
+    // Mark the first and last forecast units as such for list processing in the template.
+    $vars['forecast_units'][0]['first'] = 1;
+    $vars['forecast_units'][count($vars['forecast_units'])-1]['last'] = 1;
+    // Template each forecast unit.
+    foreach ($vars['forecast_units'] as &$candidate) {
+      $candidate['html'] = theme('nws_weather_forecast_period', $candidate, $vars['display'], $vars['forecast_units'], $vars['options']);
+    }
+  }
+}
+
+/**
+ *
+ */
+function template_preprocess_nws_weather_forecast_period(&$vars) {
+  // Assign the data for this time slice into the top level of variaables.
+  $vars['data'] = $vars['timeforecast']['data'];
+  $vars['first'] = $vars['timeforecast']['first'];
+  $vars['last'] = $vars['timeforecast']['last'];
+  // Set the list of data points to display -- empty display variable means display all.
+  $vars['display'] = count($vars['display']) == 0 ? array_keys($vars['data']) : $vars['display'];
+  // Trim based on user preferences set in admin console.  Right now we trim based on the daily display options, but will expand that to be more general in a later release.
+  foreach (variable_get('nws_weather_daily_display', array()) as $name => $value) {
+    if ($value === 0) {
+      $pos = array_search($name, $vars['display']);
+      if ($pos !== FALSE) {
+        unset($vars['display'][$pos]);
+      }
+    }
+  }
+  if ($vars['data']) {
+    $data = array();
+    // Process each of the display requests.
+    foreach ($vars['display'] as $name) {
+      if (array_key_exists($name, $vars['data'])) {
+        $data[$name]['html'] = theme('nws_weather_forecast_element', $vars['data'][$name], $vars['timeforecast'], $vars['options']);
+      }
+    }
+    // BY now we've filtered out all data that was not requested for display.
+    $vars['data'] = $data;
+  }
+  // Format the period start and end dates.
+  $vars['period_start'] = date('l, F jS, Y', $vars['timeforecast']['start-valid-unix']);
+  if ($vars['timeforecast']['end-valid-unix']) {
+    $vars['period_end'] = date('l, F jS, Y', $vars['timeforecast']['end-valid-unix']);
+  }
+}
+
+/**
+ *
+ */
+function template_preprocess_nws_weather_forecast_element(&$vars) {
+  // Title adjustments.
+  static $titles;
+  $titles = array(
+    'Daily Maximum Temperature' => 'High Temperature',
+    'Daily Minimum Temperature' => 'Low Temperature',
+    'Weather Type, Coverage, and Intensity' => '',
+    'Conditions Icons' => '',
+  ); 
+  // Set variables for the type of data element and convert that type for a CSS class selector.
+  $vars['type'] = $vars['data']['name'];
+  $class = str_replace(',', '', $vars['type']);
+  $search = str_replace(' ', '-', $class);
+  $vars['class'] = drupal_strtolower($search);
+  // Use a friendlier title or turn off title altogether.
+  $vars['title'] = array_key_exists($vars['data']['name'], $titles)
+    ? $titles[$vars['data']['name']]
+    : $vars['data']['name'];
+  // Assign the data value with some special cases.
+  switch ($vars['data']['name']) {
+    // Uppercase all words in the weather string.
+    case 'Weather Type, Coverage, and Intensity':
+      $wxstring = $vars['timeforecast']['data']['Weather Type, Coverage, and Intensity']['value'];
+      $vars['value'] = ucwords($wxstring) ;
+      break;
+    // Possible override of image.
+    case 'Conditions Icons':
+      $image = nws_weather_override_image($vars['data']['value']);
+      $wxstring = '';
+      // Check to see if we have a weather type to use for alt/title of img tag.
+      if (array_key_exists('Weather Type, Coverage, and Intensity', $vars['timeforecast']['data'])) {
+        // Extract the value for the weather string.
+        $wxstring = $vars['timeforecast']['data']['Weather Type, Coverage, and Intensity']['value'];
+      }
+      // Theme the image, using either weather string or basename as alt, and either weather string or empty string as popup title.
+      $alt = $wxstring ? $wxstring : $image;
+      $vars['value'] = theme('image', $image, $alt, $wxstring, array('class' => 'nws-weather-image'), FALSE);
+      break;
+    // For temperatures, adjust the 
+    case 'Daily Maximum Temperature':
+    case 'Daily Minimum Temperature':
+      $value = $vars['data']['value'];
+      if ($weather_units = variable_get('nws_weather_units', array('temperature' => NWS_WEATHER_TEMP_UNIT_DEFAULT))) {
+        if ($temp_units = $weather_units['temperature']) {
+          if ($temp_units == 'celsius') {
+            $vars['units'] = '&deg;C';
+            $vars['value'] = ($value) ? round((($value - 32) / 9) * 5) : '';
+          }
+          else {
+            $vars['units'] = '&deg;F';
+            $vars['value'] = $value;
+          }
+        }
+      }
+      break;
+    // Default -- just use the value in the data stream.
+    default:
+      $vars['value'] = $vars['data']['value'];
+      $vars['units'] = $vars['data']['units'];
+  }
+}
+
+/**
+ *
+ */
+function nws_weather_override_image($image) {
+  if ($override = variable_get('nws_weather_override_bool', 0)) {
+    $result = db_query("SELECT img FROM {nws_weather_config} WHERE url = '%s'", $image);
+    $row = db_fetch_array($result);
+    $directory = variable_get('nws_weather_override_directory', NWS_WEATHER_OVERRIDE_DIRECTORY_DEFAULT);
+    // Need $override switch set before will override image.
+    if ($override && $fname = $row['img']) {
+      $image = $directory . '/' . $fname;
+    }
+  }
+  return $image;
+}
+
+/**
+ *
+ */
+function nws_weather_parse_timekey($layout) {
+  $matches = array();
+  $pattern = '/k-p([0-9]{1,2})([hmd])-n([0-9]{1,2})[a-zA-Z0-9\-]*/';
+  $keys = array('length', 'period', 'quantity');
+  preg_match($pattern, $subject, $matches);
+  return array_combine($keys, array_slice($matches, 1));
+}

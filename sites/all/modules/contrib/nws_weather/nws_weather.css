@@ -1,0 +1,24 @@
+/* $Id: nws_weather.css,v 1.1 2010/01/22 21:21:03 dwaine Exp $ */ 
+
+div.nws-weather-forecast *{
+  line-height:normal;
+}
+div.nws-weather-period {
+  margin-bottom:1em;
+  clear:both;
+}
+div.nws-weather-period h4.period-name {
+  font-weight: bold;
+  margin:0 0 2px 0;
+  padding:0;
+}
+div.nws-weather-element {
+ margin: 0;
+}
+img.nws-weather-image {
+  float: left;
+  margin-right:.5em;
+}
+span.element-units{
+  margin-left:-2px;
+}

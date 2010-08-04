@@ -1,0 +1,8 @@
+core = 6.x
+engine = phptemplate
+name = Alphabet Garden
+description = Community Garden Social Media Participation Platform
+stylesheets[all][] = inc/css/styles.css
+
+
+base theme = garland
