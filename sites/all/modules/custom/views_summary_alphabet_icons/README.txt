@@ -43,3 +43,8 @@ Problems that Chach needs to work on:
 * We need to separate out the theme function from the preprocess function.
 Views should let us make a preprocess function if we provide it with a template.
 This may be out of the scope of the class (at least for the next few weeks due to time.)
+
+
+Git Scavenger Hunt
+Sign your name here if you could do a commit!
+* Chacha
