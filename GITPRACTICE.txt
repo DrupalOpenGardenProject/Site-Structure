@@ -1,0 +1,16 @@
+This is a text file that committers can play with to try out
+commits, git features, merging, git pull/push and other
+commands that require connecting to a repository or collaborating
+with other people.
+
+
+______
+Chach's Experiment:
+I have two cloned repositories on my computer, both of the github Site-Structure
+repository. 
+
+I am practicing updating my local git hub from the main repo.
+
+
+
+_____
