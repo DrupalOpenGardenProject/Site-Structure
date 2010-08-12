@@ -2,3 +2,4 @@ d6/drupal
 mn/Permaculturenews
 *.sql
 sites/*.localhost
+*.kpf
