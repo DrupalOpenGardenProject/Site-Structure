@@ -49,3 +49,4 @@ Git Scavenger Hunt
 Sign your name here if you could do a commit!
 * DrupalOpenGardenProject - github
 * chachasikes - github
+* daneheart - gihub
