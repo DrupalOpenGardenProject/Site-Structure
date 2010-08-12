@@ -4,59 +4,62 @@
 /**
  * Return an array of the modules to be enabled when this profile is installed.
  *
- * Implementation of hook_profile_modules().
- *
  * @return
  *   An array of modules to enable.
+ *
+ * An implementation of hook_profile_modules().    
  */
 function az-gardens_profile_modules() {
     global $install_locale;
   // Default Drupal core modules
   $modules = array(
+    'block',
     'color',
     'comment',
     'dblog',
+    'filter',
     'help',
-    'mark',
     'menu',
     'node',
     'path',
-    'search',
     'system',
     'taxonomy',
     'update',
-  // Contributed modules
     'user',
+  // Contributed modules
+    'admin',
+    'admin_role',
+    'content',
+    'filefield',
+    'imagefield',
+    'link',
+    'node_reference',
+    'number',
+    'option_widgets',
+    'text',
+    'user_reference',
     'ctools',
-    'context',
-    'context_ui',
-    'context_layouts',
-    'designkit',
-    'features',
+    'date',
+    'date_api',
+    'date_timexone',
+    'date_tools',
     'feeds',
     'feeds_ui',
-    'extractor',
-    'flot',
     'imageapi',
     'imageapi_gd',
     'imagecache',
+    'advanced_help',
+    'backup_migrate',
+    'login_destination',
+    'logintoboggan',
+    'pathauto',
+    'token',
     'jquery_ui',
-    'libraries',
-    'openidadmin',
-    'porterstemmer',
-    'purl',
-    'spaces',
-    'spaces_dashboard',
+    'jquery_plugins',
+    'jquery_ui'
     'views',
     'views_ui',
-    'views_rss',
-    'views_modes',
-    'votingapi',
-    'schema',
-    'seed',
-    'strongarm',
-    'geotaxonomy',
-  // Alphabet Garden modules
+  // Custom modules - Alphabet Garden modules
     'views_summary_alphabet_icons',
   );
   return $modules;
@@ -78,7 +81,6 @@ function az-gardens_profile_details() {
     'description' => 'Alphabet Gardens is a community garden news feed that <ul><li>aggregates RSS/Atom news feeds</li><li>places community garden news on a map</li><li>provides search on it and</li><li>offers a way of organizing community garden news into channels and topics.</li></ul>By Drupal Open Garden Project.'
   );
 }
-
 
 /**
  * Returns an array list of core az-gardens modules.
@@ -177,7 +179,7 @@ function az-gardens_profile_tasks(&$task, $url) {
     variable_set('site_frontpage', 'feeds');
     variable_set('comment_channel', 0);
     variable_set('comment_feed', 0);
-    variable_set('comment_book', 0);
+    variable_set('comment_topic', 0);
 
     // Clear caches.
     drupal_flush_all_caches();
