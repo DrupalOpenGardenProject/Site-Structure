@@ -47,5 +47,10 @@ This may be out of the scope of the class (at least for the next few weeks due t
 
 Git Scavenger Hunt
 Sign your name here if you could do a commit!
+<<<<<<< HEAD
 * Chacha
 * James
+=======
+* DrupalOpenGardenProject - github
+* chachasikes - github
+>>>>>>> b1bf2bd05aa987bf7580f2b24068eeed4a24e928
