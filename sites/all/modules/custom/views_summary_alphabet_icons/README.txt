@@ -50,7 +50,12 @@ Sign your name here if you could do a commit!
 <<<<<<< HEAD
 * Chacha
 * James
+* Karoline (daneheart)
 =======
 * DrupalOpenGardenProject - github
 * chachasikes - github
+<<<<<<< HEAD
+* daneheart - gihub
+=======
 >>>>>>> b1bf2bd05aa987bf7580f2b24068eeed4a24e928
+>>>>>>> dbe1fdc3edb8da5ba34f20c7c6218864f8271bec
