@@ -83,35 +83,6 @@ function az-gardens_profile_details() {
 }
 
 /**
- * Returns an array list of core az-gardens modules.
- */
-function _az-gardens_core_modules() {
-  return array(
-    'mapbox',
-    'openlayers',
-    'openlayers_ui',
-    'openlayers_behaviors',
-    'openlayers_views',
-    'stored_views',
-    'web_widgets',
-    'data',
-    'data_ui',
-    'data_search',
-    'data_node',
-    'data_taxonomy',
-    'az_core',
-    'az_about',
-    'az_search',
-    'az_channels',
-    'az_widgets',
-    'simpleshare',
-    'az_world',
-    'az_boxes',
-    'boxes',
-  );
-}
-
-/**
  * Implementation of hook_profile_task_list().
  */
 function az-gardens_profile_task_list() {
