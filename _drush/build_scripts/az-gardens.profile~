@@ -13,49 +13,9 @@ function az-gardens_profile_modules() {
     global $install_locale;
   // Default Drupal core modules
   $modules = array(
-    'color',
-    'comment',
-    'dblog',
-    'help',
-    'mark',
-    'menu',
-    'node',
-    'path',
-    'search',
-    'system',
-    'taxonomy',
-    'update',
+    
   // Contributed modules
-    'user',
-    'ctools',
-    'context',
-    'context_ui',
-    'context_layouts',
-    'designkit',
-    'features',
-    'feeds',
-    'feeds_ui',
-    'extractor',
-    'flot',
-    'imageapi',
-    'imageapi_gd',
-    'imagecache',
-    'jquery_ui',
-    'libraries',
-    'openidadmin',
-    'porterstemmer',
-    'purl',
-    'spaces',
-    'spaces_dashboard',
-    'views',
-    'views_ui',
-    'views_rss',
-    'views_modes',
-    'votingapi',
-    'schema',
-    'seed',
-    'strongarm',
-    'geotaxonomy',
+    
   // Alphabet Garden modules
     'views_summary_alphabet_icons',
   );
@@ -76,36 +36,6 @@ function az-gardens_profile_details() {
   return array(
     'name' => 'Alphabet Gardens',
     'description' => 'Alphabet Gardens is a community garden news feed that <ul><li>aggregates RSS/Atom news feeds</li><li>places community garden news on a map</li><li>provides search on it and</li><li>offers a way of organizing community garden news into channels and topics.</li></ul>By Drupal Open Garden Project.'
-  );
-}
-
-
-/**
- * Returns an array list of core az-gardens modules.
- */
-function _az-gardens_core_modules() {
-  return array(
-    'mapbox',
-    'openlayers',
-    'openlayers_ui',
-    'openlayers_behaviors',
-    'openlayers_views',
-    'stored_views',
-    'web_widgets',
-    'data',
-    'data_ui',
-    'data_search',
-    'data_node',
-    'data_taxonomy',
-    'az_core',
-    'az_about',
-    'az_search',
-    'az_channels',
-    'az_widgets',
-    'simpleshare',
-    'az_world',
-    'az_boxes',
-    'boxes',
   );
 }
 
@@ -136,30 +66,7 @@ function az-gardens_profile_tasks(&$task, $url) {
   $output = '';
 
   if ($task == 'profile') {
-    // Create a default vocabulary for storing geo terms imported by the feed_term content type
-    // and subsequently used by the extractor module. Used by the az_core feature.
-    $data = array('name' => 'Locations', 'relations' => 1);
-    taxonomy_save_vocabulary($data);
-    variable_set('az_core_location_vocab', $data['vid']);
-    variable_set('geotaxonomy_'. $data['vid'], 1);
 
-    // Create a vocabulary for channel tags.
-    $data = array('name' => 'Channel tags', 'required' => 1, 'relations' => 0, 'tags' => 1, 'nodes' => array('channel' => 1), 'help' => 'Articles with these tags will appear in this channel.');
-    taxonomy_save_vocabulary($data);
-    variable_set('az_core_tags_vocab', $data['vid']);
-
-    $modules = _az-gardens_core_modules();
-    $files = module_rebuild_cache();
-    $operations = array();
-    foreach ($modules as $module) {
-      $operations[] = array('_install_module_batch', array($module, $files[$module]->info['name']));
-    }
-    $batch = array(
-      'operations' => $operations,
-      'finished' => '_az-gardens_profile_batch_finished',
-      'title' => st('Installing @drupal', array('@drupal' => drupal_install_profile_name())),
-      'error_message' => st('The installation has encountered an error.'),
-    );
     // Start a batch, switch to 'profile-install-batch' task. We need to
     // set the variable here, because batch_process() redirects.
     variable_set('install_task', 'profile-install-batch');
@@ -175,9 +82,6 @@ function az-gardens_profile_tasks(&$task, $url) {
     // Other variables worth setting.
     variable_set('site_footer', 'Powered by <a href="http://www.az-gardens.com">Alphabet Garden</a>.');
     variable_set('site_frontpage', 'feeds');
-    variable_set('comment_channel', 0);
-    variable_set('comment_feed', 0);
-    variable_set('comment_book', 0);
 
     // Clear caches.
     drupal_flush_all_caches();
@@ -195,10 +99,6 @@ function az-gardens_profile_tasks(&$task, $url) {
     $revert = array(
       'az_core' => array('variable'),
     );
-    features_revert($revert);
-
-    $task = 'finished';
-  }
 
   return $output;
 }
