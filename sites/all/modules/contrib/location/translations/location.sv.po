@@ -1,0 +1,2183 @@
+# $Id$
+#
+# Swedish translation of Drupal (location)
+# Generated from files:
+#  location.tpl.php: n/a
+#  location_phone.views.inc,v 1.1.2.1 2009/12/16 20:47:53 bdragon
+#  location_fax.views.inc,v 1.1.2.1 2009/12/16 20:47:53 bdragon
+#  locations.tpl.php: n/a
+#  location_node.module,v 1.1.2.6 2009/04/03 20:16:45 bdragon
+#  location_search.module,v 1.12 2008/10/09 22:11:09 bdragon
+#  location.inc,v 1.95.2.5 2010/03/28 21:55:00 ankur
+#  location.views.inc,v 1.16 2008/12/03 22:51:23 bdragon
+#  location.module,v 1.222.2.29 2010/03/28 22:51:41 ankur
+#  location.info,v 1.3 2008/07/24 19:44:00 bdragon
+#  location_node.info,v 1.1.2.2 2009/02/25 18:49:31 bdragon
+#  location_user.info,v 1.1 2008/12/05 18:08:32 bdragon
+#  location_addanother.info,v 1.3.2.1 2009/02/25 20:51:52 bdragon
+#  location_cck.module,v 1.5.2.19 2010/03/25 07:00:07 ankur
+#  location_fax.info,v 1.5 2008/09/10 21:23:08 bdragon
+#  location_phone.info,v 1.5 2008/09/10 21:23:09 bdragon
+#  location_search.info,v 1.4 2008/10/22 17:30:23 bdragon
+#  location_taxonomy.info,v 1.1.2.1 2009/04/03 18:37:04 bdragon
+#  google.inc,v 1.11.2.3 2009/06/29 14:11:16 bdragon
+#  location.admin.inc,v 1.17.2.3 2009/04/17 19:12:54 bdragon
+#  location_handler_filter_location_country.inc,v 1.3 2008/12/02 22:50:21 bdragon
+#  location_views_handler_filter_proximity.inc,v 1.3.2.1 2010/01/22 16:38:05 bdragon
+#  location.de.inc,v 1.16.4.1 2009/02/04 23:16:17 bdragon
+#  location.token.inc,v 1.2.2.1 2010/01/19 16:04:48 bdragon
+#  location_handler_argument_location_country.inc,v 1.1 2008/09/16 18:23:09 bdragon
+#  location_handler_argument_location_province.inc,v 1.1 2008/09/16 18:23:09 bdragon
+#  location_handler_field_location_distance.inc,v 1.2.2.2 2010/03/28 22:13:53 ankur
+#  location_handler_sort_location_distance.inc,v 1.1 2008/12/03 22:51:23 bdragon
+#  location_handler_filter_location_province.inc,v 1.1.2.2 2010/03/28 21:05:37 ankur
+#  location_handler_field_location_province.inc,v 1.1 2008/09/15 18:43:37 bdragon
+#  location_handler_field_location_country.inc,v 1.1 2008/09/10 22:41:52 bdragon
+#  location_handler_field_location_address.inc,v 1.1.2.1 2009/02/24 20:59:05 bdragon
+#  location_user.module,v 1.2.2.1 2009/04/03 15:45:05 bdragon
+#  location.install,v 1.41.2.1 2009/02/25 18:49:30 bdragon
+#  location_addanother.module,v 1.6.2.1 2010/01/19 02:17:29 bdragon
+#  location_cck.info,v 1.3.2.1 2009/01/06 19:33:31 bdragon
+#  location_fax.module,v 1.11 2008/11/20 19:46:21 bdragon
+#  location_generate.module,v 1.4 2008/12/05 21:10:57 bdragon
+#  location_generate.info,v 1.2 2008/09/19 16:44:58 bdragon
+#  location_phone.module,v 1.12 2008/11/20 19:46:21 bdragon
+#  location_search.admin.inc,v 1.3 2008/10/09 22:09:05 bdragon
+#  location_taxonomy.module,v 1.1.2.2 2009/06/29 14:34:54 bdragon
+#  location.au.inc,v 1.9 2008/07/25 14:54:11 bdragon
+#  location_handler_field_location_street.inc,v 1.1 2008/09/16 18:23:09 bdragon
+#  location_views_handler_field_latitude.inc,v 1.1 2008/09/10 22:01:05 bdragon
+#  location.us.inc,v 1.23.2.1 2009/02/04 23:16:17 bdragon
+#  location.ca.inc,v 1.11 2008/03/08 22:25:39 bdragon
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Location 6.x\n"
+"POT-Creation-Date: 2010-04-04 03:21+0200\n"
+"PO-Revision-Date: 2010-04-04 03:59+0100\n"
+"Last-Translator: Magnus Gunnarsson <magnus.gunnarsson76@gmail.com>\n"
+"Language-Team: drupalsverige.se\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+"X-Poedit-Language: Swedish\n"
+"X-Poedit-Country: SWEDEN\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#: location.tpl.php:33
+#: contrib/location_phone/location_phone.views.inc:52
+msgid "Phone"
+msgstr "Telefon"
+
+#: location.tpl.php:39
+#: contrib/location_fax/location_fax.views.inc:52
+msgid "Fax"
+msgstr "Fax"
+
+#: locations.tpl.php:2
+#: location_node.module:211
+#: contrib/location_search/location_search.module:49
+msgid "Locations"
+msgstr "Platser"
+
+#: locations.tpl.php:2
+#: location.inc:541
+#: location.views.inc:91;96;345
+#: location.module:205;1703;38
+#: location.info:0;0
+#: location_node.info:0
+#: location_user.info:0
+#: contrib/location_addanother/location_addanother.info:0
+#: contrib/location_cck/location_cck.module:38;122
+#: contrib/location_fax/location_fax.views.inc:19
+#: contrib/location_fax/location_fax.info:0
+#: contrib/location_phone/location_phone.views.inc:19
+#: contrib/location_phone/location_phone.info:0
+#: contrib/location_search/location_search.info:0
+#: contrib/location_taxonomy/location_taxonomy.info:0
+#: geocoding/google.inc:210
+msgid "Location"
+msgstr "Plats"
+
+#: location.admin.inc:26
+msgid "Default country selection"
+msgstr "Standardval för land"
+
+#: location.admin.inc:29
+msgid "This will be the country that is automatically selected when a location form is served for a new location."
+msgstr "Detta blir det land som väljs automatiskt när ett nytt platsformulär fylls i."
+
+#: location.admin.inc:33
+msgid "Toggle location display"
+msgstr "Växla visningsläge"
+
+#: location.admin.inc:36
+msgid "Disable the display of locations."
+msgstr "Avaktivera visning av platser."
+
+#: location.admin.inc:37
+msgid "Enable the display of locations."
+msgstr "Aktivera visning av platser."
+
+#: location.admin.inc:39
+msgid "If you are interested in turning off locations and having a custom theme control their display, you may want to disable the display of locations so your theme can take that function."
+msgstr "Om du är intresserad av att stänga av platser och ha ett anpassat tema som styr visningen, bör du avaktivera visningen av platser så att ditt tema kan använda den funktionen."
+
+#: location.admin.inc:44
+msgid "Use a Google Map to set latitude and longitude "
+msgstr "Använd Google Maps för att ange latitud och longitud. "
+
+#: location.admin.inc:46
+msgid "If the gmap.module is installed and <a href=\"@enabled\">enabled</a>, and this setting is also turned on, users that are allowed to manually enter latitude/longitude coordinates will be able to do so with an interactive Google Map.  You should also make sure you have entered a <a href=\"@google_maps_api_key\">Google Maps API key</a> into your <a href=\"@gmap_module_settings\">gmap module settings</a>."
+msgstr "Om modulen GMap är installerad, <a href=\"@enabled\">aktiverad</a> och att den här inställningen är aktiverad, så kan användare skriva in koordinater för latitud och longitud till en interaktiv Google Map. Du bör också säkerställa att du har lagt till en <a href=\"@google_maps_api_key\">nyckel för Google Maps API</a> till dina inställningar för <a href=\"@gmap_module_settings\">modulen GMap</a>."
+
+#: location.admin.inc:53
+msgid "Location chooser macro"
+msgstr "Makro för platsval"
+
+#: location.admin.inc:57
+msgid "If you would like to change the macro used to generate the location chooser map, you can do so here. Note: Behaviors <em>locpick</em> and <em>collapsehack</em> are forced to be enabled and cannot be changed."
+msgstr "Om du vill ändra makrot som används för att generera platsvalskartan, så kan du göra det här. Observera: Beteendena <em>lockpick</em> och <em>collapsehack</em> måste aktiveras och kan inte ändras."
+
+#: location.admin.inc:62
+msgid "Enable JIT geocoding"
+msgstr "Aktivera geografisk kodning JIT"
+
+#: location.admin.inc:64
+msgid "If you are going to be importing locations in bulk directly into the database, you may wish to enable JIT geocoding and load the locations with source set to 4 (LOCATION_LATLON_JIT_GEOCODING). The system will automatically geocode locations as they are loaded."
+msgstr "Om du kommer att importera flera platser samtidigt till databasen så vill du kanske aktivera JIT geografisk kodning och ladda platserna med källan angiven till 4 (LOCATION_LATLON_JIT_GEOCODING). Systemet kommer automatisk att koda platser geografiskt när de laddas."
+
+#: location.admin.inc:117;194
+msgid "None supported."
+msgstr "Inget stöd."
+
+#: location.admin.inc:183
+#: contrib/location_fax/location_fax.views.inc:59
+#: contrib/location_phone/location_phone.views.inc:59
+msgid "None"
+msgstr "Ingen"
+
+#: location.admin.inc:202
+msgid "No service selected for country."
+msgstr "Ingen tjänst vald för land."
+
+#: location.admin.inc:213;219
+msgid "Configure parameters"
+msgstr "Konfigurera parametrar"
+
+#: location.admin.inc:225
+msgid "No configuration necessary for selected service."
+msgstr "Ingen konfiguration nödvändig för vald tjänst."
+
+#: location.admin.inc:254;276
+#: location.views.inc:239
+#: location.module:531;660
+#: contrib/location_search/location_search.module:196
+#: handlers/location_handler_filter_location_country.inc:30
+#: handlers/location_views_handler_filter_proximity.inc:131
+msgid "Country"
+msgstr "Land"
+
+#: location.admin.inc:254;277
+msgid "Options"
+msgstr "Alternativ"
+
+#: location.admin.inc:278
+msgid "Configure"
+msgstr "Konfigurera"
+
+#: location.admin.inc:308;313
+msgid "Clear province cache"
+msgstr "Töm cache för landskap"
+
+#: location.admin.inc:309
+msgid "If you have modified location.xx.inc files, you will need to clear the province cache to get Location to recognize the modifications."
+msgstr "Om du har ändrat någon av filerna location.xx.inc så behöver du tömma cachen för landskap för att få Location att känna igen förändringarna."
+
+#: location.admin.inc:319;324
+msgid "Clear supported country list"
+msgstr "Töm lista för länder"
+
+#: location.admin.inc:320
+msgid "If you have added support for a new country, you will need to clear the supported country list to get Location to recognize the modifications."
+msgstr "Om du har lagt till stöd för ett nytt land så behöver du tömma listan för stödda länder för att få Location att känna igen förändringarna."
+
+#: location.admin.inc:334
+msgid "Location province cache cleared."
+msgstr "Cache för landskap tömd."
+
+#: location.admin.inc:342
+msgid "Location supported country list cleared."
+msgstr "Cache för lista över länder tömd."
+
+#: location.inc:594
+msgid "Andorra"
+msgstr "Andorra"
+
+#: location.inc:595
+msgid "United Arab Emirates"
+msgstr "Förenade Arabemiraten"
+
+#: location.inc:596
+msgid "Afghanistan"
+msgstr "Afghanistan"
+
+#: location.inc:597
+msgid "Antigua and Barbuda"
+msgstr "Antigua och Barbuda"
+
+#: location.inc:598
+msgid "Anguilla"
+msgstr "Anguilla"
+
+#: location.inc:599
+msgid "Albania"
+msgstr "Albanien"
+
+#: location.inc:600
+msgid "Armenia"
+msgstr "Armenien"
+
+#: location.inc:601
+msgid "Netherlands Antilles"
+msgstr "Nederländska Antillerna"
+
+#: location.inc:602
+msgid "Angola"
+msgstr "Angola"
+
+#: location.inc:603
+msgid "Antarctica"
+msgstr "Antarktis"
+
+#: location.inc:604
+msgid "Argentina"
+msgstr "Argentina"
+
+#: location.inc:605
+msgid "American Samoa"
+msgstr "Amerikanska Samoa"
+
+#: location.inc:606
+msgid "Austria"
+msgstr "Österrike"
+
+#: location.inc:607
+msgid "Australia"
+msgstr "Australien"
+
+#: location.inc:608
+msgid "Aruba"
+msgstr "Aruba"
+
+#: location.inc:609
+msgid "Aland Islands"
+msgstr "Åland"
+
+#: location.inc:610
+msgid "Azerbaijan"
+msgstr "Azerbajdzjan"
+
+#: location.inc:611
+msgid "Bosnia and Herzegovina"
+msgstr "Bosnien och Hercegovina"
+
+#: location.inc:612
+msgid "Barbados"
+msgstr "Barbados"
+
+#: location.inc:613
+msgid "Bangladesh"
+msgstr "Bangladesh"
+
+#: location.inc:614
+msgid "Belgium"
+msgstr "Belgien"
+
+#: location.inc:615
+msgid "Burkina Faso"
+msgstr "Burkina Faso"
+
+#: location.inc:616
+msgid "Bulgaria"
+msgstr "Bulgarien"
+
+#: location.inc:617
+msgid "Bahrain"
+msgstr "Bahrain"
+
+#: location.inc:618
+msgid "Burundi"
+msgstr "Burundi"
+
+#: location.inc:619
+msgid "Benin"
+msgstr "Benin"
+
+#: location.inc:620
+msgid "Bermuda"
+msgstr "Bermuda"
+
+#: location.inc:621
+msgid "Brunei"
+msgstr "Brunei"
+
+#: location.inc:622
+msgid "Bolivia"
+msgstr "Bolivia"
+
+#: location.inc:623
+msgid "Brazil"
+msgstr "Brasilien"
+
+#: location.inc:624
+msgid "Bahamas"
+msgstr "Bahamas"
+
+#: location.inc:625
+msgid "Bhutan"
+msgstr "Bhutan"
+
+#: location.inc:626
+msgid "Bouvet Island"
+msgstr "Bouvetön"
+
+#: location.inc:627
+msgid "Botswana"
+msgstr "Botswana"
+
+#: location.inc:628
+msgid "Belarus"
+msgstr "Vitryssland"
+
+#: location.inc:629
+msgid "Belize"
+msgstr "Belize"
+
+#: location.inc:630
+msgid "Canada"
+msgstr "Kanada"
+
+#: location.inc:631
+msgid "Cocos (Keeling) Islands"
+msgstr "Kokosöarna"
+
+#: location.inc:632
+msgid "Congo (Kinshasa)"
+msgstr "Kongo-Kinshasa"
+
+#: location.inc:633
+msgid "Central African Republic"
+msgstr "Centralafrikanska republiken"
+
+#: location.inc:634
+msgid "Congo (Brazzaville)"
+msgstr "Kongo-Brazzaville"
+
+#: location.inc:635
+msgid "Switzerland"
+msgstr "Schweiz"
+
+#: location.inc:636
+msgid "Ivory Coast"
+msgstr "Elfenbenskusten"
+
+#: location.inc:637
+msgid "Cook Islands"
+msgstr "Cooköarna"
+
+#: location.inc:638
+msgid "Chile"
+msgstr "Chile"
+
+#: location.inc:639
+msgid "Cameroon"
+msgstr "Kamerun"
+
+#: location.inc:640
+msgid "China"
+msgstr "Kina"
+
+#: location.inc:641
+msgid "Colombia"
+msgstr "Colombia"
+
+#: location.inc:642
+msgid "Costa Rica"
+msgstr "Costa Rica"
+
+#: location.inc:643
+msgid "Serbia And Montenegro"
+msgstr "Serbien och Montenegro"
+
+#: location.inc:644
+msgid "Cuba"
+msgstr "Kuba"
+
+#: location.inc:645
+msgid "Cape Verde"
+msgstr "Kap Verde"
+
+#: location.inc:646
+msgid "Christmas Island"
+msgstr "Julön"
+
+#: location.inc:647
+msgid "Cyprus"
+msgstr "Cypern"
+
+#: location.inc:648
+msgid "Czech Republic"
+msgstr "Tjeckien"
+
+#: location.inc:649
+#: supported/location.de.inc:213
+msgid "Germany"
+msgstr "Tyskland"
+
+#: location.inc:650
+msgid "Djibouti"
+msgstr "Djibouti"
+
+#: location.inc:651
+msgid "Denmark"
+msgstr "Danmark"
+
+#: location.inc:652
+msgid "Dominica"
+msgstr "Dominica"
+
+#: location.inc:653
+msgid "Dominican Republic"
+msgstr "Dominikanska republiken"
+
+#: location.inc:654
+msgid "Algeria"
+msgstr "Algeriet"
+
+#: location.inc:655
+msgid "Ecuador"
+msgstr "Ecuador"
+
+#: location.inc:656
+msgid "Estonia"
+msgstr "Estland"
+
+#: location.inc:657
+msgid "Egypt"
+msgstr "Egypten"
+
+#: location.inc:658
+msgid "Western Sahara"
+msgstr "Västsahara"
+
+#: location.inc:659
+msgid "Eritrea"
+msgstr "Eritrea"
+
+#: location.inc:660
+msgid "Spain"
+msgstr "Spanien"
+
+#: location.inc:661
+msgid "Ethiopia"
+msgstr "Etiopien"
+
+#: location.inc:662
+msgid "Finland"
+msgstr "Finland"
+
+#: location.inc:663
+msgid "Fiji"
+msgstr "Fiji"
+
+#: location.inc:664
+msgid "Falkland Islands"
+msgstr "Falklandsöarna"
+
+#: location.inc:665
+msgid "Micronesia"
+msgstr "Mikronesien"
+
+#: location.inc:666
+msgid "Faroe Islands"
+msgstr "Färöarna"
+
+#: location.inc:667
+msgid "France"
+msgstr "Frankrike"
+
+#: location.inc:668
+msgid "Gabon"
+msgstr "Gabon"
+
+#: location.inc:669
+msgid "Grenada"
+msgstr "Grenada"
+
+#: location.inc:670
+msgid "Georgia"
+msgstr "Georgien"
+
+#: location.inc:671
+msgid "French Guiana"
+msgstr "Franska Guyana"
+
+#: location.inc:672
+msgid "Guernsey"
+msgstr "Guernsey"
+
+#: location.inc:673
+msgid "Ghana"
+msgstr "Ghana"
+
+#: location.inc:674
+msgid "Gibraltar"
+msgstr "Gibraltar"
+
+#: location.inc:675
+msgid "Greenland"
+msgstr "Grönland"
+
+#: location.inc:676
+msgid "Gambia"
+msgstr "Gambia"
+
+#: location.inc:677
+msgid "Guinea"
+msgstr "Guinea"
+
+#: location.inc:678
+msgid "Guadeloupe"
+msgstr "Guadeloupe"
+
+#: location.inc:679
+msgid "Equatorial Guinea"
+msgstr "Ekvatorialguinea"
+
+#: location.inc:680
+msgid "Greece"
+msgstr "Grekland"
+
+#: location.inc:681
+msgid "South Georgia and the South Sandwich Islands"
+msgstr "Sydgeorgien och Sydsandwichöarna"
+
+#: location.inc:682
+msgid "Guatemala"
+msgstr "Guatemala"
+
+#: location.inc:683
+msgid "Guam"
+msgstr "Guam"
+
+#: location.inc:684
+msgid "Guinea-Bissau"
+msgstr "Guinea-Bissau"
+
+#: location.inc:685
+msgid "Guyana"
+msgstr "Guyana"
+
+#: location.inc:686
+msgid "Hong Kong S.A.R., China"
+msgstr "Hongkong S.A.R., Kina"
+
+#: location.inc:687
+msgid "Heard Island and McDonald Islands"
+msgstr "Heard- och McDonaldsöarna"
+
+#: location.inc:688
+msgid "Honduras"
+msgstr "Honduras"
+
+#: location.inc:689
+msgid "Croatia"
+msgstr "Kroatien"
+
+#: location.inc:690
+msgid "Haiti"
+msgstr "Haiti"
+
+#: location.inc:691
+msgid "Hungary"
+msgstr "Ungern"
+
+#: location.inc:692
+msgid "Indonesia"
+msgstr "Indonesien"
+
+#: location.inc:693
+msgid "Ireland"
+msgstr "Irland"
+
+#: location.inc:694
+msgid "Israel"
+msgstr "Israel"
+
+#: location.inc:695
+msgid "Isle of Man"
+msgstr "Isle of Man"
+
+#: location.inc:696
+msgid "India"
+msgstr "Indien"
+
+#: location.inc:697
+msgid "British Indian Ocean Territory"
+msgstr "Brittiska territoriet i Indiska oceanen"
+
+#: location.inc:698
+msgid "Iraq"
+msgstr "Irak"
+
+#: location.inc:699
+msgid "Iran"
+msgstr "Iran"
+
+#: location.inc:700
+msgid "Iceland"
+msgstr "Island"
+
+#: location.inc:701
+msgid "Italy"
+msgstr "Italien"
+
+#: location.inc:702
+msgid "Jersey"
+msgstr "Jersey"
+
+#: location.inc:703
+msgid "Jamaica"
+msgstr "Jamaica"
+
+#: location.inc:704
+msgid "Jordan"
+msgstr "Jordanien"
+
+#: location.inc:705
+msgid "Japan"
+msgstr "Japan"
+
+#: location.inc:706
+msgid "Kenya"
+msgstr "Kenya"
+
+#: location.inc:707
+msgid "Kyrgyzstan"
+msgstr "Kirgizistan"
+
+#: location.inc:708
+msgid "Cambodia"
+msgstr "Kambodja"
+
+#: location.inc:709
+msgid "Kiribati"
+msgstr "Kiribati"
+
+#: location.inc:710
+msgid "Comoros"
+msgstr "Komorerna"
+
+#: location.inc:711
+msgid "Saint Kitts and Nevis"
+msgstr "Saint Kitts och Nevis"
+
+#: location.inc:712
+msgid "North Korea"
+msgstr "Nordkorea"
+
+#: location.inc:713
+msgid "South Korea"
+msgstr "Sydkorea"
+
+#: location.inc:714
+msgid "Kuwait"
+msgstr "Kuwait"
+
+#: location.inc:715
+msgid "Cayman Islands"
+msgstr "Caymanöarna"
+
+#: location.inc:716
+msgid "Kazakhstan"
+msgstr "Kazakstan"
+
+#: location.inc:717
+msgid "Laos"
+msgstr "Laos"
+
+#: location.inc:718
+msgid "Lebanon"
+msgstr "Libanon"
+
+#: location.inc:719
+msgid "Saint Lucia"
+msgstr "Saint Lucia"
+
+#: location.inc:720
+msgid "Liechtenstein"
+msgstr "Liechtenstein"
+
+#: location.inc:721
+msgid "Sri Lanka"
+msgstr "Sri Lanka"
+
+#: location.inc:722
+msgid "Liberia"
+msgstr "Liberia"
+
+#: location.inc:723
+msgid "Lesotho"
+msgstr "Lesotho"
+
+#: location.inc:724
+msgid "Lithuania"
+msgstr "Litauen"
+
+#: location.inc:725
+msgid "Luxembourg"
+msgstr "Luxemburg"
+
+#: location.inc:726
+msgid "Latvia"
+msgstr "Lettland"
+
+#: location.inc:727
+msgid "Libya"
+msgstr "Libyen"
+
+#: location.inc:728
+msgid "Morocco"
+msgstr "Marocko"
+
+#: location.inc:729
+msgid "Monaco"
+msgstr "Monaco"
+
+#: location.inc:730
+msgid "Moldova"
+msgstr "Moldavien"
+
+#: location.inc:731
+msgid "Montenegro"
+msgstr "Montenegro"
+
+#: location.inc:732
+msgid "Madagascar"
+msgstr "Madagaskar"
+
+#: location.inc:733
+msgid "Marshall Islands"
+msgstr "Marshallöarna"
+
+#: location.inc:734
+msgid "Macedonia"
+msgstr "Makedonien"
+
+#: location.inc:735
+msgid "Mali"
+msgstr "Mali"
+
+#: location.inc:736
+msgid "Myanmar"
+msgstr "Burma"
+
+#: location.inc:737
+msgid "Mongolia"
+msgstr "Mongoliet"
+
+#: location.inc:738
+msgid "Macao S.A.R., China"
+msgstr "Macao"
+
+#: location.inc:739
+msgid "Northern Mariana Islands"
+msgstr "Nordmarianerna"
+
+#: location.inc:740
+msgid "Martinique"
+msgstr "Martinique"
+
+#: location.inc:741
+msgid "Mauritania"
+msgstr "Mauretanien"
+
+#: location.inc:742
+msgid "Montserrat"
+msgstr "Montserrat"
+
+#: location.inc:743
+msgid "Malta"
+msgstr "Malta"
+
+#: location.inc:744
+msgid "Mauritius"
+msgstr "Mauritius"
+
+#: location.inc:745
+msgid "Maldives"
+msgstr "Maldiverna"
+
+#: location.inc:746
+msgid "Malawi"
+msgstr "Malawi"
+
+#: location.inc:747
+msgid "Mexico"
+msgstr "Mexiko"
+
+#: location.inc:748
+msgid "Malaysia"
+msgstr "Malaysia"
+
+#: location.inc:749
+msgid "Mozambique"
+msgstr "Moçambique"
+
+#: location.inc:750
+msgid "Namibia"
+msgstr "Namibia"
+
+#: location.inc:751
+msgid "New Caledonia"
+msgstr "Nya Kaledonien"
+
+#: location.inc:752
+msgid "Niger"
+msgstr "Niger"
+
+#: location.inc:753
+msgid "Norfolk Island"
+msgstr "Norfolkön"
+
+#: location.inc:754
+msgid "Nigeria"
+msgstr "Nigeria"
+
+#: location.inc:755
+msgid "Nicaragua"
+msgstr "Nicaragua"
+
+#: location.inc:756
+msgid "Netherlands"
+msgstr "Nederländerna"
+
+#: location.inc:757
+msgid "Norway"
+msgstr "Norge"
+
+#: location.inc:758
+msgid "Nepal"
+msgstr "Nepal"
+
+#: location.inc:759
+msgid "Nauru"
+msgstr "Nauru"
+
+#: location.inc:760
+msgid "Niue"
+msgstr "Niue"
+
+#: location.inc:761
+msgid "New Zealand"
+msgstr "Nya Zeeland"
+
+#: location.inc:762
+msgid "Oman"
+msgstr "Oman"
+
+#: location.inc:763
+msgid "Panama"
+msgstr "Panama"
+
+#: location.inc:764
+msgid "Peru"
+msgstr "Peru"
+
+#: location.inc:765
+msgid "French Polynesia"
+msgstr "Franska Polynesien"
+
+#: location.inc:766
+msgid "Papua New Guinea"
+msgstr "Papua Nya Guinea"
+
+#: location.inc:767
+msgid "Philippines"
+msgstr "Filippinerna"
+
+#: location.inc:768
+msgid "Pakistan"
+msgstr "Pakistan"
+
+#: location.inc:769
+msgid "Poland"
+msgstr "Polen"
+
+#: location.inc:770
+msgid "Saint Pierre and Miquelon"
+msgstr "Saint-Pierre och Miquelon"
+
+#: location.inc:771
+msgid "Pitcairn"
+msgstr "Pitcairnöarna"
+
+#: location.inc:772
+msgid "Puerto Rico"
+msgstr "Puerto Rico"
+
+#: location.inc:773
+msgid "Palestinian Territory"
+msgstr "Palestina"
+
+#: location.inc:774
+msgid "Portugal"
+msgstr "Portugal"
+
+#: location.inc:775
+msgid "Palau"
+msgstr "Palau"
+
+#: location.inc:776
+msgid "Paraguay"
+msgstr "Paraguay"
+
+#: location.inc:777
+msgid "Qatar"
+msgstr "Qatar"
+
+#: location.inc:778
+msgid "Reunion"
+msgstr "Réunion"
+
+#: location.inc:779
+msgid "Romania"
+msgstr "Rumänien"
+
+#: location.inc:780
+msgid "Serbia"
+msgstr "Serbien"
+
+#: location.inc:781
+msgid "Russia"
+msgstr "Ryssland"
+
+#: location.inc:782
+msgid "Rwanda"
+msgstr "Rwanda"
+
+#: location.inc:783
+msgid "Saudi Arabia"
+msgstr "Saudiarabien"
+
+#: location.inc:784
+msgid "Solomon Islands"
+msgstr "Salomonöarna"
+
+#: location.inc:785
+msgid "Seychelles"
+msgstr "Seychellerna"
+
+#: location.inc:786
+msgid "Sudan"
+msgstr "Sudan"
+
+#: location.inc:787
+msgid "Sweden"
+msgstr "Sverige"
+
+#: location.inc:788
+msgid "Singapore"
+msgstr "Singapore"
+
+#: location.inc:789
+msgid "Saint Helena"
+msgstr "Sankta Helena"
+
+#: location.inc:790
+msgid "Slovenia"
+msgstr "Slovenien"
+
+#: location.inc:791
+msgid "Svalbard and Jan Mayen"
+msgstr "Svalbard och Jan Mayen"
+
+#: location.inc:792
+msgid "Slovakia"
+msgstr "Slovakien"
+
+#: location.inc:793
+msgid "Sierra Leone"
+msgstr "Sierra Leone"
+
+#: location.inc:794
+msgid "San Marino"
+msgstr "San Marino"
+
+#: location.inc:795
+msgid "Senegal"
+msgstr "Senegal"
+
+#: location.inc:796
+msgid "Somalia"
+msgstr "Somalia"
+
+#: location.inc:797
+msgid "Suriname"
+msgstr "Surinam"
+
+#: location.inc:798
+msgid "Sao Tome and Principe"
+msgstr "São Tomé och Príncipe"
+
+#: location.inc:799
+msgid "El Salvador"
+msgstr "El Salvador"
+
+#: location.inc:800
+msgid "Syria"
+msgstr "Syrien"
+
+#: location.inc:801
+msgid "Swaziland"
+msgstr "Swaziland"
+
+#: location.inc:802
+msgid "Turks and Caicos Islands"
+msgstr "Turks- och Caicosöarna"
+
+#: location.inc:803
+msgid "Chad"
+msgstr "Tchad"
+
+#: location.inc:804
+msgid "French Southern Territories"
+msgstr "Franska sydterritorierna"
+
+#: location.inc:805
+msgid "Togo"
+msgstr "Togo"
+
+#: location.inc:806
+msgid "Thailand"
+msgstr "Thailand"
+
+#: location.inc:807
+msgid "Tajikistan"
+msgstr "Tadzjikistan"
+
+#: location.inc:808
+msgid "Tokelau"
+msgstr "Tokelauöarna"
+
+#: location.inc:809
+msgid "East Timor"
+msgstr "Östtimor"
+
+#: location.inc:810
+msgid "Turkmenistan"
+msgstr "Turkmenistan"
+
+#: location.inc:811
+msgid "Tunisia"
+msgstr "Tunisien"
+
+#: location.inc:812
+msgid "Tonga"
+msgstr "Tonga"
+
+#: location.inc:813
+msgid "Turkey"
+msgstr "Turkiet"
+
+#: location.inc:814
+msgid "Trinidad and Tobago"
+msgstr "Trinidad och Tobago"
+
+#: location.inc:815
+msgid "Tuvalu"
+msgstr "Tuvalu"
+
+#: location.inc:816
+msgid "Taiwan"
+msgstr "Taiwan"
+
+#: location.inc:817
+msgid "Tanzania"
+msgstr "Tanzania"
+
+#: location.inc:818
+msgid "Ukraine"
+msgstr "Ukraina"
+
+#: location.inc:819
+msgid "Uganda"
+msgstr "Uganda"
+
+#: location.inc:820
+msgid "United Kingdom"
+msgstr "Storbritannien"
+
+#: location.inc:821
+msgid "United States Minor Outlying Islands"
+msgstr "Förenta staternas avlägset belägna öar"
+
+#: location.inc:822
+msgid "United States"
+msgstr "Förenta Staterna"
+
+#: location.inc:823
+msgid "Uruguay"
+msgstr "Uruguay"
+
+#: location.inc:824
+msgid "Uzbekistan"
+msgstr "Uzbekistan"
+
+#: location.inc:825
+msgid "Vatican"
+msgstr "Vatikanstaten"
+
+#: location.inc:826
+msgid "Saint Vincent and the Grenadines"
+msgstr "Saint Vincent och Grenadinerna"
+
+#: location.inc:827
+msgid "Venezuela"
+msgstr "Venezuela"
+
+#: location.inc:828
+msgid "British Virgin Islands"
+msgstr "Brittiska Jungfruöarna"
+
+#: location.inc:829
+msgid "U.S. Virgin Islands"
+msgstr "Amerikanska Jungfruöarna"
+
+#: location.inc:830
+msgid "Vietnam"
+msgstr "Vietnam"
+
+#: location.inc:831
+msgid "Vanuatu"
+msgstr "Vanuatu"
+
+#: location.inc:832
+msgid "Wallis and Futuna"
+msgstr "Wallis- och Futunaöarna"
+
+#: location.inc:833
+msgid "Samoa"
+msgstr "Samoa"
+
+#: location.inc:834
+msgid "Yemen"
+msgstr "Jemen"
+
+#: location.inc:835
+msgid "Mayotte"
+msgstr "Mayotte"
+
+#: location.inc:836
+msgid "South Africa"
+msgstr "Sydafrika"
+
+#: location.inc:837
+msgid "Zambia"
+msgstr "Zambia"
+
+#: location.inc:838
+msgid "Zimbabwe"
+msgstr "Zimbabwe"
+
+#: location.inc:541
+#: geocoding/google.inc:210
+msgid "BUG: Country found in province attribute."
+msgstr "Bugg: Land funnen i attributet för landskap."
+
+#: location.token.inc:50
+msgid "Location Name (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr "Namn på plats (om det finns flera platser per nod så är N antalet, börjar med 0)"
+
+#: location.token.inc:51
+msgid "Street (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr "Gata (om det finns flera platser per nod så är N antalet, börjar med 0)"
+
+#: location.token.inc:52
+msgid "Additional (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr "Extra adress (om det finns flera platser per nod så är N antalet, börjar med 0)"
+
+#: location.token.inc:53
+msgid "City (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr "Stad (om det finns flera platser per nod så är N antalet, börjar med 0)"
+
+#: location.token.inc:54
+msgid "State/Province (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr "Län/landskap (om det finns flera platser per nod så är N antalet, börjar med 0)"
+
+#: location.token.inc:55
+msgid "State/Province Name (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr "Namn på län/landskap (om det finns flera platser per nod så är N antalet, börjar med 0)"
+
+#: location.token.inc:56
+msgid "Postal Code (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr "Postnummer (om det finns flera platser per nod så är N antalet, börjar med 0)"
+
+#: location.token.inc:57
+msgid "Latitude (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr "Latitud (om det finns flera platser per nod så är N antalet, börjar med 0)"
+
+#: location.token.inc:58
+msgid "Longitude (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr "Longitud (om det finns flera platser per nod så är N antalet, börjar med 0)"
+
+#: location.token.inc:59
+msgid "Country (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr "Land (om det finns flera platser per nod så är N antalet, börjar med 0)"
+
+#: location.token.inc:60
+msgid "Country Name (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr "Landsnamn (om det finns flera platser per nod så är N antalet, börjar med 0)"
+
+#: location.views.inc:97
+msgid "Locations are addresses and map coordinates."
+msgstr "Platser är adresser och kartkoordinater."
+
+#: location.views.inc:127
+msgid "Lid"
+msgstr "Lid"
+
+#: location.views.inc:128
+msgid "The location ID of the location."
+msgstr "ID för platsen."
+
+#: location.views.inc:155
+#: location.module:466
+msgid "Name"
+msgstr "Namn"
+
+#: location.views.inc:156
+msgid "The name of the selected location."
+msgstr "Namnet på den valda platsen."
+
+#: location.views.inc:170
+#: location.module:602
+msgid "Street"
+msgstr "Gata"
+
+#: location.views.inc:171
+msgid "The street address of the selected location."
+msgstr "Gatuadressen för den valda platsen."
+
+#: location.views.inc:185
+#: location.module:531;623
+#: contrib/location_search/location_search.module:212
+msgid "City"
+msgstr "Stad"
+
+#: location.views.inc:186
+msgid "The city of the selected location."
+msgstr "Staden för den valda platsen."
+
+#: location.views.inc:192
+#: location.module:289
+#: handlers/location_handler_argument_location_country.inc:18
+#: handlers/location_handler_argument_location_province.inc:24
+msgid "Unknown"
+msgstr "Okänd"
+
+#: location.views.inc:204
+msgid "Province"
+msgstr "Landskap"
+
+#: location.views.inc:205
+msgid "The province of the selected location."
+msgstr "Landskapet för den valda platsen."
+
+#: location.views.inc:224
+msgid "Postal Code"
+msgstr "Postnummer"
+
+#: location.views.inc:225
+msgid "The postal code of the selected location."
+msgstr "Postnummret för den valda platsen."
+
+#: location.views.inc:240
+msgid "The country of the selected location."
+msgstr "Landet för den valda platsen."
+
+#: location.views.inc:259
+#: location.module:281;309
+#: contrib/location_search/location_search.module:233
+#: handlers/location_handler_field_location_distance.inc:49
+#: handlers/location_handler_sort_location_distance.inc:49
+#: handlers/location_views_handler_filter_proximity.inc:108
+msgid "Latitude"
+msgstr "Latitud"
+
+#: location.views.inc:260
+msgid "The latitude of the selected location."
+msgstr "Latituden för den valda platsen."
+
+#: location.views.inc:273
+#: location.module:286;317
+#: contrib/location_search/location_search.module:237
+#: handlers/location_handler_field_location_distance.inc:54
+#: handlers/location_handler_sort_location_distance.inc:54
+#: handlers/location_views_handler_filter_proximity.inc:115
+msgid "Longitude"
+msgstr "Longitud"
+
+#: location.views.inc:274
+msgid "The longitude of the selected location."
+msgstr "Longituden för den valda platsen."
+
+#: location.views.inc:287
+#: location.module:534
+msgid "Coordinates"
+msgstr "Koordinater"
+
+#: location.views.inc:288
+msgid "The coordinates of the selected location in 'lat, long' format."
+msgstr "Koordinaterna för den valda platsen i formatet \"lat, long\"."
+
+#: location.views.inc:297
+msgid "Distance / Proximity"
+msgstr "Avstånd / Närhet"
+
+#: location.views.inc:298
+msgid "The distance from the selected location and either the current user or a specific location."
+msgstr "Avståndet från den valda platsen till antingen den nuvarande användaren eller en specifik plats."
+
+#: location.views.inc:336
+msgid "Address"
+msgstr "Adress"
+
+#: location.views.inc:337
+msgid "The entire address block for the location."
+msgstr "Hela adressblocket för platsen."
+
+#: location.module:110
+#: location.info:0
+msgid "The location module allows you to associate a geographic location with content and users. Users can do proximity searches by postal code.  This is useful for organizing communities that have a geographic presence."
+msgstr "Modulen Location tillåter dig att associera en geografisk plats med innehåll och användare. Användare kan göra sökning på närliggande postnummer. Detta är användbart för att organisera communities som har en geografisk hållning."
+
+#: location.module:111
+msgid "To administer locative information for content, use the content type administration page.  To support most location enabled features, you will need to install the country specific include file.  To support postal code proximity searches for a particular country, you will need a database dump of postal code data for that country.  As of June 2007 only U.S. and German postal codes are supported."
+msgstr "För att administrera platsorienterad information för innehåll, använd administrationssidan för innehållstyper. För att stöda de flesta platsorienterade funktionerna behöver du installera den landsspecifika inkluderingsfilen. För att stöda sökning av närliggande postnummer för ett specifikt land behöver du en databasdump av postnummer för det landet. Vid Juni 2007 hade bara amerikanska och tyska postnummer stöd för detta."
+
+#: location.module:112
+msgid ""
+"<p>You can</p>\n"
+"<ul>\n"
+"<li>administer locative information at <a href=\"@admin-node-configure-types\">Administer &gt;&gt; Content management &gt;&gt; Content types</a> to configure a type and see the locative information.</li>\n"
+"<li>administer location at <a href=\"@admin-settings-location\">Administer &gt;&gt; Site configuration &gt;&gt; Location</a>.</li>\n"
+"<li>use a database dump for a U.S. and/or German postal codes table that can be found at <a href=\"@external-http-cvs-drupal-org\">zipcode database</a>.</li>\n"
+msgstr ""
+"<p>Du kan</p>\n"
+"<ul>\n"
+"<li>administrera platsinformation på <a href=\"@admin-node-configure-types\">Administrera &gt;&gt; Innehåll &gt;&gt; Innehållstyper</a> för att konfigurera en typ och se platsinformationen.</li>\n"
+"<li>administrera plats på <a href=\"@admin-settings-location\">Administrera &gt;&gt; Inställningar &gt;&gt; Plats</a>.</li>\n"
+"<li>använda en databasdump för en amerikansk och/eller tysk postnummertabell som kan hittas i <a href=\"@external-http-cvs-drupal-org\">zipcode database</a>.</li>\n"
+
+#: location.module:118
+msgid "For more information please read the configuration and customization handbook <a href=\"@location\">Location page</a>."
+msgstr "För mer information var vänlig läs konfigurations- och anpassningshandboken på sidan <a href=\"@location\">Plats</a>."
+
+#: location.module:277
+msgid "Current coordinates"
+msgstr "Nuvarande koordinater"
+
+#: location.module:292
+msgid "User-submitted"
+msgstr "Angivna av användare"
+
+#: location.module:295
+msgid "Geocoded (Postal code level)"
+msgstr "Geografiskt kodad (postnummernivå)"
+
+#: location.module:298
+msgid "Geocoded (Exact)"
+msgstr "Geografisk kodad (exakt)"
+
+#: location.module:302
+msgid "Source"
+msgstr "Källa"
+
+#: location.module:327
+msgid "If you wish to supply your own latitude and longitude, you may enter them above.  If you leave these fields blank, the system will attempt to determine a latitude and longitude for you from the entered address.  To have the system recalculate your location from the address, for example if you change the address, delete the values for these fields."
+msgstr "Om du vill tillhandahålla egen latitud och longitud kan du ange dem ovan. Om du lämnar dessa fält blanka kommer systemet göra ett försök att bestämma latitud och longitud för dig från den angivna adressen. För att få systemet att räkna om din plats för adressen, om du exempelvis bytt adress, ta bort värdena för dessa fält."
+
+#: location.module:370
+msgid "You may set the location by clicking on the map, or dragging the location marker.  To clear the location and cause it to be recalculated, click on the marker."
+msgstr "Du kan ange platsen genom att klicka på kartan, eller dra platsmarkören. Klicka på markören för att nollställa platsen och få den att räknas om."
+
+#: location.module:379
+msgid "Delete"
+msgstr "Radera"
+
+#: location.module:381
+msgid "Check this box to delete this location."
+msgstr "Markera den här rutan för att ta bort den här platsen."
+
+#: location.module:395
+msgid "Location Fields"
+msgstr "Platsfält"
+
+#: location.module:421
+msgid "Do not collect"
+msgstr "Samla inte"
+
+#: location.module:422
+msgid "Allow"
+msgstr "Tillåt"
+
+#: location.module:423
+msgid "Require"
+msgstr "Kräv"
+
+#: location.module:424
+msgid "Force Default"
+msgstr "Tvinga standardval"
+
+#: location.module:469
+msgid "Collect"
+msgstr "Insamling"
+
+#: location.module:469
+msgid "Default"
+msgstr "Standard"
+
+#: location.module:469
+msgid "Weight"
+msgstr "Vikt"
+
+#: location.module:531;590
+msgid "Location name"
+msgstr "Namn på plats"
+
+#: location.module:531
+msgid "Street location"
+msgstr "Gatuadress"
+
+#: location.module:531;613
+msgid "Additional"
+msgstr "Extra adress"
+
+#: location.module:531;637
+#: contrib/location_search/location_search.module:204
+#: handlers/location_handler_filter_location_province.inc:38
+msgid "State/Province"
+msgstr "Län/landskap"
+
+#: location.module:531;674
+#: handlers/location_views_handler_filter_proximity.inc:123
+msgid "Postal code"
+msgstr "Postnummer"
+
+#: location.module:531
+msgid "Coordinate Chooser"
+msgstr "Val av koordinering"
+
+#: location.module:534
+#: handlers/location_handler_field_location_province.inc:29
+msgid "Province name"
+msgstr "Namn på landskap"
+
+#: location.module:534
+#: handlers/location_handler_field_location_country.inc:22
+msgid "Country name"
+msgstr "Namn på land"
+
+#: location.module:534
+msgid "Map link"
+msgstr "Kartlänk"
+
+#: location.module:567
+msgid "The specified province was not found in the specified country."
+msgstr "Det angivna landskapet hittades inte i det angivna landet."
+
+#: location.module:579
+msgid "You must fill out both latitude and longitude or you must leave them both blank."
+msgstr "Du måste fylla i både latitud och longitud eller lämna båda tomma."
+
+#: location.module:594
+msgid "e.g. a place of business, venue, meeting point"
+msgstr "Till exempel affärslokal, plats eller mötesplats"
+
+#: location.module:657
+msgid "Please select"
+msgstr "Vänligen välj"
+
+#: location.module:657
+msgid "NOT LISTED"
+msgstr "EJ VISAD"
+
+#: location.module:721
+msgid "Configure parameters for %service geocoding"
+msgstr "Konfigurera parametrar för geografisk kodning %service"
+
+#: location.module:746
+msgid "No configuration parameters are necessary, or a form to take such paramters has not been implemented."
+msgstr "Inga konfigurationsparametrar är nödvändiga, eller så har ett formulär för att ta emot sådana parametrar inte implementerats."
+
+#: location.module:1553
+msgid "Locative information"
+msgstr "Platsinformation"
+
+#: location.module:1561
+msgid "Number of locations"
+msgstr "Antal platser"
+
+#: location.module:1569
+msgid "Minimum number of locations"
+msgstr "Minsta antalet platser"
+
+#: location.module:1572
+msgid "The number of locations that are required to be filled in."
+msgstr "Det antal platser som måste fyllas i."
+
+#: location.module:1576
+msgid "Maximum number of locations"
+msgstr "Största antal platser"
+
+#: location.module:1579
+msgid "The maximum number of locations that can be associated."
+msgstr "Det största antal platser som kan associeras."
+
+#: location.module:1584
+msgid "Number of locations that can be added at once"
+msgstr "Antal platser som kan läggas till på en och samma gång."
+
+#: location.module:1587
+msgid "The number of empty location forms to show when editing."
+msgstr "Det antal tomma platser som syns i vid redigering."
+
+#: location.module:1594
+msgid "Collection settings"
+msgstr "Inställningar för insamling"
+
+#: location.module:1603
+msgid "Location form weight"
+msgstr "Vikt på platsformulär"
+
+#: location.module:1605
+msgid "Weight of the location box in the add / edit form. Lower values will be displayed higher in the form."
+msgstr "Vikt på platsrutan i formuläret för att lägga till/redigera. Lägre värden kommer att visas högre upp i formuläret."
+
+#: location.module:1609
+msgid "Collapsible"
+msgstr "Hopfällbar"
+
+#: location.module:1611
+msgid "Make the location box collapsible."
+msgstr "Gör platsformuläret hopfällbar."
+
+#: location.module:1616
+msgid "Collapsed"
+msgstr "Hopfälld"
+
+#: location.module:1618
+msgid "Display the location box collapsed."
+msgstr "Visa platsformuläret hopfällt."
+
+#: location.module:1628
+msgid "Display Settings"
+msgstr "Inställningar för visning"
+
+#: location.module:1638
+msgid "Display Weight"
+msgstr "Vikt för visning"
+
+#: location.module:1645
+#: handlers/location_handler_field_location_address.inc:21
+msgid "Hide fields from display"
+msgstr "Göm fält från visning"
+
+#: location.module:1694
+msgid "Location #%number"
+msgstr "Plats #%number"
+
+#: location.module:840;1129
+msgid "location"
+msgstr "plats"
+
+#: location.module:840
+msgid "Deleting unreferenced location with LID %lid."
+msgstr "Tar bort orefererade platser med LID %lid."
+
+#: location.module:1129
+msgid "Conserving lid %lid due to uniqueness."
+msgstr "Bevarar lid %lid på grund av unikhet."
+
+#: location.module:1673
+msgid "Location"
+msgid_plural "Locations"
+msgstr[0] "Plats"
+msgstr[1] "Platser"
+
+#: location.module:98
+msgid "submit latitude/longitude"
+msgstr "ange latitud/longitud"
+
+#: location.module:39
+msgid "Settings for Location module"
+msgstr "Inställningar för modulen Location"
+
+#: location.module:46
+msgid "Main settings"
+msgstr "Huvudinställningar"
+
+#: location.module:50
+msgid "Map links"
+msgstr "Kartlänkar"
+
+#: location.module:59
+msgid "Geocoding options"
+msgstr "Alternativ för geografisk kodning"
+
+#: location.module:74
+msgid "Location utilities"
+msgstr "Hjälpprogram för platser"
+
+#: location_node.module:89
+msgid "Node location"
+msgstr "Plats för nod"
+
+#: location_node.module:113
+msgid "Display location in teaser view"
+msgstr "Visa plats i vyn för sammanfattning"
+
+#: location_node.module:119
+msgid "Display location in full view"
+msgstr "Visa plats i fullständiga vyn"
+
+#: location_node.module:125
+msgid "RSS Settings"
+msgstr "Inställningar för RSS"
+
+#: location_node.module:126
+msgid "Here, you can change how locative data affects RSS feeds on nodes."
+msgstr "Här kan du ändra hur platsdata påverkar RSS-flöden för noder."
+
+#: location_node.module:134
+msgid "RSS mode"
+msgstr "RSS-läge"
+
+#: location_node.module:135
+msgid "Select how to use locations in RSS feeds for this content type."
+msgstr "Välj hur du vill använda platser i RSS-flöden för den här innehållstypen."
+
+#: location_node.module:137
+msgid "None (Do not put locational data in RSS feeds)"
+msgstr "Ingen (Lägg inte in platsdata i RSS-flöden)"
+
+#: location_node.module:138
+msgid "W3C Geo (deprecated)"
+msgstr "W3C Geo (föråldrad)"
+
+#: location_node.module:139
+msgid "Location 1.x-2.x compatible (buggy W3C)"
+msgstr "Kompatibel med Location 1.x-2.x (buggig W3C)"
+
+#: location_node.module:140
+msgid "GeoRSS-Simple"
+msgstr "GeoRSS-Simple"
+
+#: location_node.module:141
+msgid "GeoRSS GML"
+msgstr "GeoRSS GML"
+
+#: location_node.module:170
+msgid "You must have at least one empty location form enabled if you are going to allow locations to be submitted for nodes of this content type. If you don't intend to allow locations to be submitted for nodes of this content type, set the maximum number of locations allowed for this content type to 0."
+msgstr "Du måste ha åtminstone ett tomt platsformulär aktiverat om du skall kunna tillåta att platser läggs till för noder av denna innehållstyp. Om du inte planerar att tillåta att platser läggs till noder för denna innehållstyp, ange då största antalet platser för denna innehållstyp till 0."
+
+#: location_node.module:174
+msgid "You can't show more empty location forms than the maximum number of locations allowed for this content type."
+msgstr "Du kan inte visa fler tomma platsformulär än det största antalet platser som tillåts för denna innehållstyp."
+
+#: location_node.module:212
+msgid "Node Locations module form."
+msgstr "Formulär för modulen Node Locations."
+
+#: location_user.module:30
+msgid "User locations"
+msgstr "Användarplatser"
+
+#: location_user.module:34
+msgid "Collect during registration"
+msgstr "Samla in under registrering"
+
+#: location_user.module:105
+msgid "User location"
+msgstr "Plats för användare"
+
+#: location_user.module:11
+msgid "administer user locations"
+msgstr "administrera användarplatser"
+
+#: location_user.module:12
+msgid "set own user location"
+msgstr "ange egen användarplats"
+
+#: location_user.module:13
+msgid "view own user location"
+msgstr "visa egen användarplats"
+
+#: location_user.module:14
+msgid "view all user locations"
+msgstr "visa alla användarplatser"
+
+#: location.install:256;734
+msgid "Generic cache table for caching things not separated out into their own tables. Contributed modules may also use this to store cached items."
+msgstr "Allmän cachetabell för cachning av saker som inte finns i separata tabeller. Tilläggsmoduler kan också använda den för att lagra cachade poster."
+
+#: location.install:259;737
+msgid "Primary Key: Unique cache ID."
+msgstr "Primärnyckel: Unikt cache-ID."
+
+#: location.install:265;743
+msgid "A collection of data to cache."
+msgstr "En uppsättning data att cacha."
+
+#: location.install:270;748
+msgid "A Unix timestamp indicating when the cache entry should expire, or 0 for never."
+msgstr "En tidsstämpel i Unix för tiden då cacheposten skall upphöra att gälla, eller 0 för aldrig."
+
+#: location.install:275;753
+msgid "A Unix timestamp indicating when the cache entry was created."
+msgstr "En tidsstämpel i Unix som anger när cacheposten skapades."
+
+#: location.install:280;758
+msgid "Any custom HTTP headers to be added to cached data."
+msgstr "Eventuella anpassade HTTP-headers som läggs till cachad data."
+
+#: location.install:284;762
+msgid "A flag to indicate whether content is serialized (1) or not (0)."
+msgstr "En flagga för att indikera huruvida innehållet är serialiserat (1) eller inte (0)."
+
+#: location.install:779
+msgid "Note: A location with lid 0 was found in your database. It has been moved to lid %lid. You may wish to verify it manually, as lid 0 is usually a corrupt entry."
+msgstr "Observera: En plats med lid 0 hittades i din databas. Den har blivit flyttad till lid %lid. Du kanske vill verifiera det manuellt, eftersom lid 0 vanligtvis är en korrupt post."
+
+#: location.install:1100
+msgid "Note: Location module has now split off user location support into a seperate module, called <em>User Locations</em>. It has been enabled for you. If you don't want user locations, visit the <a href='!url'>modules page</a> and disable it."
+msgstr "Observera: Modulen Location har nu delat upp stödet för användarplatser i en separat modul kallad <em>User Locations</em>. Den har aktiverats åt dig. Om du inte vill ha användarplatser, besök då sidan <a href='!url'>moduler</a> och inaktivera den."
+
+#: location.install:1105
+msgid "Note: Refusing to enable location_user.module, as location.module is not currently enabled."
+msgstr "Observera: Vägrar aktivera modulen Location User eftersom modulen Location inte är aktiverad för närvarande."
+
+#: location.install:1115
+msgid "Note: Location module has now split off node location support into a seperate module, called <em>Node Locations</em>. It has been enabled for you. If you don't want node locations, visit the <a href='!url'>modules page</a> and disable it."
+msgstr "Observera: Modulen Location har nu delat upp stödet nodplatser i en separat modul kallad <em>Node Locations</em>. Den har aktiverats åt dig. Om du inte vill ha nodplatser, besök då sidan <a href='!url'>moduler</a> och inaktivera den."
+
+#: location.install:1120
+msgid "Note: Refusing to enable location_node.module, as location.module is not currently enabled."
+msgstr "Observera: Vägrar aktivera modulen Location Node eftersom modulen Location inte är aktiverad för närvarande."
+
+#: (duplicate) location.install:726
+msgid "Note: Location.module update 6301 will generate several warnings/failures regarding indexes and primary keys if you are upgrading from one of the 6.x test releases. These warnings can be safely disregarded in this case."
+msgstr "Observera: Uppdatering 6301 för modulen Location kommer att generera flera varningar/fel gällande index och primära nycklar om du uppgraderar från en av testutgåvorna från 6.x. Dessa varningar kan med säkerhet ignoreras i detta fall."
+
+#: location_node.info:0
+msgid "Node Locations"
+msgstr "Platser för noder"
+
+#: location_node.info:0
+msgid "Associate locations with nodes."
+msgstr "Associera platser med noder."
+
+#: location_user.info:0
+msgid "User Locations"
+msgstr "Platser för användare"
+
+#: location_user.info:0
+msgid "Associate locations with users."
+msgstr "Associera platser med användare."
+
+#: contrib/location_addanother/location_addanother.module:35
+msgid "Add another location from node view page"
+msgstr "Lägg till en annan plats från nodens visningssida."
+
+#: contrib/location_addanother/location_addanother.module:37
+msgid "Display the \"Add another location\" option on the node view page."
+msgstr "Visa alternativet \"Lägg till en annan plats\" på nodens visningssida."
+
+#: contrib/location_addanother/location_addanother.module:50
+msgid "Add another location"
+msgstr "Lägg till en annan plats"
+
+#: contrib/location_addanother/location_addanother.module:62
+msgid "Add location"
+msgstr "Lägg till plats"
+
+#: contrib/location_addanother/location_addanother.module:76
+msgid "You don't have permission to add a location to this node, or the node has the maximum number of locations already."
+msgstr "Du har inte behörighet att lägga till en plats till denna noden, eller så har noden redan maximalt antal platser."
+
+#: contrib/location_addanother/location_addanother.info:0
+msgid "Location Add Another"
+msgstr "Lägg till en annan plats"
+
+#: contrib/location_addanother/location_addanother.info:0
+msgid "Allows you to quickly add locations directly from a node without having to click 'edit' first."
+msgstr "Tillåter dig att snabbt lägga till platser direkt från en nod utan att först behöva klicka på \"redigera\"."
+
+#: contrib/location_cck/location_cck.module:39
+msgid "Store a location.module location."
+msgstr "Lagra en plats för modulen Location."
+
+#: contrib/location_cck/location_cck.module:71
+msgid "GMap Macro"
+msgstr "Makro för GMap"
+
+#: contrib/location_cck/location_cck.module:74
+msgid "A macro to be used as a base map for this field.  This map will be recentered on the location, so the center is not that important."
+msgstr "Ett makro att användas som grundkarta för detta fält. Denna karta kommer att centreras för platsen, så denna centrering är inte så viktigt."
+
+#: contrib/location_cck/location_cck.module:80
+msgid "GMap marker"
+msgstr "Markör för GMap"
+
+#: contrib/location_cck/location_cck.module:180
+msgid "Default (address)"
+msgstr "Standard (adress)"
+
+#: contrib/location_cck/location_cck.module:186
+msgid "Address with map"
+msgstr "Adress med karta"
+
+#: contrib/location_cck/location_cck.module:190
+msgid "Map only"
+msgstr "Enbart karta"
+
+#: contrib/location_cck/location_cck.module:194
+msgid "Multiple field values on a single map"
+msgstr "Flera fältvärden på en och samma karta"
+
+#: contrib/location_cck/location_cck.module:208
+msgid "Location Field"
+msgstr "Plats"
+
+#: contrib/location_cck/location_cck.module:480;481
+msgid "CCK location"
+msgstr "CCK plats"
+
+#: contrib/location_cck/location_cck.info:0
+msgid "Location CCK"
+msgstr "Plats för CCK"
+
+#: contrib/location_cck/location_cck.info:0
+msgid "Defines a Location field type."
+msgstr "Definierar en fälttyp för plats."
+
+#: contrib/location_cck/location_cck.info:0
+msgid "CCK"
+msgstr "CCK"
+
+#: contrib/location_fax/location_fax.views.inc:53
+msgid "The fax number of the selected location."
+msgstr "Faxnumret för den valda platsen."
+
+#: contrib/location_fax/location_fax.module:15;26
+msgid "Fax number"
+msgstr "Faxnummer"
+
+#: contrib/location_fax/location_fax.module:70
+msgid "Location Fax number (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr "Faxnummer till platser (om det finns flera platser per nod så är N antalet, börjar med 0)"
+
+#: contrib/location_fax/location_fax.info:0
+msgid "Location Fax"
+msgstr "Plats för fax"
+
+#: contrib/location_fax/location_fax.info:0
+msgid "Allows you to add a fax number to a location."
+msgstr "Tillåter dig att lägga till ett faxnummer till en plats."
+
+#: contrib/location_generate/location_generate.module:52
+msgid "Add locations to each node."
+msgstr "Lägg till platser för varje nod."
+
+#: contrib/location_generate/location_generate.module:53
+msgid "Added by location_generate.module"
+msgstr "Tillagd av modulen Location Generate"
+
+#: contrib/location_generate/location_generate.info:0
+msgid "Location Generate"
+msgstr "Generera plats"
+
+#: contrib/location_generate/location_generate.info:0
+msgid "Bulk assign random latitude and longitudes to nodes."
+msgstr "Ge noder slumpmässiga latituder och longituder."
+
+#: contrib/location_generate/location_generate.info:0
+msgid "Development"
+msgstr "Utveckling"
+
+#: contrib/location_phone/location_phone.views.inc:53
+msgid "The phone number of the selected location."
+msgstr "Telefonnumret för den valda platsen."
+
+#: contrib/location_phone/location_phone.module:15;26
+msgid "Phone number"
+msgstr "Telefonnummer"
+
+#: contrib/location_phone/location_phone.module:70
+msgid "Location Phone number (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr "Telefonnummer till platsen (om det finns flera platser per nod så är N antalet, börjar med 0)"
+
+#: contrib/location_phone/location_phone.info:0
+msgid "Location Phone"
+msgstr "Plats för telefon"
+
+#: contrib/location_phone/location_phone.info:0
+msgid "Allows you to add a phone number to a location."
+msgstr "Tillåter dig att lägga till ett telefonnummer till en plats."
+
+#: contrib/location_search/location_search.admin.inc:17
+msgid "Use map to pick search coordinates"
+msgstr "Använd karta för att välja sökkoordinater."
+
+#: contrib/location_search/location_search.admin.inc:23
+msgid "Add geocoding address field to search map"
+msgstr "Lägg till geografiskt kodat adressfält till sökkartan."
+
+#: contrib/location_search/location_search.admin.inc:29
+msgid "Macro for search map"
+msgstr "Makro för sökkarta"
+
+#: contrib/location_search/location_search.module:188;258
+msgid "Advanced search"
+msgstr "Avancerad sökning"
+
+#: contrib/location_search/location_search.module:219
+msgid "Proximity"
+msgstr "Närhet"
+
+#: contrib/location_search/location_search.module:227
+msgid "Locate Address"
+msgstr "Lokalisera adress"
+
+#: contrib/location_search/location_search.module:241
+#: handlers/location_views_handler_filter_proximity.inc:140
+msgid "Distance"
+msgstr "Distans"
+
+#: contrib/location_search/location_search.module:251
+msgid "mi"
+msgstr "mi"
+
+#: contrib/location_search/location_search.module:252
+msgid "km"
+msgstr "km"
+
+#: contrib/location_search/location_search.module:14
+msgid "Search options"
+msgstr "Sökalternativ"
+
+#: contrib/location_search/location_search.module:15
+msgid "Settings for Location Search module"
+msgstr "Inställningar för modulen Location Search"
+
+#: contrib/location_search/location_search.info:0
+msgid "Location Search"
+msgstr "Platssökning"
+
+#: contrib/location_search/location_search.info:0
+msgid "Advanced search page for locations."
+msgstr "Avancerad söksida för platser."
+
+#: contrib/location_taxonomy/location_taxonomy.module:102
+msgid "Term location"
+msgstr "Term för plats"
+
+#: contrib/location_taxonomy/location_taxonomy.module:103
+msgid "Taxonomy location"
+msgstr "Taxonomi för plats"
+
+#: contrib/location_taxonomy/location_taxonomy.info:0
+msgid "Location Taxonomy"
+msgstr "Taxonomi för plats"
+
+#: contrib/location_taxonomy/location_taxonomy.info:0
+msgid "Associate locations with taxonomy terms."
+msgstr "Associera platser med taxonomitermer."
+
+#: geocoding/google.inc:164;172
+#: supported/location.au.inc:323
+msgid "Google Maps API Key"
+msgstr "Nyckel för Google Maps API"
+
+#: geocoding/google.inc:166
+msgid "The key in use was automatically provided by GMap."
+msgstr "Nyckeln som används tillhandahölls automatiskt av GMap."
+
+#: geocoding/google.inc:176
+msgid "In order to use the Google Maps API geocoding web-service, you will need a Google Maps API Key.  You can obtain one at the !sign_up_link for the !google_maps_api.  PLEASE NOTE: You will <em>not</em> have to re-enter your API key for each country for which you have selected Google Maps for geocoding.  This setting is global."
+msgstr "För att använda webbtjänsten Google Maps API för geografisk kodning behöver du en nyckel för Google Maps API. Du kan hämta en från !sign_up_link för !google_maps_api. Observera: Du behöver <em>inte</em> ange din nyckel för varje land som du valt för geografisk kodning med Google Maps. Denna inställningen är global."
+
+#: handlers/location_handler_field_location_country.inc:20
+#: handlers/location_handler_field_location_province.inc:27
+#: handlers/location_handler_field_location_street.inc:27
+#: handlers/location_views_handler_field_latitude.inc:20
+msgid "Display style"
+msgstr "Visningsstil"
+
+#: handlers/location_handler_field_location_country.inc:22
+msgid "Country code"
+msgstr "Landskod"
+
+#: handlers/location_handler_field_location_distance.inc:27
+#: handlers/location_handler_sort_location_distance.inc:27
+msgid "Units"
+msgstr "Enheter"
+
+#: handlers/location_handler_field_location_distance.inc:29
+#: handlers/location_handler_sort_location_distance.inc:29
+#: handlers/location_views_handler_filter_proximity.inc:148
+msgid "Kilometers"
+msgstr "Kilometer"
+
+#: handlers/location_handler_field_location_distance.inc:30
+#: handlers/location_handler_sort_location_distance.inc:30
+#: handlers/location_views_handler_filter_proximity.inc:147
+msgid "Miles"
+msgstr "Miles"
+
+#: handlers/location_handler_field_location_distance.inc:32;44
+#: handlers/location_handler_sort_location_distance.inc:32;44
+#: handlers/location_views_handler_filter_proximity.inc:61
+msgid "FIXME"
+msgstr "FIXME"
+
+#: handlers/location_handler_field_location_distance.inc:37
+#: handlers/location_handler_sort_location_distance.inc:37
+msgid "Origin"
+msgstr "Ursprung"
+
+#: handlers/location_handler_field_location_distance.inc:39
+#: handlers/location_handler_sort_location_distance.inc:39
+msgid "User's location (blank if unset)"
+msgstr "Användarens plats (tom om inte angiven)"
+
+#: handlers/location_handler_field_location_distance.inc:40
+#: handlers/location_handler_sort_location_distance.inc:40
+msgid "User's location (fall back to static if unset)"
+msgstr "Användarens plats (fall tillbaka till statisk om inte angiven)"
+
+#: handlers/location_handler_field_location_distance.inc:41
+#: handlers/location_handler_sort_location_distance.inc:41
+msgid "Static location"
+msgstr "Statisk plats"
+
+#: handlers/location_handler_field_location_distance.inc:42
+#: handlers/location_handler_sort_location_distance.inc:42
+msgid "Use Distance / Proximity filter"
+msgstr "Använd filter för avstånd / närhet"
+
+#: handlers/location_handler_field_location_province.inc:29
+msgid "Province code"
+msgstr "Kod för landskap"
+
+#: handlers/location_handler_field_location_street.inc:30
+msgid "Both street and additional"
+msgstr "Både gata och extra adress"
+
+#: handlers/location_handler_field_location_street.inc:31
+msgid "Street only"
+msgstr "Endast gata"
+
+#: handlers/location_handler_field_location_street.inc:32
+msgid "Additional only"
+msgstr "Endast extra adress"
+
+#: handlers/location_handler_filter_location_country.inc:45
+#: handlers/location_handler_filter_location_province.inc:57
+msgid "Is one of"
+msgstr "Är en av"
+
+#: handlers/location_handler_filter_location_country.inc:46
+#: handlers/location_handler_filter_location_province.inc:58
+msgid "Is not one of"
+msgstr "Är inte en av"
+
+#: handlers/location_handler_filter_location_country.inc:51
+#: handlers/location_handler_filter_location_province.inc:63
+msgid "Is"
+msgstr "Är"
+
+#: handlers/location_handler_filter_location_country.inc:52
+#: handlers/location_handler_filter_location_province.inc:64
+msgid "Is not"
+msgstr "Är inte"
+
+#: handlers/location_views_handler_field_latitude.inc:22
+msgid "Decimal degrees"
+msgstr "Decimala grader"
+
+#: handlers/location_views_handler_field_latitude.inc:22
+msgid "Degrees, minutes, seconds"
+msgstr "Grader, minuter, sekunder"
+
+#: handlers/location_views_handler_filter_proximity.inc:44
+msgid "Proximity (Rectangular)"
+msgstr "Närhet (rektangulärt)"
+
+#: handlers/location_views_handler_filter_proximity.inc:45
+msgid "Proximity (Circular)"
+msgstr "Närhet (cirkulärt)"
+
+#: handlers/location_views_handler_filter_proximity.inc:54
+msgid "Form mode"
+msgstr "Formulärläge"
+
+#: handlers/location_views_handler_filter_proximity.inc:56
+msgid "Latitude / Longitude input"
+msgstr "Inmatning av latitud/longitud"
+
+#: handlers/location_views_handler_filter_proximity.inc:57
+msgid "Postal Code / Country"
+msgstr "Postnummer/Land"
+
+#: handlers/location_views_handler_filter_proximity.inc:58
+msgid "Postal Code (assume default country)"
+msgstr "Postnummer (antag standardval för land)"
+
+#: handlers/location_views_handler_filter_proximity.inc:66
+msgid "Latitude / Longitude input (use map)"
+msgstr "Inmatning av latitud/longitud (använd karta)"
+
+#: handlers/location_views_handler_filter_proximity.inc:73
+msgid "GMap macro"
+msgstr "Makro för GMap"
+
+#: handlers/location_views_handler_filter_proximity.inc:74
+msgid "The macro to use for the Latitude / Longitude map, if applicable."
+msgstr "Det makro som skall användas för kartan med latitud/longitud, om möjligt."
+
+#: supported/location.au.inc:234
+#: supported/location.us.inc:240
+msgid "Yahoo! Web Services Application ID"
+msgstr "ID för Yahoo! Web Service Application"
+
+#: supported/location.au.inc:238
+#: supported/location.us.inc:244
+msgid "Unless you are using this site to test and develop, you will need to obtain a Yahoo! Web Services Application ID from the %network_link.  If you are using for development and testing purposes, you can use 'YahooDemo' as your AppID.  When getting an Application ID from Yahoo!, please also be sure to review the %usage_policy."
+msgstr "Om du inte använder denna webbplats till test och utveckling kommer du behöva hämta ett Yahoo! Web Service Application ID från %network_link. Om du använder webbplatsen i test- och utvecklingssyfte kan du använda \"YahooDemo\" som ditt AppID. Var vänlig att läsa igenom %usage_policy när du får ett Application ID från Yahoo!."
+
+#: supported/location.au.inc:327
+msgid "In order to use the Google Maps API geocoding web-service, you will need a Google Maps API Key.  You can obtain one at the !sign_up_link for the !google_maps_api."
+msgstr "För att kunna använda webbtjänsten Google Maps API för geografisk kodning behöver du en nyckel för Google Maps. Du kan hämta en från !sign_up_link för !google_maps_api."
+
+#: supported/location.ca.inc:329
+msgid "Geocoder API Key"
+msgstr "Nyckel för Geocoder API"
+
+#: supported/location.ca.inc:333
+msgid "In order to use the Geocoder.ca API geocoding web-service, you for a commercial entity or without attribution you will need a Geocoder API Key.  You can obtain one at the !sign_up_link for the !geocoder_api."
+msgstr "För att använda webbtjänsten Geocoder.ca API för geografisk kodning behöver du som kommersiell eller privat användare en nyckel för Geocoder API. Du kan hämta en från !sign_up_link för !geocoder_api."
+

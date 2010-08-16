@@ -1,0 +1,222 @@
+<?php
+// $Id: location_feeds.user.test,v 1.1.2.3 2010/06/11 17:58:20 elliottf Exp $
+
+/**
+ *  @file
+ *
+ * Test case for location user imports
+ *
+ * @author: Elliott Foster
+ */
+
+module_load_include('inc', 'location_feeds', 'tests/location_feeds.test');
+
+class UserFeedsMapperLocationTestCase extends FeedsMapperLocationTestCase {
+  public static function getInfo() {
+    return array(
+      'name' => t('Mapper: User Locations'),
+      'description' => t('Test Feeds Mapper support for User Location.'),
+      'group' => t('Feeds'),
+    );
+  }
+
+  /**
+   * Set up the test.
+   */
+  public function setUp() {
+    // Call parent setup with required modules.
+    parent::setUp('feeds', 'feeds_ui', 'ctools', 'location', 'location_user', 'location_feeds');
+
+    // Create user and login.
+    $this->drupalLogin($this->drupalCreateUser(
+        array(
+          'administer feeds',
+          'administer site configuration',
+          'administer users',
+        )
+    ));
+  }
+
+  /**
+   * Basic test loading an RSS feed for users with locations.
+   */
+  public function test() {
+    // expected import values:
+    $loc = array(
+      0 => array(
+        'street' => "405 Hilgard Ave.",
+        'city' => "Los Angeles",
+        'province' => "CA",
+        'postal_code' => 90095,
+        'country' => "us",
+      ),
+      1  => array(
+        'street' => "2400 Inner Campus Drive",
+        'city' => "Austin",
+        'province' => "TX",
+        'postal_code' => 78712,
+        'country' => "us",
+      ),
+      2 => array(
+        'street' => "405 Hilgard Ave.",
+        'city' => "Los Angeles",
+        'province' => "CA",
+        'postal_code' => 90095,
+        'country' => "us",
+      ),
+    );
+
+    $settings = $this->_location_defaults();
+    variable_set('location_settings_user', $settings['location_settings']);
+
+    // Create a feed.
+    $this->createFeedConfiguration('User location import', 'user_location_import');
+
+    // Set and configure plugins.
+    $this->setPlugin('user_location_import', 'FeedsFileFetcher');
+    $this->setPlugin('user_location_import', 'FeedsCSVParser');
+    $this->setPlugin('user_location_import', 'FeedsUserProcessor');
+
+    // Go to mapping page and create a couple of mappings.
+    $mappings = array(
+      '0' => array(
+        'source' => 'name',
+        'target' => 'name',
+        'unique' => 0,
+      ),
+      '1' => array(
+        'source' => 'mail',
+        'target' => 'mail',
+        'unique' => 1,
+      ),
+      '2' => array(
+        'source' => 'street',
+        'target' => 'locations:street',
+        'unique' => FALSE,
+      ),
+      '3' => array(
+        'source' => 'city',
+        'target' => 'locations:city',
+        'unique' => FALSE,
+      ),
+      '4' => array(
+        'source' => 'state',
+        'target' => 'locations:province',
+        'unique' => FALSE,
+      ),
+      '5' => array(
+        'source' => 'country',
+        'target' => 'locations:country',
+        'unique' => FALSE,
+      ),
+      '6' => array(
+        'source' => 'zip',
+        'target' => 'locations:postal_code',
+        'unique' => FALSE,
+      ),
+    );
+    $this->addMappings('user_location_import', $mappings);
+
+    // Change some of the basic configuration.
+    $edit = array(
+      'content_type' => '',
+      'import_period' => FEEDS_SCHEDULE_NEVER,
+    );
+    $this->drupalPost('admin/build/feeds/edit/user_location_import/settings', $edit, 'Save');
+
+    // Import CSV file.
+    $this->importFile('user_location_import', drupal_get_path('module', 'location_feeds') .'/tests/feeds/location_users.csv');
+
+    // Assert result.
+    $this->assertText('Created 3 users.');
+    $this->drupalGet('admin/user/user');
+    $this->assertText('blue');
+    $this->assertText('drop');
+    $this->assertText('red');
+
+    $blue = user_load(array('name' => 'blue'));
+    $this->assertEqual(
+      $loc[0]['street'],
+      $blue->locations[0]['street'],
+      t('Testing street import, expected: @e, found: @f',
+        array('@e' => $loc[0]['street'], '@f' => $blue->locations[0]['street']))
+    );
+    $this->assertEqual(
+      $loc[0]['city'],
+      $blue->locations[0]['city'],
+      t('Testing city import, expected: @e, found: @f', array('@e' => $loc[0]['city'], '@f' => $blue->locations[0]['city']))
+    );
+    $this->assertEqual(
+      $loc[0]['province'],
+      $blue->locations[0]['province'],
+      t('Testing province import, expected: @e, found: @f', array('@e' => $loc[0]['province'], '@f' => $blue->locations[0]['province']))
+    );
+    $this->assertEqual(
+      $loc[0]['country'],
+      $blue->locations[0]['country'],
+      t('Testing country import, expected: @e, found: @f', array('@e' => $loc[0]['country'], '@f' => $blue->locations[0]['country']))
+    );
+    $this->assertEqual(
+      $loc[0]['postal_code'],
+      $blue->locations[0]['postal_code'],
+      t('Testing country import, expected: @e, found: @f', array('@e' => $loc[0]['postal_code'], '@f' => $blue->locations[0]['postal_code']))
+    );
+
+    $drop = user_load(array('name' => 'drop'));
+    $this->assertEqual(
+      $loc[1]['street'],
+      $drop->locations[0]['street'],
+      t('Testing street import, expected: @e, found: @f',
+        array('@e' => $loc[1]['street'], '@f' => $drop->locations[0]['street']))
+    );
+    $this->assertEqual(
+      $loc[1]['city'],
+      $drop->locations[0]['city'],
+      t('Testing city import, expected: @e, found: @f', array('@e' => $loc[1]['city'], '@f' => $drop->locations[0]['city']))
+    );
+    $this->assertEqual(
+      $loc[1]['province'],
+      $drop->locations[0]['province'],
+      t('Testing province import, expected: @e, found: @f', array('@e' => $loc[1]['province'], '@f' => $drop->locations[0]['province']))
+    );
+    $this->assertEqual(
+      $loc[1]['country'],
+      $drop->locations[0]['country'],
+      t('Testing country import, expected: @e, found: @f', array('@e' => $loc[1]['country'], '@f' => $drop->locations[0]['country']))
+    );
+    $this->assertEqual(
+      $loc[1]['postal_code'],
+      $drop->locations[0]['postal_code'],
+      t('Testing country import, expected: @e, found: @f', array('@e' => $loc[1]['postal_code'], '@f' => $drop->locations[0]['postal_code']))
+    );
+
+    $red = user_load(array('name' => 'red'));
+    $this->assertEqual(
+      $loc[2]['street'],
+      $red->locations[0]['street'],
+      t('Testing street import, expected: @e, found: @f',
+        array('@e' => $loc[2]['street'], '@f' => $red->locations[0]['street']))
+    );
+    $this->assertEqual(
+      $loc[2]['city'],
+      $red->locations[0]['city'],
+      t('Testing city import, expected: @e, found: @f', array('@e' => $loc[2]['city'], '@f' => $red->locations[0]['city']))
+    );
+    $this->assertEqual(
+      $loc[2]['province'],
+      $red->locations[0]['province'],
+      t('Testing province import, expected: @e, found: @f', array('@e' => $loc[2]['province'], '@f' => $red->locations[0]['province']))
+    );
+    $this->assertEqual(
+      $loc[2]['country'],
+      $red->locations[0]['country'],
+      t('Testing country import, expected: @e, found: @f', array('@e' => $loc[2]['country'], '@f' => $red->locations[0]['country']))
+    );
+    $this->assertEqual(
+      $loc[2]['postal_code'],
+      $red->locations[0]['postal_code'],
+      t('Testing country import, expected: @e, found: @f', array('@e' => $loc[2]['postal_code'], '@f' => $red->locations[0]['postal_code']))
+    );
+  }
+}
+

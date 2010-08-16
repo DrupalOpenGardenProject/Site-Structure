@@ -1,0 +1,132 @@
+<?php
+// $Id: location_feeds.georss.test,v 1.1.2.1 2010/06/30 20:06:56 elliottf Exp $
+
+/**
+ *  @file
+ *
+ * Test case for location georss imports
+ *
+ * @author: Elliott Foster
+ */
+
+module_load_include('inc', 'location_feeds', 'tests/location_feeds.test');
+
+class GeoRSSFeedsMapperLocationTestCase extends FeedsMapperLocationTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => t('Mapper: GeoRSS Locations'),
+      'description' => t('Test Feeds Mapper support for GeoRSS Locations.'),
+      'group' => t('Feeds'),
+    );
+  }
+
+  /**
+   * Set up the test.
+   */
+  public function setUp() {
+    // Call parent setup with required modules.
+    parent::setUp('feeds', 'feeds_ui', 'ctools', 'location', 'location_feeds', 'content');
+
+    // Create user and login.
+    $this->drupalLogin($this->drupalCreateUser(
+        array(
+          'administer content types',
+          'administer feeds',
+          'administer nodes',
+          'administer site configuration',
+        )
+    ));
+  }
+
+  /**
+   * Basic test loading an RSS feed for nodes with locations.
+   */
+  public function test() {
+    $settings = $this->_location_defaults();
+    $type = $this->drupalCreateContentType($settings);
+
+    // Taken from _location_node_type_save_submit() to correctly
+    // set the location variables
+    variable_set('location_settings_node_'. $type->type, $settings['location_settings']);
+
+    // @@@ Backwards compatibility variables.
+    // There are a few places in contrib where these variables are checked.
+    variable_set('location_maxnum_'. $type->type, $settings['location_settings']['multiple']['max']);
+    variable_set('location_defaultnum_'. $type->type, $settings['location_settings']['multiple']['add']);
+
+    $this->refreshVariables();
+
+    // Test constants
+    $loc = array(
+      0 => array(
+        'latitude' => 32.1783,
+        'longitude' => -115.2768,
+      ),
+      1  => array(
+        'latitude' => 40.6083,
+        'longitude' => -124.7635,
+      ),
+    );
+
+    // Create and configure importer.
+    // Create a feed.
+    $this->createFeedConfiguration('Location import', 'location_import');
+
+    // Set and configure plugins.
+    $this->setPlugin('location_import', 'FeedsFileFetcher');
+    $this->setPlugin('location_import', 'FeedsCSVParser');
+    $this->setSettings('location_import', 'FeedsNodeProcessor', array('content_type' => $type->type));
+
+    // Go to mapping page and create a couple of mappings.
+    $mappings = array(
+      array(
+        'source' => 'title',
+        'target' => 'title',
+        'unique' => FALSE,
+      ),
+      array(
+        'source' => 'guid',
+        'target' => 'guid',
+        'unique' => TRUE,
+      ),
+      array(
+        'source' => 'georss:point',
+        'target' => 'locations:georss:point',
+        'unique' => FALSE,
+      ),
+    );
+    $this->addMappings('location_import', $mappings);
+
+    // Change some of the basic configuration.
+    $edit = array(
+      'content_type' => '',
+      'import_period' => FEEDS_SCHEDULE_NEVER,
+    );
+    $this->drupalPost('admin/build/feeds/edit/location_import/settings', $edit, 'Save');
+
+    // Import CSV file.
+    $this->importFile('location_import', drupal_get_path('module', 'location_feeds') .'/tests/feeds/location_georss.csv');
+    $this->assertText('Created 2 '. $type->type .' nodes.');
+
+    // Check the imported locations
+    $x = 0;
+    $res = db_query("SELECT nid FROM {node} WHERE type='%s'", $type->type);
+    while ($node = db_fetch_object($res)) {
+      $node = node_load($node->nid);
+      $this->assertEqual(
+        $loc[$x]['latitude'],
+        $node->locations[0]['latitude'],
+        t('Testing latitude import, expected: @e, found: @f',
+          array('@e' => $loc[$x]['latitude'], '@f' => $node->locations[0]['latitude']))
+      );
+      $this->assertEqual(
+        $loc[$x]['longitude'],
+        $node->locations[0]['longitude'],
+        t('Testing longitude import, expected: @e, found: @f', array('@e' => $loc[$x]['longitude'], '@f' => $node->locations[0]['longitude']))
+      );
+      $x++;
+    }
+  }
+
+}

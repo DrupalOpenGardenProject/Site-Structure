@@ -1,0 +1,229 @@
+<?php
+// $Id: location_feeds.module,v 1.1.2.3 2010/06/30 20:06:56 elliottf Exp $
+
+/**
+ * @file
+ *
+ * This module provides location mappers to feed importers.
+ *
+ * @author: Elliott Foster
+ */
+
+/**
+ * Implements feeds_user_processor_target_alter().
+ */
+function location_feeds_feeds_user_processor_targets_alter(&$targets) {
+  $settings = variable_get('location_settings_user', array());
+
+  // Only add fields when collecting locations
+  if (isset($settings['multiple']['max']) && $settings['multiple']['max'] > 0) {
+    _location_feeds_location($targets, $settings);
+  }
+}
+ 
+/**
+ * Implements feeds_node_processor_target_alter().
+ *
+ * @param $targets array of target fields
+ * @param $content_type
+ */
+function location_feeds_feeds_node_processor_targets_alter(&$targets, $content_type) {
+
+  // location.module logic
+  $settings = variable_get('location_settings_node_'. $content_type, array());
+  // Only add fields when collecting locations
+  if (isset($settings['multiple']['max']) && $settings['multiple']['max'] > 0) {
+    _location_feeds_location($targets, $settings);
+  }
+
+  // location_cck.module logic
+  $info = content_types($content_type);
+  if (isset($info['fields']) && count($info['fields'])) {
+    foreach ($info['fields'] as $field_name => $field) {
+      $location_fields = _location_feeds_fields();
+      if (in_array($field['type'], array('location'))) {
+        _location_feeds_fill_targets($targets, 'location_cck', $field_name, $location_fields);
+      }
+    }
+  }
+}
+
+/**
+ * Helper function to handle node and user locations
+ *
+ * For sub elements we use the '][' construct
+ *
+ * @param $targets
+ * @param $settings
+ */
+function _location_feeds_location(&$targets, $settings) {
+  $location_fields= _location_feeds_fields();
+
+  // We need the collect settings
+  $fields = $settings['form']['fields'];
+  // locpick is a compound field. So split it
+  $fields['locpick][user_latitude'] = $fields['locpick'];
+  $fields['locpick][user_longitude'] = $fields['locpick'];
+  unset($fields['locpick']);
+
+  foreach ($fields as $field => $values) {
+    if (! $values['collect']) {
+      unset($location_fields[$field]);
+    }
+  }
+
+  _location_feeds_fill_targets($targets, 'location', 'locations', $location_fields);
+}
+
+/**
+ * Helper function to add target fields
+ *
+ * @param $targets
+ * @param $module
+ *   Module name providing the field.
+ * @param $field_name
+ *   Field name where values are supposed to get stored to.
+ * @param $sub_fields
+ *   Location elements for the given $field_name
+ */
+function _location_feeds_fill_targets(&$targets, $module, $field_name, $sub_fields) {
+  foreach ($sub_fields as $sub_field => $value) {
+    $targets[ $field_name . ':' . $sub_field] = array(
+      'name' => $module . " module: " . $field_name . '.' . t('@label', array('@label' => $value)),
+      'callback' => ($sub_field == 'country') ? 'location_feeds_set_country' : 'location_feeds_set_target',
+      'description' => t('The @label for the location of the node.', array('@label' => $sub_field)),
+    );
+  }
+
+  // support georss
+  $targets[$field_name . ':georss:point'] = array(
+    'name' => $module . " module:" . $field_name . " georss:point",
+    'callback' => 'location_feeds_set_georss_point',
+    'description' => t('Map a georss point to location points'),
+  );
+}
+
+/**
+ * Helper function to get to manage target fields
+ *
+ * @return array of key/value field name/field label
+ */
+function _location_feeds_fields() {
+  static $fields;
+  if (isset($fields)) {
+    return $fields;
+  }
+
+  $fields= location_field_names(TRUE);
+  unset($fields['locpick']);
+  $fields['locpick][user_latitude'] = t("Latitude");
+  $fields['locpick][user_longitude'] = t("Longitude");
+
+  // province_name / country_name / map_link are display fields
+  unset($fields['province_name']);
+  unset($fields['country_name']);
+  unset($fields['map_link']);
+
+  return $fields;
+}
+
+/**
+ * Implementation of feed_set_target
+ *
+ * @param object $object
+ *   Either a user or node object dpending on where this is called
+ * @param string $target
+ *   When targeting sub arrays the '][' is used to drill down.
+ *   Note that this implementation is lazy ... we assume just depth=2
+ * @param $value
+ * @return object
+ */
+function location_feeds_set_target($object, $target, $value) {
+  list($field_name, $sub_field) = explode(':', $target);
+  if (strpos($sub_field, '][') > 0) {
+    // TODO : make this algorithm recursive.
+    list($sub_field, $last_field) = explode('\]\[', $sub_field, 2);
+  }
+
+  if (!is_array($value)) {
+    $value = array($value);
+  }
+
+  foreach ($value as $i => $val) {
+    if (isset($last_field)) {
+      $object->{$field_name}[$i][$sub_field][$last_field] = $val;
+    }
+    else {
+      $object->{$field_name}[$i][$sub_field] = $val;
+    }
+  }
+
+  return $object;
+}
+
+/**
+ * Set the country and attempt to support non-iso country imports
+ *
+ * @param object $object
+ *   Either a user or node object dpending on where this is called
+ * @param string $target
+ *   When targeting sub arrays the '][' is used to drill down.
+ *   Note that this implementation is lazy ... we assume just depth=2
+ * @param $value
+ * @return object
+ */
+function location_feeds_set_country($object, $target, $value) {
+  module_load_include('inc', 'location', 'location');
+  list($field_name, $sub_field) = explode(':', $target);
+  static $iso_list = array();
+
+  if (!is_array($value)) {
+    $value = array($value);
+  }
+
+  foreach ($value as $i => $val) {
+    // if the country is in iso format or close to it, store
+    // it, else try to figure out the iso format
+    if (location_standardize_country_code($val)) {
+      $object->{$field_name}[$i][$sub_field] = $val;
+    }
+    else {
+      // only load this once...
+      if (sizeof($iso_list) == 0) {
+        $iso_list = location_get_iso3166_list();
+      }
+      $keys = array_keys($iso_list, $val);
+      if (isset($keys[0])) {
+        $object->{$field_name}[$i][$sub_field] = $keys[0];
+      }
+    }
+  }
+
+  return $object;
+}
+
+/**
+ * Set a georss:point value for the node
+ *
+ * @param object $object
+ *  Either a user or node object depending on where this is called
+ * @param string $target
+ *  The target that invoked this
+ * @param $value
+ * @return object
+ */
+function location_feeds_set_georss_point($object, $target, $value) {
+  list($field_name, $georss, $point) = explode(':', $target);
+  if (!is_array($value)) {
+    $value = array($value);
+  }
+
+  foreach ($value as $i => $val) {
+    list($lat, $long) = explode(' ', $val);
+    $object->{$field_name}[$i]['latitude'] = $lat;
+    $object->{$field_name}[$i]['longitude'] = $long;
+  }
+
+  return $object;
+}
+

@@ -1,0 +1,192 @@
+<?php
+// $Id: location_feeds.node.test,v 1.1.2.4 2010/06/30 20:06:56 elliottf Exp $
+
+/**
+ *  @file
+ *
+ * Test case for location node imports
+ *
+ * @author: Elliott Foster
+ */
+
+module_load_include('inc', 'location_feeds', 'tests/location_feeds.test');
+
+class NodeFeedsMapperLocationTestCase extends FeedsMapperLocationTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => t('Mapper: Node Locations'),
+      'description' => t('Test Feeds Mapper support for Node Location.'),
+      'group' => t('Feeds'),
+    );
+  }
+
+  /**
+   * Set up the test.
+   */
+  public function setUp() {
+    // Call parent setup with required modules.
+    parent::setUp('feeds', 'feeds_ui', 'ctools', 'location', 'location_feeds', 'content');
+
+    // Create user and login.
+    $this->drupalLogin($this->drupalCreateUser(
+        array(
+          'administer content types',
+          'administer feeds',
+          'administer nodes',
+          'administer site configuration',
+        )
+    ));
+  }
+
+  /**
+   * Basic test loading an RSS feed for nodes with locations.
+   */
+  public function test() {
+    $settings = $this->_location_defaults();
+    $type = $this->drupalCreateContentType($settings);
+
+    // Taken from _location_node_type_save_submit() to correctly
+    // set the location variables
+    variable_set('location_settings_node_'. $type->type, $settings['location_settings']);
+
+    // @@@ Backwards compatibility variables.
+    // There are a few places in contrib where these variables are checked.
+    variable_set('location_maxnum_'. $type->type, $settings['location_settings']['multiple']['max']);
+    variable_set('location_defaultnum_'. $type->type, $settings['location_settings']['multiple']['add']);
+
+    $this->refreshVariables();
+
+    // Test constants
+    $loc = array(
+      0 => array(
+        'street' => "93 Rue de Rivoli",
+        'city' => "Paris",
+        'province' => "",
+        'country' => "fr",
+        'postal_code' => 75001
+      ),
+      1  => array(
+        'street' => "1600 Amphitheatre Parkway",
+        'city' => "Mountain View",
+        'province' => "CA",
+        'country' => "us",
+        'postal_code' => 94043
+      ),
+      2 => array(
+        'street' => "93 Rue de Rivoli",
+        'city' => "Paris",
+        'province' => "",
+        'country' => "fr",
+        'postal_code' => 75001
+      ),
+      3  => array(
+        'street' => "1600 Amphitheatre Parkway",
+        'city' => "Mountain View",
+        'province' => "CA",
+        'country' => "us",
+        'postal_code' => 94043
+      ),
+    );
+
+    // Create and configure importer.
+    // Create a feed.
+    $this->createFeedConfiguration('Location import', 'location_import');
+
+    // Set and configure plugins.
+    $this->setPlugin('location_import', 'FeedsFileFetcher');
+    $this->setPlugin('location_import', 'FeedsCSVParser');
+    $this->setSettings('location_import', 'FeedsNodeProcessor', array('content_type' => $type->type));
+
+    // Go to mapping page and create a couple of mappings.
+    $mappings = array(
+      array(
+        'source' => 'title',
+        'target' => 'title',
+        'unique' => FALSE,
+      ),
+      array(
+        'source' => 'description',
+        'target' => 'body',
+        'unique' => FALSE,
+      ),
+      array(
+        'source' => 'timestamp',
+        'target' => 'created',
+        'unique' => FALSE,
+      ),
+      array(
+        'source' => 'guid',
+        'target' => 'guid',
+        'unique' => TRUE,
+      ),
+      array(
+        'source' => 'street',
+        'target' => 'locations:street',
+      ),
+      array(
+        'source' => 'city',
+        'target' => 'locations:city',
+      ),
+      array(
+        'source' => 'state',
+        'target' => 'locations:province',
+      ),
+      array(
+        'source' => 'zip',
+        'target' => 'locations:postal_code',
+      ),
+      array(
+        'source' => 'country',
+        'target' => 'locations:country',
+      ),
+    );
+    $this->addMappings('location_import', $mappings);
+
+    // Change some of the basic configuration.
+    $edit = array(
+      'content_type' => '',
+      'import_period' => FEEDS_SCHEDULE_NEVER,
+    );
+    $this->drupalPost('admin/build/feeds/edit/location_import/settings', $edit, 'Save');
+
+    // Import CSV file.
+    $this->importFile('location_import', drupal_get_path('module', 'location_feeds') .'/tests/feeds/location_nodes.csv');
+    $this->assertText('Created 4 '. $type->type .' nodes.');
+
+    // Check the imported locations
+    $x = 0;
+    $res = db_query("SELECT nid FROM {node} WHERE type='%s'", $type->type);
+    while ($node = db_fetch_object($res)) {
+      $node = node_load($node->nid);
+      $this->assertEqual(
+        $loc[$x]['street'],
+        $node->locations[0]['street'],
+        t('Testing street import, expected: @e, found: @f',
+          array('@e' => $loc[$x]['street'], '@f' => $node->locations[0]['street']))
+      );
+      $this->assertEqual(
+        $loc[$x]['city'],
+        $node->locations[0]['city'],
+        t('Testing city import, expected: @e, found: @f', array('@e' => $loc[$x]['city'], '@f' => $node->locations[0]['city']))
+      );
+      $this->assertEqual(
+        $loc[$x]['province'],
+        $node->locations[0]['province'],
+        t('Testing province import, expected: @e, found: @f', array('@e' => $loc[$x]['province'], '@f' => $node->locations[0]['province']))
+      );
+      $this->assertEqual(
+        $loc[$x]['country'],
+        $node->locations[0]['country'],
+        t('Testing country import, expected: @e, found: @f', array('@e' => $loc[$x]['country'], '@f' => $node->locations[0]['country']))
+      );
+      $this->assertEqual(
+        $loc[$x]['postal_code'],
+        $node->locations[0]['postal_code'],
+        t('Testing country import, expected: @e, found: @f', array('@e' => $loc[$x]['postal_code'], '@f' => $node->locations[0]['postal_code']))
+      );
+      $x++;
+    }
+  }
+
+}

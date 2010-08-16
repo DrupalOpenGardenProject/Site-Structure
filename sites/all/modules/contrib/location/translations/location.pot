@@ -1,0 +1,2367 @@
+# $Id: location.pot,v 1.1.2.2 2010/07/06 13:45:06 rooby Exp $
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  location.tpl.php: n/a
+#  location_phone.views.inc,v 1.1.2.1 2009/12/16 20:47:53 bdragon
+#  location_fax.views.inc,v 1.1.2.1 2009/12/16 20:47:53 bdragon
+#  locations.tpl.php: n/a
+#  location_node.module,v 1.1.2.6 2009/04/03 20:16:45 bdragon
+#  location_search.module,v 1.12 2008/10/09 22:11:09 bdragon
+#  location.inc,v 1.95.2.9 2010/07/04 14:10:07 rooby
+#  location.views.inc,v 1.16.2.3 2010/07/04 14:10:07 rooby
+#  location.module,v 1.222.2.39 2010/07/04 12:27:36 rooby
+#  location.info,v 1.3 2008/07/24 19:44:00 bdragon
+#  location_node.info,v 1.1.2.2 2009/02/25 18:49:31 bdragon
+#  location_user.info,v 1.1 2008/12/05 18:08:32 bdragon
+#  location_addanother.info,v 1.3.2.1 2009/02/25 20:51:52 bdragon
+#  location_cck.module,v 1.5.2.19 2010/03/25 07:00:07 ankur
+#  location_fax.info,v 1.5 2008/09/10 21:23:08 bdragon
+#  location_phone.info,v 1.5 2008/09/10 21:23:09 bdragon
+#  location_search.info,v 1.4 2008/10/22 17:30:23 bdragon
+#  location_taxonomy.info,v 1.1.2.1 2009/04/03 18:37:04 bdragon
+#  google.inc,v 1.11.2.4 2010/05/27 12:16:14 rooby
+#  location_views_handler_filter_proximity.inc,v 1.3.2.3 2010/07/04 14:10:07 rooby
+#  location.inc,v 1.1 2010/05/19 18:28:09 dww
+#  location.admin.inc,v 1.17.2.6 2010/05/27 14:48:13 rooby
+#  location_handler_field_location_distance.inc,v 1.2.2.4 2010/07/04 14:48:15 rooby
+#  location_handler_filter_location_country.inc,v 1.3 2008/12/02 22:50:21 bdragon
+#  location_handler_sort_location_distance.inc,v 1.1.2.1 2010/07/04 14:10:07 rooby
+#  location.de.inc,v 1.16.4.1 2009/02/04 23:16:17 bdragon
+#  location.token.inc,v 1.2.2.1 2010/01/19 16:04:48 bdragon
+#  location_handler_argument_location_country.inc,v 1.1 2008/09/16 18:23:09 bdragon
+#  location_handler_argument_location_province.inc,v 1.1 2008/09/16 18:23:09 bdragon
+#  location_from_node.inc,v 1.1 2010/05/19 18:28:09 dww
+#  location_handler_filter_location_province.inc,v 1.1.2.2 2010/03/28 21:05:37 ankur
+#  location_handler_field_location_province.inc,v 1.1 2008/09/15 18:43:37 bdragon
+#  location_handler_field_location_country.inc,v 1.1 2008/09/10 22:41:52 bdragon
+#  location_handler_field_location_address.inc,v 1.1.2.1 2009/02/24 20:59:05 bdragon
+#  location_user.module,v 1.2.2.1 2009/04/03 15:45:05 bdragon
+#  location.install,v 1.41.2.2 2010/07/04 14:10:07 rooby
+#  location_addanother.module,v 1.6.2.1 2010/01/19 02:17:29 bdragon
+#  location_cck.info,v 1.3.2.1 2009/01/06 19:33:31 bdragon
+#  location_fax.module,v 1.11 2008/11/20 19:46:21 bdragon
+#  location_generate.module,v 1.4 2008/12/05 21:10:57 bdragon
+#  location_generate.info,v 1.2 2008/09/19 16:44:58 bdragon
+#  location_phone.module,v 1.12 2008/11/20 19:46:21 bdragon
+#  location_search.admin.inc,v 1.3 2008/10/09 22:09:05 bdragon
+#  location_taxonomy.module,v 1.1.2.2 2009/06/29 14:34:54 bdragon
+#  location.au.inc,v 1.9.2.1 2010/05/27 12:16:14 rooby
+#  location_handler_argument_location_proximity.inc,v 1.1.2.1 2010/07/04 10:34:04 rooby
+#  location_views_handler_field_latitude.inc,v 1.1 2008/09/10 22:01:05 bdragon
+#  location_handler_field_location_street.inc,v 1.1 2008/09/16 18:23:09 bdragon
+#  location.us.inc,v 1.23.2.1 2009/02/04 23:16:17 bdragon
+#  location.ca.inc,v 1.11 2008/03/08 22:25:39 bdragon
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2010-07-06 22:26+1000\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: location.tpl.php:30 contrib/location_phone/location_phone.views.inc:52
+msgid "Phone"
+msgstr ""
+
+#: location.tpl.php:36 contrib/location_fax/location_fax.views.inc:52
+msgid "Fax"
+msgstr ""
+
+#: locations.tpl.php:2 location_node.module:211 contrib/location_search/location_search.module:49
+msgid "Locations"
+msgstr ""
+
+#: locations.tpl.php:2 location.inc:575 location.views.inc:94;99;352 location.module:217;1716;38 location.info:0;0 location_node.info:0 location_user.info:0 contrib/location_addanother/location_addanother.info:0 contrib/location_cck/location_cck.module:38;122 contrib/location_fax/location_fax.views.inc:19 contrib/location_fax/location_fax.info:0 contrib/location_phone/location_phone.views.inc:19 contrib/location_phone/location_phone.info:0 contrib/location_search/location_search.info:0 contrib/location_taxonomy/location_taxonomy.info:0 geocoding/google.inc:220 handlers/location_views_handler_filter_proximity.inc:251 plugins/contexts/location.inc:14;15
+msgid "Location"
+msgstr ""
+
+#: location.admin.inc:26
+msgid "Default country selection"
+msgstr ""
+
+#: location.admin.inc:29
+msgid "This will be the country that is automatically selected when a location form is served for a new location."
+msgstr ""
+
+#: location.admin.inc:33
+msgid "Toggle location display"
+msgstr ""
+
+#: location.admin.inc:36
+msgid "Disable the display of locations."
+msgstr ""
+
+#: location.admin.inc:37
+msgid "Enable the display of locations."
+msgstr ""
+
+#: location.admin.inc:39
+msgid "If you are interested in turning off locations and having a custom theme control their display, you may want to disable the display of locations so your theme can take that function."
+msgstr ""
+
+#: location.admin.inc:44
+msgid "Province display"
+msgstr ""
+
+#: location.admin.inc:47
+msgid "Display full province name."
+msgstr ""
+
+#: location.admin.inc:48
+msgid "Display province/state code."
+msgstr ""
+
+#: location.admin.inc:54
+msgid "Use a Google Map to set latitude and longitude "
+msgstr ""
+
+#: location.admin.inc:56
+msgid "If the gmap.module is installed and <a href=\"@enabled\">enabled</a>, and this setting is also turned on, users that are allowed to manually enter latitude/longitude coordinates will be able to do so with an interactive Google Map.  You should also make sure you have entered a <a href=\"@google_maps_api_key\">Google Maps API key</a> into your <a href=\"@gmap_module_settings\">gmap module settings</a>."
+msgstr ""
+
+#: location.admin.inc:63
+msgid "Location chooser macro"
+msgstr ""
+
+#: location.admin.inc:67
+msgid "If you would like to change the macro used to generate the location chooser map, you can do so here. Note: Behaviors <em>locpick</em> and <em>collapsehack</em> are forced to be enabled and cannot be changed."
+msgstr ""
+
+#: location.admin.inc:72
+msgid "Enable JIT geocoding"
+msgstr ""
+
+#: location.admin.inc:74
+msgid "If you are going to be importing locations in bulk directly into the database, you may wish to enable JIT geocoding and load the locations with source set to 4 (LOCATION_LATLON_JIT_GEOCODING). The system will automatically geocode locations as they are loaded."
+msgstr ""
+
+#: location.admin.inc:79 location.module:547
+msgid "Map link"
+msgstr ""
+
+#: location.admin.inc:83
+msgid "Open map link in new window"
+msgstr ""
+
+#: location.admin.inc:85
+msgid "Select this if you want the map link to open in a separate window"
+msgstr ""
+
+#: location.admin.inc:89
+msgid "Open in new window method"
+msgstr ""
+
+#: location.admin.inc:95
+msgid "If you have selected to open map in a new window this controls the method used to open in a new window.  target=\"_blank\" will just work but is not XTHML Strict compliant.  rel=\"external\" is XHTML Strict compliant but will not open in a new window unless you add some jQuery to your site to add the target attribute. If you are unsure leave set to target=\"_blank\""
+msgstr ""
+
+#: location.admin.inc:148;232
+msgid "None supported."
+msgstr ""
+
+#: location.admin.inc:163
+msgid "Google Maps geocoding minimum accuracy"
+msgstr ""
+
+#: location.admin.inc:166
+msgid "The Google Maps geocoding API returns results with a given accuracy. Any responses below this minimum accuracy will be ignored. See a !accuracy_values_link."
+msgstr ""
+
+#: location.admin.inc:221 contrib/location_fax/location_fax.views.inc:59 contrib/location_phone/location_phone.views.inc:59
+msgid "None"
+msgstr ""
+
+#: location.admin.inc:240
+msgid "No service selected for country."
+msgstr ""
+
+#: location.admin.inc:251;257
+msgid "Configure parameters"
+msgstr ""
+
+#: location.admin.inc:263
+msgid "No configuration necessary for selected service."
+msgstr ""
+
+#: location.admin.inc:293;316 location.views.inc:242 location.module:544;673 contrib/location_search/location_search.module:196 handlers/location_handler_field_location_distance.inc:82 handlers/location_handler_filter_location_country.inc:30 handlers/location_handler_sort_location_distance.inc:71 handlers/location_views_handler_filter_proximity.inc:142
+msgid "Country"
+msgstr ""
+
+#: location.admin.inc:293;317
+msgid "Options"
+msgstr ""
+
+#: location.admin.inc:318
+msgid "Configure"
+msgstr ""
+
+#: location.admin.inc:348;353
+msgid "Clear province cache"
+msgstr ""
+
+#: location.admin.inc:349
+msgid "If you have modified location.xx.inc files, you will need to clear the province cache to get Location to recognize the modifications."
+msgstr ""
+
+#: location.admin.inc:359;364
+msgid "Clear supported country list"
+msgstr ""
+
+#: location.admin.inc:360
+msgid "If you have added support for a new country, you will need to clear the supported country list to get Location to recognize the modifications."
+msgstr ""
+
+#: location.admin.inc:374
+msgid "Location province cache cleared."
+msgstr ""
+
+#: location.admin.inc:382
+msgid "Location supported country list cleared."
+msgstr ""
+
+#: location.inc:628
+msgid "Andorra"
+msgstr ""
+
+#: location.inc:629
+msgid "United Arab Emirates"
+msgstr ""
+
+#: location.inc:630
+msgid "Afghanistan"
+msgstr ""
+
+#: location.inc:631
+msgid "Antigua and Barbuda"
+msgstr ""
+
+#: location.inc:632
+msgid "Anguilla"
+msgstr ""
+
+#: location.inc:633
+msgid "Albania"
+msgstr ""
+
+#: location.inc:634
+msgid "Armenia"
+msgstr ""
+
+#: location.inc:635
+msgid "Netherlands Antilles"
+msgstr ""
+
+#: location.inc:636
+msgid "Angola"
+msgstr ""
+
+#: location.inc:637
+msgid "Antarctica"
+msgstr ""
+
+#: location.inc:638
+msgid "Argentina"
+msgstr ""
+
+#: location.inc:639
+msgid "American Samoa"
+msgstr ""
+
+#: location.inc:640
+msgid "Austria"
+msgstr ""
+
+#: location.inc:641
+msgid "Australia"
+msgstr ""
+
+#: location.inc:642
+msgid "Aruba"
+msgstr ""
+
+#: location.inc:643
+msgid "Aland Islands"
+msgstr ""
+
+#: location.inc:644
+msgid "Azerbaijan"
+msgstr ""
+
+#: location.inc:645
+msgid "Bosnia and Herzegovina"
+msgstr ""
+
+#: location.inc:646
+msgid "Barbados"
+msgstr ""
+
+#: location.inc:647
+msgid "Bangladesh"
+msgstr ""
+
+#: location.inc:648
+msgid "Belgium"
+msgstr ""
+
+#: location.inc:649
+msgid "Burkina Faso"
+msgstr ""
+
+#: location.inc:650
+msgid "Bulgaria"
+msgstr ""
+
+#: location.inc:651
+msgid "Bahrain"
+msgstr ""
+
+#: location.inc:652
+msgid "Burundi"
+msgstr ""
+
+#: location.inc:653
+msgid "Benin"
+msgstr ""
+
+#: location.inc:654
+msgid "Bermuda"
+msgstr ""
+
+#: location.inc:655
+msgid "Brunei"
+msgstr ""
+
+#: location.inc:656
+msgid "Bolivia"
+msgstr ""
+
+#: location.inc:657
+msgid "Brazil"
+msgstr ""
+
+#: location.inc:658
+msgid "Bahamas"
+msgstr ""
+
+#: location.inc:659
+msgid "Bhutan"
+msgstr ""
+
+#: location.inc:660
+msgid "Bouvet Island"
+msgstr ""
+
+#: location.inc:661
+msgid "Botswana"
+msgstr ""
+
+#: location.inc:662
+msgid "Belarus"
+msgstr ""
+
+#: location.inc:663
+msgid "Belize"
+msgstr ""
+
+#: location.inc:664
+msgid "Canada"
+msgstr ""
+
+#: location.inc:665
+msgid "Cocos (Keeling) Islands"
+msgstr ""
+
+#: location.inc:666
+msgid "Congo (Kinshasa)"
+msgstr ""
+
+#: location.inc:667
+msgid "Central African Republic"
+msgstr ""
+
+#: location.inc:668
+msgid "Congo (Brazzaville)"
+msgstr ""
+
+#: location.inc:669
+msgid "Switzerland"
+msgstr ""
+
+#: location.inc:670
+msgid "Ivory Coast"
+msgstr ""
+
+#: location.inc:671
+msgid "Cook Islands"
+msgstr ""
+
+#: location.inc:672
+msgid "Chile"
+msgstr ""
+
+#: location.inc:673
+msgid "Cameroon"
+msgstr ""
+
+#: location.inc:674
+msgid "China"
+msgstr ""
+
+#: location.inc:675
+msgid "Colombia"
+msgstr ""
+
+#: location.inc:676
+msgid "Costa Rica"
+msgstr ""
+
+#: location.inc:677
+msgid "Serbia And Montenegro"
+msgstr ""
+
+#: location.inc:678
+msgid "Cuba"
+msgstr ""
+
+#: location.inc:679
+msgid "Cape Verde"
+msgstr ""
+
+#: location.inc:680
+msgid "Christmas Island"
+msgstr ""
+
+#: location.inc:681
+msgid "Cyprus"
+msgstr ""
+
+#: location.inc:682
+msgid "Czech Republic"
+msgstr ""
+
+#: location.inc:683 supported/location.de.inc:213
+msgid "Germany"
+msgstr ""
+
+#: location.inc:684
+msgid "Djibouti"
+msgstr ""
+
+#: location.inc:685
+msgid "Denmark"
+msgstr ""
+
+#: location.inc:686
+msgid "Dominica"
+msgstr ""
+
+#: location.inc:687
+msgid "Dominican Republic"
+msgstr ""
+
+#: location.inc:688
+msgid "Algeria"
+msgstr ""
+
+#: location.inc:689
+msgid "Ecuador"
+msgstr ""
+
+#: location.inc:690
+msgid "Estonia"
+msgstr ""
+
+#: location.inc:691
+msgid "Egypt"
+msgstr ""
+
+#: location.inc:692
+msgid "Western Sahara"
+msgstr ""
+
+#: location.inc:693
+msgid "Eritrea"
+msgstr ""
+
+#: location.inc:694
+msgid "Spain"
+msgstr ""
+
+#: location.inc:695
+msgid "Ethiopia"
+msgstr ""
+
+#: location.inc:696
+msgid "Finland"
+msgstr ""
+
+#: location.inc:697
+msgid "Fiji"
+msgstr ""
+
+#: location.inc:698
+msgid "Falkland Islands"
+msgstr ""
+
+#: location.inc:699
+msgid "Micronesia"
+msgstr ""
+
+#: location.inc:700
+msgid "Faroe Islands"
+msgstr ""
+
+#: location.inc:701
+msgid "France"
+msgstr ""
+
+#: location.inc:702
+msgid "Gabon"
+msgstr ""
+
+#: location.inc:703
+msgid "Grenada"
+msgstr ""
+
+#: location.inc:704
+msgid "Georgia"
+msgstr ""
+
+#: location.inc:705
+msgid "French Guiana"
+msgstr ""
+
+#: location.inc:706
+msgid "Guernsey"
+msgstr ""
+
+#: location.inc:707
+msgid "Ghana"
+msgstr ""
+
+#: location.inc:708
+msgid "Gibraltar"
+msgstr ""
+
+#: location.inc:709
+msgid "Greenland"
+msgstr ""
+
+#: location.inc:710
+msgid "Gambia"
+msgstr ""
+
+#: location.inc:711
+msgid "Guinea"
+msgstr ""
+
+#: location.inc:712
+msgid "Guadeloupe"
+msgstr ""
+
+#: location.inc:713
+msgid "Equatorial Guinea"
+msgstr ""
+
+#: location.inc:714
+msgid "Greece"
+msgstr ""
+
+#: location.inc:715
+msgid "South Georgia and the South Sandwich Islands"
+msgstr ""
+
+#: location.inc:716
+msgid "Guatemala"
+msgstr ""
+
+#: location.inc:717
+msgid "Guam"
+msgstr ""
+
+#: location.inc:718
+msgid "Guinea-Bissau"
+msgstr ""
+
+#: location.inc:719
+msgid "Guyana"
+msgstr ""
+
+#: location.inc:720
+msgid "Hong Kong S.A.R., China"
+msgstr ""
+
+#: location.inc:721
+msgid "Heard Island and McDonald Islands"
+msgstr ""
+
+#: location.inc:722
+msgid "Honduras"
+msgstr ""
+
+#: location.inc:723
+msgid "Croatia"
+msgstr ""
+
+#: location.inc:724
+msgid "Haiti"
+msgstr ""
+
+#: location.inc:725
+msgid "Hungary"
+msgstr ""
+
+#: location.inc:726
+msgid "Indonesia"
+msgstr ""
+
+#: location.inc:727
+msgid "Ireland"
+msgstr ""
+
+#: location.inc:728
+msgid "Israel"
+msgstr ""
+
+#: location.inc:729
+msgid "Isle of Man"
+msgstr ""
+
+#: location.inc:730
+msgid "India"
+msgstr ""
+
+#: location.inc:731
+msgid "British Indian Ocean Territory"
+msgstr ""
+
+#: location.inc:732
+msgid "Iraq"
+msgstr ""
+
+#: location.inc:733
+msgid "Iran"
+msgstr ""
+
+#: location.inc:734
+msgid "Iceland"
+msgstr ""
+
+#: location.inc:735
+msgid "Italy"
+msgstr ""
+
+#: location.inc:736
+msgid "Jersey"
+msgstr ""
+
+#: location.inc:737
+msgid "Jamaica"
+msgstr ""
+
+#: location.inc:738
+msgid "Jordan"
+msgstr ""
+
+#: location.inc:739
+msgid "Japan"
+msgstr ""
+
+#: location.inc:740
+msgid "Kenya"
+msgstr ""
+
+#: location.inc:741
+msgid "Kyrgyzstan"
+msgstr ""
+
+#: location.inc:742
+msgid "Cambodia"
+msgstr ""
+
+#: location.inc:743
+msgid "Kiribati"
+msgstr ""
+
+#: location.inc:744
+msgid "Comoros"
+msgstr ""
+
+#: location.inc:745
+msgid "Saint Kitts and Nevis"
+msgstr ""
+
+#: location.inc:746
+msgid "North Korea"
+msgstr ""
+
+#: location.inc:747
+msgid "South Korea"
+msgstr ""
+
+#: location.inc:748
+msgid "Kuwait"
+msgstr ""
+
+#: location.inc:749
+msgid "Cayman Islands"
+msgstr ""
+
+#: location.inc:750
+msgid "Kazakhstan"
+msgstr ""
+
+#: location.inc:751
+msgid "Laos"
+msgstr ""
+
+#: location.inc:752
+msgid "Lebanon"
+msgstr ""
+
+#: location.inc:753
+msgid "Saint Lucia"
+msgstr ""
+
+#: location.inc:754
+msgid "Liechtenstein"
+msgstr ""
+
+#: location.inc:755
+msgid "Sri Lanka"
+msgstr ""
+
+#: location.inc:756
+msgid "Liberia"
+msgstr ""
+
+#: location.inc:757
+msgid "Lesotho"
+msgstr ""
+
+#: location.inc:758
+msgid "Lithuania"
+msgstr ""
+
+#: location.inc:759
+msgid "Luxembourg"
+msgstr ""
+
+#: location.inc:760
+msgid "Latvia"
+msgstr ""
+
+#: location.inc:761
+msgid "Libya"
+msgstr ""
+
+#: location.inc:762
+msgid "Morocco"
+msgstr ""
+
+#: location.inc:763
+msgid "Monaco"
+msgstr ""
+
+#: location.inc:764
+msgid "Moldova"
+msgstr ""
+
+#: location.inc:765
+msgid "Montenegro"
+msgstr ""
+
+#: location.inc:766
+msgid "Madagascar"
+msgstr ""
+
+#: location.inc:767
+msgid "Marshall Islands"
+msgstr ""
+
+#: location.inc:768
+msgid "Macedonia"
+msgstr ""
+
+#: location.inc:769
+msgid "Mali"
+msgstr ""
+
+#: location.inc:770
+msgid "Myanmar"
+msgstr ""
+
+#: location.inc:771
+msgid "Mongolia"
+msgstr ""
+
+#: location.inc:772
+msgid "Macao S.A.R., China"
+msgstr ""
+
+#: location.inc:773
+msgid "Northern Mariana Islands"
+msgstr ""
+
+#: location.inc:774
+msgid "Martinique"
+msgstr ""
+
+#: location.inc:775
+msgid "Mauritania"
+msgstr ""
+
+#: location.inc:776
+msgid "Montserrat"
+msgstr ""
+
+#: location.inc:777
+msgid "Malta"
+msgstr ""
+
+#: location.inc:778
+msgid "Mauritius"
+msgstr ""
+
+#: location.inc:779
+msgid "Maldives"
+msgstr ""
+
+#: location.inc:780
+msgid "Malawi"
+msgstr ""
+
+#: location.inc:781
+msgid "Mexico"
+msgstr ""
+
+#: location.inc:782
+msgid "Malaysia"
+msgstr ""
+
+#: location.inc:783
+msgid "Mozambique"
+msgstr ""
+
+#: location.inc:784
+msgid "Namibia"
+msgstr ""
+
+#: location.inc:785
+msgid "New Caledonia"
+msgstr ""
+
+#: location.inc:786
+msgid "Niger"
+msgstr ""
+
+#: location.inc:787
+msgid "Norfolk Island"
+msgstr ""
+
+#: location.inc:788
+msgid "Nigeria"
+msgstr ""
+
+#: location.inc:789
+msgid "Nicaragua"
+msgstr ""
+
+#: location.inc:790
+msgid "Netherlands"
+msgstr ""
+
+#: location.inc:791
+msgid "Norway"
+msgstr ""
+
+#: location.inc:792
+msgid "Nepal"
+msgstr ""
+
+#: location.inc:793
+msgid "Nauru"
+msgstr ""
+
+#: location.inc:794
+msgid "Niue"
+msgstr ""
+
+#: location.inc:795
+msgid "New Zealand"
+msgstr ""
+
+#: location.inc:796
+msgid "Oman"
+msgstr ""
+
+#: location.inc:797
+msgid "Panama"
+msgstr ""
+
+#: location.inc:798
+msgid "Peru"
+msgstr ""
+
+#: location.inc:799
+msgid "French Polynesia"
+msgstr ""
+
+#: location.inc:800
+msgid "Papua New Guinea"
+msgstr ""
+
+#: location.inc:801
+msgid "Philippines"
+msgstr ""
+
+#: location.inc:802
+msgid "Pakistan"
+msgstr ""
+
+#: location.inc:803
+msgid "Poland"
+msgstr ""
+
+#: location.inc:804
+msgid "Saint Pierre and Miquelon"
+msgstr ""
+
+#: location.inc:805
+msgid "Pitcairn"
+msgstr ""
+
+#: location.inc:806
+msgid "Puerto Rico"
+msgstr ""
+
+#: location.inc:807
+msgid "Palestinian Territory"
+msgstr ""
+
+#: location.inc:808
+msgid "Portugal"
+msgstr ""
+
+#: location.inc:809
+msgid "Palau"
+msgstr ""
+
+#: location.inc:810
+msgid "Paraguay"
+msgstr ""
+
+#: location.inc:811
+msgid "Qatar"
+msgstr ""
+
+#: location.inc:812
+msgid "Reunion"
+msgstr ""
+
+#: location.inc:813
+msgid "Romania"
+msgstr ""
+
+#: location.inc:814
+msgid "Serbia"
+msgstr ""
+
+#: location.inc:815
+msgid "Russia"
+msgstr ""
+
+#: location.inc:816
+msgid "Rwanda"
+msgstr ""
+
+#: location.inc:817
+msgid "Saudi Arabia"
+msgstr ""
+
+#: location.inc:818
+msgid "Solomon Islands"
+msgstr ""
+
+#: location.inc:819
+msgid "Seychelles"
+msgstr ""
+
+#: location.inc:820
+msgid "Sudan"
+msgstr ""
+
+#: location.inc:821
+msgid "Sweden"
+msgstr ""
+
+#: location.inc:822
+msgid "Singapore"
+msgstr ""
+
+#: location.inc:823
+msgid "Saint Helena"
+msgstr ""
+
+#: location.inc:824
+msgid "Slovenia"
+msgstr ""
+
+#: location.inc:825
+msgid "Svalbard and Jan Mayen"
+msgstr ""
+
+#: location.inc:826
+msgid "Slovakia"
+msgstr ""
+
+#: location.inc:827
+msgid "Sierra Leone"
+msgstr ""
+
+#: location.inc:828
+msgid "San Marino"
+msgstr ""
+
+#: location.inc:829
+msgid "Senegal"
+msgstr ""
+
+#: location.inc:830
+msgid "Somalia"
+msgstr ""
+
+#: location.inc:831
+msgid "Suriname"
+msgstr ""
+
+#: location.inc:832
+msgid "Sao Tome and Principe"
+msgstr ""
+
+#: location.inc:833
+msgid "El Salvador"
+msgstr ""
+
+#: location.inc:834
+msgid "Syria"
+msgstr ""
+
+#: location.inc:835
+msgid "Swaziland"
+msgstr ""
+
+#: location.inc:836
+msgid "Turks and Caicos Islands"
+msgstr ""
+
+#: location.inc:837
+msgid "Chad"
+msgstr ""
+
+#: location.inc:838
+msgid "French Southern Territories"
+msgstr ""
+
+#: location.inc:839
+msgid "Togo"
+msgstr ""
+
+#: location.inc:840
+msgid "Thailand"
+msgstr ""
+
+#: location.inc:841
+msgid "Tajikistan"
+msgstr ""
+
+#: location.inc:842
+msgid "Tokelau"
+msgstr ""
+
+#: location.inc:843
+msgid "East Timor"
+msgstr ""
+
+#: location.inc:844
+msgid "Turkmenistan"
+msgstr ""
+
+#: location.inc:845
+msgid "Tunisia"
+msgstr ""
+
+#: location.inc:846
+msgid "Tonga"
+msgstr ""
+
+#: location.inc:847
+msgid "Turkey"
+msgstr ""
+
+#: location.inc:848
+msgid "Trinidad and Tobago"
+msgstr ""
+
+#: location.inc:849
+msgid "Tuvalu"
+msgstr ""
+
+#: location.inc:850
+msgid "Taiwan"
+msgstr ""
+
+#: location.inc:851
+msgid "Tanzania"
+msgstr ""
+
+#: location.inc:852
+msgid "Ukraine"
+msgstr ""
+
+#: location.inc:853
+msgid "Uganda"
+msgstr ""
+
+#: location.inc:854
+msgid "United Kingdom"
+msgstr ""
+
+#: location.inc:855
+msgid "United States Minor Outlying Islands"
+msgstr ""
+
+#: location.inc:856
+msgid "United States"
+msgstr ""
+
+#: location.inc:857
+msgid "Uruguay"
+msgstr ""
+
+#: location.inc:858
+msgid "Uzbekistan"
+msgstr ""
+
+#: location.inc:859
+msgid "Vatican"
+msgstr ""
+
+#: location.inc:860
+msgid "Saint Vincent and the Grenadines"
+msgstr ""
+
+#: location.inc:861
+msgid "Venezuela"
+msgstr ""
+
+#: location.inc:862
+msgid "British Virgin Islands"
+msgstr ""
+
+#: location.inc:863
+msgid "U.S. Virgin Islands"
+msgstr ""
+
+#: location.inc:864
+msgid "Vietnam"
+msgstr ""
+
+#: location.inc:865
+msgid "Vanuatu"
+msgstr ""
+
+#: location.inc:866
+msgid "Wallis and Futuna"
+msgstr ""
+
+#: location.inc:867
+msgid "Samoa"
+msgstr ""
+
+#: location.inc:868
+msgid "Yemen"
+msgstr ""
+
+#: location.inc:869
+msgid "Mayotte"
+msgstr ""
+
+#: location.inc:870
+msgid "South Africa"
+msgstr ""
+
+#: location.inc:871
+msgid "Zambia"
+msgstr ""
+
+#: location.inc:872
+msgid "Zimbabwe"
+msgstr ""
+
+#: location.inc:575 geocoding/google.inc:220
+msgid "BUG: Country found in province attribute."
+msgstr ""
+
+#: location.token.inc:50
+msgid "Location Name (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr ""
+
+#: location.token.inc:51
+msgid "Street (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr ""
+
+#: location.token.inc:52
+msgid "Additional (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr ""
+
+#: location.token.inc:53
+msgid "City (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr ""
+
+#: location.token.inc:54
+msgid "State/Province (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr ""
+
+#: location.token.inc:55
+msgid "State/Province Name (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr ""
+
+#: location.token.inc:56
+msgid "Postal Code (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr ""
+
+#: location.token.inc:57
+msgid "Latitude (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr ""
+
+#: location.token.inc:58
+msgid "Longitude (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr ""
+
+#: location.token.inc:59
+msgid "Country (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr ""
+
+#: location.token.inc:60
+msgid "Country Name (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr ""
+
+#: location.views.inc:100
+msgid "Locations are addresses and map coordinates."
+msgstr ""
+
+#: location.views.inc:130
+msgid "Lid"
+msgstr ""
+
+#: location.views.inc:131
+msgid "The location ID of the location."
+msgstr ""
+
+#: location.views.inc:158 location.module:479
+msgid "Name"
+msgstr ""
+
+#: location.views.inc:159
+msgid "The name of the selected location."
+msgstr ""
+
+#: location.views.inc:173 location.module:615
+msgid "Street"
+msgstr ""
+
+#: location.views.inc:174
+msgid "The street address of the selected location."
+msgstr ""
+
+#: location.views.inc:188 location.module:544;636 contrib/location_search/location_search.module:212
+msgid "City"
+msgstr ""
+
+#: location.views.inc:189
+msgid "The city of the selected location."
+msgstr ""
+
+#: location.views.inc:195 location.module:302 handlers/location_handler_argument_location_country.inc:18 handlers/location_handler_argument_location_province.inc:24
+msgid "Unknown"
+msgstr ""
+
+#: location.views.inc:207
+msgid "Province"
+msgstr ""
+
+#: location.views.inc:208
+msgid "The province of the selected location."
+msgstr ""
+
+#: location.views.inc:227
+msgid "Postal Code"
+msgstr ""
+
+#: location.views.inc:228
+msgid "The postal code of the selected location."
+msgstr ""
+
+#: location.views.inc:243
+msgid "The country of the selected location."
+msgstr ""
+
+#: location.views.inc:262 location.module:294;322 contrib/location_search/location_search.module:233 handlers/location_handler_field_location_distance.inc:60 handlers/location_handler_sort_location_distance.inc:49 handlers/location_views_handler_filter_proximity.inc:117
+msgid "Latitude"
+msgstr ""
+
+#: location.views.inc:263
+msgid "The latitude of the selected location."
+msgstr ""
+
+#: location.views.inc:276 location.module:299;330 contrib/location_search/location_search.module:237 handlers/location_handler_field_location_distance.inc:67 handlers/location_handler_sort_location_distance.inc:56 handlers/location_views_handler_filter_proximity.inc:125
+msgid "Longitude"
+msgstr ""
+
+#: location.views.inc:277
+msgid "The longitude of the selected location."
+msgstr ""
+
+#: location.views.inc:290 location.module:547
+msgid "Coordinates"
+msgstr ""
+
+#: location.views.inc:291
+msgid "The coordinates of the selected location in 'lat, long' format."
+msgstr ""
+
+#: location.views.inc:300
+msgid "Distance / Proximity"
+msgstr ""
+
+#: location.views.inc:301
+msgid "The distance from the selected location and either the current user or a specific location."
+msgstr ""
+
+#: location.views.inc:342
+msgid "Address"
+msgstr ""
+
+#: location.views.inc:343
+msgid "The entire address block for the location."
+msgstr ""
+
+#: location.views.inc:403 location_node.module:89 plugins/relationships/location_from_node.inc:14
+msgid "Node location"
+msgstr ""
+
+#: location.views.inc:408
+msgid "CCK Location: @label (@name)"
+msgstr ""
+
+#: location.module:113 location.info:0
+msgid "The location module allows you to associate a geographic location with content and users. Users can do proximity searches by postal code.  This is useful for organizing communities that have a geographic presence."
+msgstr ""
+
+#: location.module:114
+msgid "To administer locative information for content, use the content type administration page.  To support most location enabled features, you will need to install the country specific include file.  To support postal code proximity searches for a particular country, you will need a database dump of postal code data for that country.  As of June 2007 only U.S. and German postal codes are supported."
+msgstr ""
+
+#: location.module:115
+msgid "<p>You can</p>\n<ul>\n<li>administer locative information at <a href=\"@admin-node-configure-types\">Administer &gt;&gt; Content management &gt;&gt; Content types</a> to configure a type and see the locative information.</li>\n<li>administer location at <a href=\"@admin-settings-location\">Administer &gt;&gt; Site configuration &gt;&gt; Location</a>.</li>\n<li>use a database dump for a U.S. and/or German postal codes table that can be found at <a href=\"@external-http-cvs-drupal-org\">zipcode database</a>.</li>\n"
+msgstr ""
+
+#: location.module:121
+msgid "For more information please read the configuration and customization handbook <a href=\"@location\">Location page</a>."
+msgstr ""
+
+#: location.module:289
+msgid "Current coordinates"
+msgstr ""
+
+#: location.module:305
+msgid "User-submitted"
+msgstr ""
+
+#: location.module:308
+msgid "Geocoded (Postal code level)"
+msgstr ""
+
+#: location.module:311
+msgid "Geocoded (Exact)"
+msgstr ""
+
+#: location.module:315
+msgid "Source"
+msgstr ""
+
+#: location.module:340
+msgid "If you wish to supply your own latitude and longitude, you may enter them above.  If you leave these fields blank, the system will attempt to determine a latitude and longitude for you from the entered address.  To have the system recalculate your location from the address, for example if you change the address, delete the values for these fields."
+msgstr ""
+
+#: location.module:383
+msgid "You may set the location by clicking on the map, or dragging the location marker.  To clear the location and cause it to be recalculated, click on the marker."
+msgstr ""
+
+#: location.module:392
+msgid "Delete"
+msgstr ""
+
+#: location.module:394
+msgid "Check this box to delete this location."
+msgstr ""
+
+#: location.module:408
+msgid "Location Fields"
+msgstr ""
+
+#: location.module:434
+msgid "Do not collect"
+msgstr ""
+
+#: location.module:435
+msgid "Allow"
+msgstr ""
+
+#: location.module:436
+msgid "Require"
+msgstr ""
+
+#: location.module:437
+msgid "Force Default"
+msgstr ""
+
+#: location.module:482
+msgid "Collect"
+msgstr ""
+
+#: location.module:482
+msgid "Default"
+msgstr ""
+
+#: location.module:482
+msgid "Weight"
+msgstr ""
+
+#: location.module:544;603
+msgid "Location name"
+msgstr ""
+
+#: location.module:544
+msgid "Street location"
+msgstr ""
+
+#: location.module:544;626
+msgid "Additional"
+msgstr ""
+
+#: location.module:544;650 contrib/location_search/location_search.module:204 handlers/location_handler_filter_location_province.inc:38
+msgid "State/Province"
+msgstr ""
+
+#: location.module:544;687 handlers/location_handler_field_location_distance.inc:75 handlers/location_handler_sort_location_distance.inc:64 handlers/location_views_handler_filter_proximity.inc:134
+msgid "Postal code"
+msgstr ""
+
+#: location.module:544
+msgid "Coordinate Chooser"
+msgstr ""
+
+#: location.module:547 handlers/location_handler_field_location_province.inc:29
+msgid "Province name"
+msgstr ""
+
+#: location.module:547 handlers/location_handler_field_location_country.inc:22 plugins/contexts/location.inc:74
+msgid "Country name"
+msgstr ""
+
+#: location.module:580
+msgid "The specified province was not found in the specified country."
+msgstr ""
+
+#: location.module:592
+msgid "You must fill out both latitude and longitude or you must leave them both blank."
+msgstr ""
+
+#: location.module:607
+msgid "e.g. a place of business, venue, meeting point"
+msgstr ""
+
+#: location.module:670
+msgid "Please select"
+msgstr ""
+
+#: location.module:670
+msgid "NOT LISTED"
+msgstr ""
+
+#: location.module:734
+msgid "Configure parameters for %service geocoding"
+msgstr ""
+
+#: location.module:759
+msgid "No configuration parameters are necessary, or a form to take such paramters has not been implemented."
+msgstr ""
+
+#: location.module:1566
+msgid "Locative information"
+msgstr ""
+
+#: location.module:1574
+msgid "Number of locations"
+msgstr ""
+
+#: location.module:1582
+msgid "Minimum number of locations"
+msgstr ""
+
+#: location.module:1585
+msgid "The number of locations that are required to be filled in."
+msgstr ""
+
+#: location.module:1589
+msgid "Maximum number of locations"
+msgstr ""
+
+#: location.module:1592
+msgid "The maximum number of locations that can be associated."
+msgstr ""
+
+#: location.module:1597
+msgid "Number of locations that can be added at once"
+msgstr ""
+
+#: location.module:1600
+msgid "The number of empty location forms to show when editing."
+msgstr ""
+
+#: location.module:1607
+msgid "Collection settings"
+msgstr ""
+
+#: location.module:1616
+msgid "Location form weight"
+msgstr ""
+
+#: location.module:1618
+msgid "Weight of the location box in the add / edit form. Lower values will be displayed higher in the form."
+msgstr ""
+
+#: location.module:1622
+msgid "Collapsible"
+msgstr ""
+
+#: location.module:1624
+msgid "Make the location box collapsible."
+msgstr ""
+
+#: location.module:1629
+msgid "Collapsed"
+msgstr ""
+
+#: location.module:1631
+msgid "Display the location box collapsed."
+msgstr ""
+
+#: location.module:1641
+msgid "Display Settings"
+msgstr ""
+
+#: location.module:1651
+msgid "Display Weight"
+msgstr ""
+
+#: location.module:1658 handlers/location_handler_field_location_address.inc:21
+msgid "Hide fields from display"
+msgstr ""
+
+#: location.module:1707
+msgid "Location #%number"
+msgstr ""
+
+#: location.module:1751
+msgid "Unknown location"
+msgstr ""
+
+#: location.module:1752
+msgid "Country level accuracy"
+msgstr ""
+
+#: location.module:1753
+msgid "Region (state, province, prefecture, etc.) level accuracy"
+msgstr ""
+
+#: location.module:1754
+msgid "Sub-region (county, municipality, etc.) level accuracy"
+msgstr ""
+
+#: location.module:1755
+msgid "Town (city, village) level accuracy"
+msgstr ""
+
+#: location.module:1756
+msgid "Post code (zip code) level accuracy"
+msgstr ""
+
+#: location.module:1757
+msgid "Street level accuracy"
+msgstr ""
+
+#: location.module:1758
+msgid "Intersection level accuracy"
+msgstr ""
+
+#: location.module:1759
+msgid "Address level accuracy"
+msgstr ""
+
+#: location.module:1760
+msgid "Premise (building name, property name, shopping center, etc.) level accuracy"
+msgstr ""
+
+#: location.module:853;1141
+msgid "location"
+msgstr ""
+
+#: location.module:853
+msgid "Deleting unreferenced location with LID %lid."
+msgstr ""
+
+#: location.module:1141
+msgid "Conserving lid %lid due to uniqueness."
+msgstr ""
+
+#: location.module:1686
+msgid "Location"
+msgid_plural "Locations"
+msgstr[0] ""
+msgstr[1] ""
+
+#: location.module:98
+msgid "submit latitude/longitude"
+msgstr ""
+
+#: location.module:99
+msgid "view location directory"
+msgstr ""
+
+#: location.module:100
+msgid "view node location table"
+msgstr ""
+
+#: location.module:101
+msgid "view user location table"
+msgstr ""
+
+#: location.module:39
+msgid "Settings for Location module"
+msgstr ""
+
+#: location.module:46
+msgid "Main settings"
+msgstr ""
+
+#: location.module:50
+msgid "Map links"
+msgstr ""
+
+#: location.module:59
+msgid "Geocoding options"
+msgstr ""
+
+#: location.module:74
+msgid "Location utilities"
+msgstr ""
+
+#: location_node.module:113
+msgid "Display location in teaser view"
+msgstr ""
+
+#: location_node.module:119
+msgid "Display location in full view"
+msgstr ""
+
+#: location_node.module:125
+msgid "RSS Settings"
+msgstr ""
+
+#: location_node.module:126
+msgid "Here, you can change how locative data affects RSS feeds on nodes."
+msgstr ""
+
+#: location_node.module:134
+msgid "RSS mode"
+msgstr ""
+
+#: location_node.module:135
+msgid "Select how to use locations in RSS feeds for this content type."
+msgstr ""
+
+#: location_node.module:137
+msgid "None (Do not put locational data in RSS feeds)"
+msgstr ""
+
+#: location_node.module:138
+msgid "W3C Geo (deprecated)"
+msgstr ""
+
+#: location_node.module:139
+msgid "Location 1.x-2.x compatible (buggy W3C)"
+msgstr ""
+
+#: location_node.module:140
+msgid "GeoRSS-Simple"
+msgstr ""
+
+#: location_node.module:141
+msgid "GeoRSS GML"
+msgstr ""
+
+#: location_node.module:170
+msgid "You must have at least one empty location form enabled if you are going to allow locations to be submitted for nodes of this content type. If you don't intend to allow locations to be submitted for nodes of this content type, set the maximum number of locations allowed for this content type to 0."
+msgstr ""
+
+#: location_node.module:174
+msgid "You can't show more empty location forms than the maximum number of locations allowed for this content type."
+msgstr ""
+
+#: location_node.module:212
+msgid "Node Locations module form."
+msgstr ""
+
+#: location_user.module:30
+msgid "User locations"
+msgstr ""
+
+#: location_user.module:34
+msgid "Collect during registration"
+msgstr ""
+
+#: location_user.module:105
+msgid "User location"
+msgstr ""
+
+#: location_user.module:11
+msgid "administer user locations"
+msgstr ""
+
+#: location_user.module:12
+msgid "set own user location"
+msgstr ""
+
+#: location_user.module:13
+msgid "view own user location"
+msgstr ""
+
+#: location_user.module:14
+msgid "view all user locations"
+msgstr ""
+
+#: location.install:256;734
+msgid "Generic cache table for caching things not separated out into their own tables. Contributed modules may also use this to store cached items."
+msgstr ""
+
+#: location.install:259;737
+msgid "Primary Key: Unique cache ID."
+msgstr ""
+
+#: location.install:265;743
+msgid "A collection of data to cache."
+msgstr ""
+
+#: location.install:270;748
+msgid "A Unix timestamp indicating when the cache entry should expire, or 0 for never."
+msgstr ""
+
+#: location.install:275;753
+msgid "A Unix timestamp indicating when the cache entry was created."
+msgstr ""
+
+#: location.install:280;758
+msgid "Any custom HTTP headers to be added to cached data."
+msgstr ""
+
+#: location.install:284;762
+msgid "A flag to indicate whether content is serialized (1) or not (0)."
+msgstr ""
+
+#: location.install:779
+msgid "Note: A location with lid 0 was found in your database. It has been moved to lid %lid. You may wish to verify it manually, as lid 0 is usually a corrupt entry."
+msgstr ""
+
+#: location.install:1100
+msgid "Note: Location module has now split off user location support into a seperate module, called <em>User Locations</em>. It has been enabled for you. If you don't want user locations, visit the <a href='!url'>modules page</a> and disable it."
+msgstr ""
+
+#: location.install:1105
+msgid "Note: Refusing to enable location_user.module, as location.module is not currently enabled."
+msgstr ""
+
+#: location.install:1115
+msgid "Note: Location module has now split off node location support into a seperate module, called <em>Node Locations</em>. It has been enabled for you. If you don't want node locations, visit the <a href='!url'>modules page</a> and disable it."
+msgstr ""
+
+#: location.install:1120
+msgid "Note: Refusing to enable location_node.module, as location.module is not currently enabled."
+msgstr ""
+
+#: location.install:1171
+msgid "Note: The 'Form type' option for the 'Location: Distance / Proximity' filter in views has been changed and is now the 'Origin' option.  The following views were using that setting and have been updated to use the new setting: %views."
+msgstr ""
+
+#: (duplicate) location.install:726 
+msgid "Note: Location.module update 6301 will generate several warnings/failures regarding indexes and primary keys if you are upgrading from one of the 6.x test releases. These warnings can be safely disregarded in this case."
+msgstr ""
+
+#: location_node.info:0
+msgid "Node Locations"
+msgstr ""
+
+#: location_node.info:0
+msgid "Associate locations with nodes."
+msgstr ""
+
+#: location_user.info:0
+msgid "User Locations"
+msgstr ""
+
+#: location_user.info:0
+msgid "Associate locations with users."
+msgstr ""
+
+#: contrib/location_addanother/location_addanother.module:35
+msgid "Add another location from node view page"
+msgstr ""
+
+#: contrib/location_addanother/location_addanother.module:37
+msgid "Display the \"Add another location\" option on the node view page."
+msgstr ""
+
+#: contrib/location_addanother/location_addanother.module:50
+msgid "Add another location"
+msgstr ""
+
+#: contrib/location_addanother/location_addanother.module:62
+msgid "Add location"
+msgstr ""
+
+#: contrib/location_addanother/location_addanother.module:76
+msgid "You don't have permission to add a location to this node, or the node has the maximum number of locations already."
+msgstr ""
+
+#: contrib/location_addanother/location_addanother.info:0
+msgid "Location Add Another"
+msgstr ""
+
+#: contrib/location_addanother/location_addanother.info:0
+msgid "Allows you to quickly add locations directly from a node without having to click 'edit' first."
+msgstr ""
+
+#: contrib/location_cck/location_cck.module:39
+msgid "Store a location.module location."
+msgstr ""
+
+#: contrib/location_cck/location_cck.module:71
+msgid "GMap Macro"
+msgstr ""
+
+#: contrib/location_cck/location_cck.module:74
+msgid "A macro to be used as a base map for this field.  This map will be recentered on the location, so the center is not that important."
+msgstr ""
+
+#: contrib/location_cck/location_cck.module:80
+msgid "GMap marker"
+msgstr ""
+
+#: contrib/location_cck/location_cck.module:180
+msgid "Default (address)"
+msgstr ""
+
+#: contrib/location_cck/location_cck.module:186
+msgid "Address with map"
+msgstr ""
+
+#: contrib/location_cck/location_cck.module:190
+msgid "Map only"
+msgstr ""
+
+#: contrib/location_cck/location_cck.module:194
+msgid "Multiple field values on a single map"
+msgstr ""
+
+#: contrib/location_cck/location_cck.module:208
+msgid "Location Field"
+msgstr ""
+
+#: contrib/location_cck/location_cck.module:480;481
+msgid "CCK location"
+msgstr ""
+
+#: contrib/location_cck/location_cck.info:0
+msgid "Location CCK"
+msgstr ""
+
+#: contrib/location_cck/location_cck.info:0
+msgid "Defines a Location field type."
+msgstr ""
+
+#: contrib/location_cck/location_cck.info:0
+msgid "CCK"
+msgstr ""
+
+#: contrib/location_fax/location_fax.views.inc:53
+msgid "The fax number of the selected location."
+msgstr ""
+
+#: contrib/location_fax/location_fax.module:15;26
+msgid "Fax number"
+msgstr ""
+
+#: contrib/location_fax/location_fax.module:70
+msgid "Location Fax number (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr ""
+
+#: contrib/location_fax/location_fax.info:0
+msgid "Location Fax"
+msgstr ""
+
+#: contrib/location_fax/location_fax.info:0
+msgid "Allows you to add a fax number to a location."
+msgstr ""
+
+#: contrib/location_generate/location_generate.module:52
+msgid "Add locations to each node."
+msgstr ""
+
+#: contrib/location_generate/location_generate.module:53
+msgid "Added by location_generate.module"
+msgstr ""
+
+#: contrib/location_generate/location_generate.info:0
+msgid "Location Generate"
+msgstr ""
+
+#: contrib/location_generate/location_generate.info:0
+msgid "Bulk assign random latitude and longitudes to nodes."
+msgstr ""
+
+#: contrib/location_generate/location_generate.info:0
+msgid "Development"
+msgstr ""
+
+#: contrib/location_phone/location_phone.views.inc:53
+msgid "The phone number of the selected location."
+msgstr ""
+
+#: contrib/location_phone/location_phone.module:15;26
+msgid "Phone number"
+msgstr ""
+
+#: contrib/location_phone/location_phone.module:70
+msgid "Location Phone number (If there are multiple locations per node, N is the iteration, starting with 0)"
+msgstr ""
+
+#: contrib/location_phone/location_phone.info:0
+msgid "Location Phone"
+msgstr ""
+
+#: contrib/location_phone/location_phone.info:0
+msgid "Allows you to add a phone number to a location."
+msgstr ""
+
+#: contrib/location_search/location_search.admin.inc:17
+msgid "Use map to pick search coordinates"
+msgstr ""
+
+#: contrib/location_search/location_search.admin.inc:23
+msgid "Add geocoding address field to search map"
+msgstr ""
+
+#: contrib/location_search/location_search.admin.inc:29
+msgid "Macro for search map"
+msgstr ""
+
+#: contrib/location_search/location_search.module:188;258
+msgid "Advanced search"
+msgstr ""
+
+#: contrib/location_search/location_search.module:219
+msgid "Proximity"
+msgstr ""
+
+#: contrib/location_search/location_search.module:227
+msgid "Locate Address"
+msgstr ""
+
+#: contrib/location_search/location_search.module:241 handlers/location_views_handler_filter_proximity.inc:197
+msgid "Distance"
+msgstr ""
+
+#: contrib/location_search/location_search.module:251
+msgid "mi"
+msgstr ""
+
+#: contrib/location_search/location_search.module:252
+msgid "km"
+msgstr ""
+
+#: contrib/location_search/location_search.module:14
+msgid "Search options"
+msgstr ""
+
+#: contrib/location_search/location_search.module:15
+msgid "Settings for Location Search module"
+msgstr ""
+
+#: contrib/location_search/location_search.info:0
+msgid "Location Search"
+msgstr ""
+
+#: contrib/location_search/location_search.info:0
+msgid "Advanced search page for locations."
+msgstr ""
+
+#: contrib/location_taxonomy/location_taxonomy.module:102
+msgid "Term location"
+msgstr ""
+
+#: contrib/location_taxonomy/location_taxonomy.module:103
+msgid "Taxonomy location"
+msgstr ""
+
+#: contrib/location_taxonomy/location_taxonomy.info:0
+msgid "Location Taxonomy"
+msgstr ""
+
+#: contrib/location_taxonomy/location_taxonomy.info:0
+msgid "Associate locations with taxonomy terms."
+msgstr ""
+
+#: geocoding/google.inc:164;172 supported/location.au.inc:323
+msgid "Google Maps API Key"
+msgstr ""
+
+#: geocoding/google.inc:166
+msgid "The key in use was automatically provided by GMap."
+msgstr ""
+
+#: geocoding/google.inc:176
+msgid "In order to use the Google Maps API geocoding web-service, you will need a Google Maps API Key.  You can obtain one at the !sign_up_link for the !google_maps_api.  PLEASE NOTE: You will <em>not</em> have to re-enter your API key for each country for which you have selected Google Maps for geocoding.  This setting is global."
+msgstr ""
+
+#: geocoding/google.inc:184 supported/location.au.inc:332
+msgid "Google Maps Geocoding Accuracy for %country"
+msgstr ""
+
+#: geocoding/google.inc:187 supported/location.au.inc:335
+msgid "The minimum required accuracy for the geolocation data to be saved."
+msgstr ""
+
+#: handlers/location_handler_argument_location_proximity.inc:29
+msgid "Coordinate Type"
+msgstr ""
+
+#: handlers/location_handler_argument_location_proximity.inc:32
+msgid "Postal Code (Zipcode)"
+msgstr ""
+
+#: handlers/location_handler_argument_location_proximity.inc:33
+msgid "Decimal Latitude and Longitude coordinates, comma delimited"
+msgstr ""
+
+#: handlers/location_handler_argument_location_proximity.inc:36
+msgid "Type of center point."
+msgstr ""
+
+#: handlers/location_handler_argument_location_proximity.inc:36
+msgid "Postal code argument format: country_postcode_distance or postcode_distance"
+msgstr ""
+
+#: handlers/location_handler_argument_location_proximity.inc:36
+msgid "Lat/Lon argument format: lat,lon_distance"
+msgstr ""
+
+#: handlers/location_handler_argument_location_proximity.inc:42
+msgid "Distance unit"
+msgstr ""
+
+#: handlers/location_handler_argument_location_proximity.inc:44 handlers/location_handler_field_location_distance.inc:35 handlers/location_views_handler_filter_proximity.inc:206
+msgid "Kilometers"
+msgstr ""
+
+#: handlers/location_handler_argument_location_proximity.inc:45
+msgid "Meters"
+msgstr ""
+
+#: handlers/location_handler_argument_location_proximity.inc:46 handlers/location_handler_field_location_distance.inc:36 handlers/location_views_handler_filter_proximity.inc:205
+msgid "Miles"
+msgstr ""
+
+#: handlers/location_handler_argument_location_proximity.inc:47 handlers/location_views_handler_field_latitude.inc:22
+msgid "Decimal degrees"
+msgstr ""
+
+#: handlers/location_handler_argument_location_proximity.inc:50
+msgid "Select the unit of distance. Decimal degrees should be comma delimited."
+msgstr ""
+
+#: handlers/location_handler_argument_location_proximity.inc:54
+msgid "Method"
+msgstr ""
+
+#: handlers/location_handler_argument_location_proximity.inc:57
+msgid "Circular Proximity"
+msgstr ""
+
+#: handlers/location_handler_argument_location_proximity.inc:58
+msgid "Rectangular Proximity"
+msgstr ""
+
+#: handlers/location_handler_argument_location_proximity.inc:61
+msgid "Method of determining proximity. Please note that Circular Proximity does not work with Decimal degrees."
+msgstr ""
+
+#: handlers/location_handler_field_location_country.inc:20 handlers/location_handler_field_location_province.inc:27 handlers/location_handler_field_location_street.inc:27 handlers/location_views_handler_field_latitude.inc:20
+msgid "Display style"
+msgstr ""
+
+#: handlers/location_handler_field_location_country.inc:22
+msgid "Country code"
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:33
+msgid "Units"
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:42 handlers/location_handler_sort_location_distance.inc:32 handlers/location_views_handler_filter_proximity.inc:74
+msgid "Origin"
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:44 handlers/location_handler_sort_location_distance.inc:34 handlers/location_views_handler_filter_proximity.inc:76
+msgid "User's Latitude / Longitude (blank if unset)"
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:45 handlers/location_handler_sort_location_distance.inc:35 handlers/location_views_handler_filter_proximity.inc:77
+msgid "User's Latitude / Longitude (fall back to static if unset)"
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:46 handlers/location_handler_sort_location_distance.inc:36 handlers/location_views_handler_filter_proximity.inc:78
+msgid "Static  Latitude / Longitude"
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:47 handlers/location_handler_sort_location_distance.inc:37
+msgid "Use Distance / Proximity filter"
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:48 handlers/location_handler_sort_location_distance.inc:38 handlers/location_views_handler_filter_proximity.inc:79
+msgid "Postal Code / Country"
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:49 handlers/location_handler_sort_location_distance.inc:39 handlers/location_views_handler_filter_proximity.inc:80
+msgid "Postal Code (assume default country)"
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:50 handlers/location_handler_sort_location_distance.inc:40 handlers/location_views_handler_filter_proximity.inc:81
+msgid "Use PHP code to determine latitude/longitude"
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:51 handlers/location_handler_sort_location_distance.inc:41 handlers/location_views_handler_filter_proximity.inc:82
+msgid "Node's Latitude / Longitude from views nid argument"
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:52 handlers/location_handler_sort_location_distance.inc:42 handlers/location_views_handler_filter_proximity.inc:83
+msgid "User's Latitude / Longitude from views uid argument"
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:54 handlers/location_handler_sort_location_distance.inc:44
+msgid "This will be the way the latitude/longitude of origin is determined. When using the user's latitude / longitude, if a user has multiple locations the first will be used."
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:91 handlers/location_handler_sort_location_distance.inc:80 handlers/location_views_handler_filter_proximity.inc:152
+msgid "PHP code for latitude, longitude"
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:95 handlers/location_handler_sort_location_distance.inc:84 handlers/location_views_handler_filter_proximity.inc:156
+msgid "Enter PHP code that returns a latitude/longitude.  Do not use &lt;?php ?&gt;. You must return only an array with float values set for the 'latitude' and 'longitude' keys."
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:103 handlers/location_handler_sort_location_distance.inc:92 handlers/location_views_handler_filter_proximity.inc:166
+msgid "Node ID argument to use"
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:106 handlers/location_handler_sort_location_distance.inc:95 handlers/location_views_handler_filter_proximity.inc:169
+msgid "Select which of the view's arguments to use as the node ID.  The latitude / longitude of the first location of that node will be used as the origin. Use the 'Global: Null' argument if you don't want to also restrict results to that node ID. You must have added arguments to the view to use this option."
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:106 handlers/location_handler_sort_location_distance.inc:95 handlers/location_views_handler_filter_proximity.inc:169
+msgid "Select which of the view's arguments to use as the node ID.  The latitude / longitude of the first location of that node will be used as the origin. Use the 'Global: Null' argument if you don't want to also restrict results to that node ID."
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:112 handlers/location_handler_sort_location_distance.inc:101 handlers/location_views_handler_filter_proximity.inc:176
+msgid "Location to use"
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:115 handlers/location_handler_sort_location_distance.inc:104 handlers/location_views_handler_filter_proximity.inc:179
+msgid "Select which of the node's locations to use as the origin.  Either the node locations or a CCK location field.  If the location supports multiple entries the first one will be used."
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:121 handlers/location_handler_sort_location_distance.inc:110 handlers/location_views_handler_filter_proximity.inc:186
+msgid "User ID argument to use"
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:124 handlers/location_handler_sort_location_distance.inc:113 handlers/location_views_handler_filter_proximity.inc:189
+msgid "Select which of the view's arguments to use as the user ID.  The latitude / longitude of the first location of that user will be used as the origin. Use the 'Global: Null' argument if you don't want to also restrict results to that user ID. You must have added arguments to the view to use this option."
+msgstr ""
+
+#: handlers/location_handler_field_location_distance.inc:124 handlers/location_handler_sort_location_distance.inc:113 handlers/location_views_handler_filter_proximity.inc:189
+msgid "Select which of the view's arguments to use as the user ID.  The latitude / longitude of the first location of that user will be used as the origin. Use the 'Global: Null' argument if you don't want to also restrict results to that user ID."
+msgstr ""
+
+#: handlers/location_handler_field_location_province.inc:29
+msgid "Province code"
+msgstr ""
+
+#: handlers/location_handler_field_location_street.inc:30
+msgid "Both street and additional"
+msgstr ""
+
+#: handlers/location_handler_field_location_street.inc:31
+msgid "Street only"
+msgstr ""
+
+#: handlers/location_handler_field_location_street.inc:32
+msgid "Additional only"
+msgstr ""
+
+#: handlers/location_handler_filter_location_country.inc:45 handlers/location_handler_filter_location_province.inc:57
+msgid "Is one of"
+msgstr ""
+
+#: handlers/location_handler_filter_location_country.inc:46 handlers/location_handler_filter_location_province.inc:58
+msgid "Is not one of"
+msgstr ""
+
+#: handlers/location_handler_filter_location_country.inc:51 handlers/location_handler_filter_location_province.inc:63
+msgid "Is"
+msgstr ""
+
+#: handlers/location_handler_filter_location_country.inc:52 handlers/location_handler_filter_location_province.inc:64
+msgid "Is not"
+msgstr ""
+
+#: handlers/location_views_handler_field_latitude.inc:22
+msgid "Degrees, minutes, seconds"
+msgstr ""
+
+#: handlers/location_views_handler_filter_proximity.inc:47
+msgid "Proximity (Rectangular)"
+msgstr ""
+
+#: handlers/location_views_handler_filter_proximity.inc:48
+msgid "Proximity (Circular)"
+msgstr ""
+
+#: handlers/location_views_handler_filter_proximity.inc:58
+msgid "GMap macro"
+msgstr ""
+
+#: handlers/location_views_handler_filter_proximity.inc:59
+msgid "The macro to use for the Latitude / Longitude map, if applicable."
+msgstr ""
+
+#: handlers/location_views_handler_filter_proximity.inc:65
+msgid "Allow choice of user location"
+msgstr ""
+
+#: handlers/location_views_handler_filter_proximity.inc:67
+msgid "If checked and using a user location origin, the user will be able to choose which of their locations to use.  Otherwise their first location will be used."
+msgstr ""
+
+#: handlers/location_views_handler_filter_proximity.inc:85
+msgid "This will be the way the latitude/longitude of origin is determined.  If this filter is exposed, this will determine the default values. NOTE: The PHP code, nid argument and uid argument options will not be available when the filter is exposed and the use of map is only available when the filter is exposed."
+msgstr ""
+
+#: handlers/location_views_handler_filter_proximity.inc:89
+msgid "Latitude / Longitude input (use map)"
+msgstr ""
+
+#: handlers/location_views_handler_filter_proximity.inc:221
+msgid "Gmap location selection is not available during live preview."
+msgstr ""
+
+#: handlers/location_views_handler_filter_proximity.inc:243
+msgid "Location #@num"
+msgstr ""
+
+#: handlers/location_views_handler_filter_proximity.inc:253
+msgid "Select which of your locations to use."
+msgstr ""
+
+#: plugins/contexts/location.inc:75
+msgid "State/Province name"
+msgstr ""
+
+#: plugins/contexts/location.inc:100
+msgid "Unknown location keyword"
+msgstr ""
+
+#: plugins/relationships/location_from_node.inc:16
+msgid "Creates a location context from a node."
+msgstr ""
+
+#: plugins/relationships/location_from_node.inc:17
+msgid "Node"
+msgstr ""
+
+#: plugins/relationships/location_from_node.inc:113
+msgid "Use location directly saved in the node for this relationship"
+msgstr ""
+
+#: plugins/relationships/location_from_node.inc:116
+msgid "Node location offset"
+msgstr ""
+
+#: plugins/relationships/location_from_node.inc:120;151
+msgid "If the nodes that will be used for this relationship have multiple locations, select which location you want to use."
+msgstr ""
+
+#: plugins/relationships/location_from_node.inc:135
+msgid "Location CCK field to use for this relationship"
+msgstr ""
+
+#: plugins/relationships/location_from_node.inc:147
+msgid "Location CCK field offset"
+msgstr ""
+
+#: plugins/relationships/location_from_node.inc:161
+msgid "Use location CCK fields for this relationship"
+msgstr ""
+
+#: plugins/relationships/location_from_node.inc:167
+msgid "Location type"
+msgstr ""
+
+#: supported/location.au.inc:234 supported/location.us.inc:240
+msgid "Yahoo! Web Services Application ID"
+msgstr ""
+
+#: supported/location.au.inc:238 supported/location.us.inc:244
+msgid "Unless you are using this site to test and develop, you will need to obtain a Yahoo! Web Services Application ID from the %network_link.  If you are using for development and testing purposes, you can use 'YahooDemo' as your AppID.  When getting an Application ID from Yahoo!, please also be sure to review the %usage_policy."
+msgstr ""
+
+#: supported/location.au.inc:327
+msgid "In order to use the Google Maps API geocoding web-service, you will need a Google Maps API Key.  You can obtain one at the !sign_up_link for the !google_maps_api."
+msgstr ""
+
+#: supported/location.ca.inc:329
+msgid "Geocoder API Key"
+msgstr ""
+
+#: supported/location.ca.inc:333
+msgid "In order to use the Geocoder.ca API geocoding web-service, you for a commercial entity or without attribution you will need a Geocoder API Key.  You can obtain one at the !sign_up_link for the !geocoder_api."
+msgstr ""
+

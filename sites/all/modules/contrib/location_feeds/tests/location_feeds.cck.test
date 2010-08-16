@@ -1,0 +1,235 @@
+<?php
+// $Id: location_feeds.cck.test,v 1.1.2.2 2010/06/11 17:58:20 elliottf Exp $
+
+/**
+ * @file
+ *
+ * Test case for CCK location imports.
+ *
+ * @author: Elliott Foster
+ */
+
+module_load_include('inc', 'location_feeds', 'tests/location_feeds.test');
+
+class CCKFeedsMapperLocationTestCase extends FeedsMapperLocationTestCase {
+
+   public static function getInfo() {
+    return array(
+      'name' => t('Mapper: CCK Locations'),
+      'description' => t('Test Feeds Mapper support for CCK Location.'),
+      'group' => t('Feeds'),
+    );
+  }
+
+  /**
+   * Set up the test.
+   */
+  public function setUp() {
+    // Call parent setup with required modules.
+    parent::setUp('feeds', 'feeds_ui', 'ctools', 'location', 'location_feeds', 'location_cck', 'content');
+
+    // Create user and login.
+    $this->drupalLogin($this->drupalCreateUser(
+        array(
+          'administer content types',
+          'administer feeds',
+          'administer nodes',
+          'administer site configuration',
+        )
+    ));
+  }
+
+  /**
+   * Basic test loading an RSS feed for nodes with CCK locations.
+   */
+  public function test() {
+    $nsettings = array();
+    $settings = $this->_location_defaults();
+    // unset stuff CCK doesn't need
+    unset($settings['location_settings']['multiple']);
+    unset($settings['location_settings']['rss']);
+
+    // Create content type.
+    $type = $this->drupalCreateContentType($nsettings);
+    $this->_location_cck_fields($type, 'field_location', $settings);
+
+    // Test constants
+    $loc = array(
+      0 => array(
+        'street' => "93 Rue de Rivoli",
+        'city' => "Paris",
+        'province' => "",
+        'country' => "fr",
+        'postal_code' => 75001
+      ),
+      1  => array(
+        'street' => "1600 Amphitheatre Parkway",
+        'city' => "Mountain View",
+        'province' => "CA",
+        'country' => "us",
+        'postal_code' => 94043
+      ),
+      2 => array(
+        'street' => "93 Rue de Rivoli",
+        'city' => "Paris",
+        'province' => "",
+        'country' => "fr",
+        'postal_code' => 75001
+      ),
+      3  => array(
+        'street' => "1600 Amphitheatre Parkway",
+        'city' => "Mountain View",
+        'province' => "CA",
+        'country' => "us",
+        'postal_code' => 94043
+      ),
+    );
+
+    // Create and configure importer.
+    // Create a feed.
+    $this->createFeedConfiguration('Location import', 'location_import');
+
+    // Set and configure plugins.
+    $this->setPlugin('location_import', 'FeedsFileFetcher');
+    $this->setPlugin('location_import', 'FeedsCSVParser');
+    $this->setSettings('location_import', 'FeedsNodeProcessor', array('content_type' => $type->type));
+
+    // Go to mapping page and create a couple of mappings.
+    $mappings = array(
+      array(
+        'source' => 'title',
+        'target' => 'title',
+        'unique' => FALSE,
+      ),
+      array(
+        'source' => 'description',
+        'target' => 'body',
+        'unique' => FALSE,
+      ),
+      array(
+        'source' => 'timestamp',
+        'target' => 'created',
+        'unique' => FALSE,
+      ),
+      array(
+        'source' => 'guid',
+        'target' => 'guid',
+        'unique' => TRUE,
+      ),
+      array(
+        'source' => 'street',
+        'target' => 'field_location:street',
+      ),
+      array(
+        'source' => 'city',
+        'target' => 'field_location:city',
+      ),
+      array(
+        'source' => 'state',
+        'target' => 'field_location:province',
+      ),
+      array(
+        'source' => 'zip',
+        'target' => 'field_location:postal_code',
+      ),
+      array(
+        'source' => 'country',
+        'target' => 'field_location:country',
+      ),
+    );
+    $this->addMappings('location_import', $mappings);
+
+    // Change some of the basic configuration.
+    $edit = array(
+      'content_type' => '',
+      'import_period' => FEEDS_SCHEDULE_NEVER,
+    );
+    $this->drupalPost('admin/build/feeds/edit/location_import/settings', $edit, 'Save');
+
+    // Import CSV file.
+    $this->importFile('location_import', drupal_get_path('module', 'location_feeds') .'/tests/feeds/location_nodes.csv');
+    $this->assertText('Created 4 '. $type->type .' nodes.');
+
+    // Check the imported locations
+    $x = 0;
+    $res = db_query("SELECT nid FROM {node} WHERE type='%s'", $type->type);
+    while ($node = db_fetch_object($res)) {
+      $node = node_load($node->nid);
+
+      // the location doesn't appear to be loaded correctly on the node object
+      // but is correctly stored in the database so load it directly here
+      $location = location_load_location(db_result(db_query("SELECT lid FROM {location_instance} WHERE genid='%s'", 'cck:field_location:' . $node->vid)));
+
+      $this->assertEqual(
+        $loc[$x]['street'],
+        $location['street'],
+        t('Testing street import, expected: @e, found: @f',
+          array('@e' => $loc[$x]['street'], '@f' => $location['street']))
+      );
+      $this->assertEqual(
+        $loc[$x]['city'],
+        $location['city'],
+        t('Testing city import, expected: @e, found: @f', array('@e' => $loc[$x]['city'], '@f' => $location['city']))
+      );
+      $this->assertEqual(
+        $loc[$x]['province'],
+        $location['province'],
+        t('Testing province import, expected: @e, found: @f', array('@e' => $loc[$x]['province'], '@f' => $location['province']))
+      );
+      $this->assertEqual(
+        $loc[$x]['country'],
+        $location['country'],
+        t('Testing country import, expected: @e, found: @f', array('@e' => $loc[$x]['country'], '@f' => $location['country']))
+      );
+      $this->assertEqual(
+        $loc[$x]['postal_code'],
+        $location['postal_code'],
+        t('Testing country import, expected: @e, found: @f', array('@e' => $loc[$x]['postal_code'], '@f' => $location['postal_code']))
+      );
+      $x++;
+    }
+  }
+
+  /**
+   * Helper function to add the location CCK fields
+   *
+   * @param: $type - the node type object
+   * @param: $field_name - the field name to add
+   * @param: $settings - the field settings array
+   */
+  private function _location_cck_fields($type, $field_name, $settings) {
+      $field_type = 'location';
+      $field_widget = 'location';
+      $label = $field_name . '_' . $field_type . '_label';
+      $edit = array(
+        '_add_new_field[label]' => $label,
+        '_add_new_field[field_name]' => $field_name,
+        '_add_new_field[type]' => $field_type,
+        '_add_new_field[widget_type]' => $field_widget,
+      );
+      $this->drupalPost('admin/content/node-type/' . $type->type . '/fields', $edit, 'Save');
+
+      // (Default) Configure the field.
+      $this->drupalPost(NULL, $this->flattenPostData($settings), 'Save field settings');
+      $this->assertText('Added field ' . $field_name);
+  }
+
+  /**
+   * Helper function to flatten post data
+   */
+  private function flattenPostData(&$edit) {
+    do {
+      $edit_flattened = TRUE;
+      foreach ($edit as $k => $v) {
+        if (is_array($v)) {
+          $edit_flattened = FALSE;
+          foreach ($v as $kk => $vv) {
+            $edit["{$k}[{$kk}]"] = $vv;
+          }
+          unset($edit[$k]);
+        }
+      }
+    } while (!$edit_flattened);
+  }
+}
+

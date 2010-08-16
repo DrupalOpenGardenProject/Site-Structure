@@ -1,0 +1,6 @@
+name = Google Maps GeoRSS parser
+description = A Google Maps GeoRSS feed parser for Feeds.
+package = Other
+dependencies[] = feeds
+dependencies[] = feeds_ui
+core = 6.x

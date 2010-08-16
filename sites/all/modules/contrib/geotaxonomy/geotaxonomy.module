@@ -1,5 +1,5 @@
 <?php
-// $Id: geotaxonomy.module,v 1.2.2.5.2.3 2010/06/24 14:04:46 tmcw Exp $
+// $Id: geotaxonomy.module,v 1.2.2.5.2.7 2010/08/10 17:29:09 diggersf Exp $
 /**
  * @file
  * Function definitions for geotaxonomy module.
@@ -10,12 +10,11 @@
  * Adds option of geo storage to vocab edit page.
  */
 function geotaxonomy_form_taxonomy_form_vocabulary_alter(&$form, &$form_state) {
+  $vocabulary_settings = variable_get('geotaxonomy_vocabularies', array());
   $form['settings']['geotaxonomy_status'] = array(
     '#type' => 'checkbox',
     '#title' => t('Store geo data for this vocabulary'),
-    '#default_value' => !empty($form['vid']) ?
-      variable_get("geotaxonomy_" . $form['vid']['#value'], 0)
-      : FALSE,
+    '#default_value' => !empty($form['vid']) ? $vocabulary_settings[$form['vid']['#value']] : FALSE,
     '#description' => t('Allows latitude and longitude data to be stored with terms of this taxonomy.'),
   );
   $form['#submit'][]   = 'geotaxonomy_form_vocabulary_submit';
@@ -26,7 +25,9 @@ function geotaxonomy_form_taxonomy_form_vocabulary_alter(&$form, &$form_state) {
  */
 function geotaxonomy_form_vocabulary_submit($form, &$form_state) {
   $vid = $form_state['values']['vid'];
-  variable_set("geotaxonomy_$vid", $form_state['values']['geotaxonomy_status']);
+  $vocabulary_settings = variable_get('geotaxonomy_vocabularies', array());
+  $vocabulary_settings[$vid] = $form_state['values']['geotaxonomy_status'];
+  variable_set('geotaxonomy_vocabularies', $vocabulary_settings);
 }
 
 /**
@@ -35,7 +36,8 @@ function geotaxonomy_form_vocabulary_submit($form, &$form_state) {
  */
 function geotaxonomy_form_taxonomy_form_term_alter(&$form, &$form_state) {
   $vid = $form['vid']['#value'];
-  if (!variable_get("geotaxonomy_".$vid, 0)) {
+  $vocabulary_settings = variable_get('geotaxonomy_vocabularies', array());
+  if (!$vocabulary_settings[$vid]) {
     return;
   }
   $form['submit']['#weight'] = isset($form['submit']['#weight']) ? $form['submit']['#weight'] + 1 : 1;
@@ -78,6 +80,11 @@ function geotaxonomy_form_taxonomy_form_term_alter(&$form, &$form_state) {
     '#type'   => 'textfield',
     '#title'         => t('Left boundary'),
     '#default_value' => $latlon['bound_left'],
+  );
+
+  $form['geotaxonomy']['geometry'] = array(
+    '#type' => 'hidden',
+    '#value' => $latlon['geometry']
   );
 
   // Helper map for lat/lon if OpenLayers UI is available.
@@ -123,14 +130,15 @@ function geotaxonomy_views_api() {
  * Little API helper function to retrieve geo data for a given term.
  */
 function geotaxonomy_get_term($tid) {
-  return db_fetch_array(db_query("SELECT lat, lon, bound_top, bound_right, bound_bottom, bound_left FROM {term_geo} WHERE tid = %d", $tid));
+  return db_fetch_array(db_query("SELECT lat, lon, bound_top, bound_right, bound_bottom, bound_left, geometry FROM {term_geo} WHERE tid = %d", $tid));
 }
 
 /**
  * Implementation of hook_taxonomy().
  */
 function geotaxonomy_taxonomy($op = NULL, $type = NULL, $term = NULL){
-  if($type =='term' && $term && variable_get("geotaxonomy_".$term['vid'], 0)) {
+  $vocabulary_settings = variable_get('geotaxonomy_vocabularies', array());
+  if($type =='term' && $term && $vocabulary_settings[$term['vid']]) {
     switch ($op) {
       case 'delete':
         db_query("DELETE FROM {term_geo} WHERE tid = %d", $term['tid']);
@@ -138,9 +146,29 @@ function geotaxonomy_taxonomy($op = NULL, $type = NULL, $term = NULL){
       case 'update':
         db_query("DELETE FROM {term_geo} WHERE tid = %d", $term['tid']);
       case 'insert':
-        drupal_write_record('term_geo', $term);
+        geotaxonomy_write_record($term);
         break;
     }
+  }
+}
+
+/**
+ * A wrapper for drupal_write_record() that cleans and checks the record
+ * before writing it.
+ */
+function geotaxonomy_write_record($term){
+  $empty_record = TRUE;
+  $fields = array('lat', 'lon', 'bound_top', 'bound_right', 'bound_bottom', 'bound_left', 'geometry');
+  foreach ($fields as $field) {
+    if (empty($term[$field])) {
+      unset($term[$field]);
+    }
+    else {
+      $empty_record = FALSE;
+    }
+  }
+  if (!$empty_record) {
+    drupal_write_record('term_geo', $term);
   }
 }
 
@@ -173,6 +201,16 @@ function geotaxonomy_rebuild_hierarchy($vid) {
 }
 
 /**
+ * Implementation of hook_feeds_taxonomy_load()
+ */
+function geotaxonomy_feeds_taxonomy_load($term) {
+  if ($geo = geotaxonomy_get_term($term['tid'])) {
+    $term = array_merge($term, $geo);
+  }
+  return $term;
+}
+
+/**
  * Implementation of hook_feeds_term_processor_targets_alter().
  *
  * Expose possible mapping targets for taxonomy terms. If a user picks these
@@ -180,7 +218,8 @@ function geotaxonomy_rebuild_hierarchy($vid) {
  * $term['lon'] and so forth.
  */
 function geotaxonomy_feeds_term_processor_targets_alter(&$targets, $vid) {
-  if (variable_get('geotaxonomy_'. $vid, FALSE)) {
+  $vocabulary_settings = variable_get('geotaxonomy_vocabularies', array());
+  if ($vocabulary_settings[$vid]) {
     $targets['lat'] = array(
       'name' => t('Latitude'),
       'description' => t('Latitude of the geo term.'),
@@ -230,10 +269,11 @@ function geotaxonomy_feeds_term_processor_targets_alter(&$targets, $vid) {
  * Rebuild term hierarchy after import.
  */
 function geotaxonomy_feeds_after_import($importer, $source) {
-  if ($importer->processor instanceOf FeedsTermProcessor && $importer->processor->config['vocabulary']) {
-    if (variable_get('geotaxonomy_'. $importer->processor->config['vocabulary'], FALSE)) {
-
-      geotaxonomy_rebuild_hierarchy($importer->processor->config['vocabulary']);
+  $vid = $importer->processor->config['vocabulary'];
+  if ($importer->processor instanceOf FeedsTermProcessor && $vid) {
+    $vocabulary_settings = variable_get('geotaxonomy_vocabularies', array());
+    if ($vocabulary_settings[$vid]) {
+      geotaxonomy_rebuild_hierarchy($vid);
       drupal_set_message(t('Rebuilt term hierarchy.'));
     }
   }
@@ -330,7 +370,7 @@ function _geotaxonomy_save($feed_item, $feed_nid, $settings = array()) {
             'bound_bottom' => is_numeric($feed_item['term_bound_bottom']) ? $feed_item['term_bound_bottom'] : NULL,
             'bound_left' => is_numeric($feed_item['term_bound_left']) ? $feed_item['term_bound_left'] : NULL,
           );
-          drupal_write_record('term_geo', $term_geo);
+          geotaxonomy_write_record($term_geo);
         }
       }
     }

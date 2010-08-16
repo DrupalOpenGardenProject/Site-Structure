@@ -1,0 +1,4 @@
+name,mail,street,city,state,zip,country
+"blue","blue@drupal.org","405 Hilgard Ave.","Los Angeles","California",90095,"us"
+"drop","drop@drupal.org","2400 Inner Campus Drive","Austin","Texas",78712,"US"
+"red","red@drupal.org","405 Hilgard Ave.","Los Angeles","California",90095,"United States"

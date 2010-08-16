@@ -1,0 +1,14 @@
+;$Id: location_feeds.info,v 1.1 2010/06/07 15:50:09 elliottf Exp $
+name = Location Feeds
+description = Provides location mappers for feed importers
+core = 6.x
+dependencies[] = feeds
+dependencies[] = location
+package = Feeds
+
+; Information added by drupal.org packaging script on 2010-06-30
+version = "6.x-1.1"
+core = "6.x"
+project = "location_feeds"
+datestamp = "1277928912"
+

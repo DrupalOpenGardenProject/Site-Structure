@@ -1,0 +1,64 @@
+<?php
+// $Id: location_cck.install,v 1.1.2.4 2010/03/30 19:11:11 ankur Exp $
+
+/**
+ * @file
+ *  Module installation/uninstallation hooks.
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function location_cck_install() {
+  // Notify content module when this module is installed.
+  drupal_load('module', 'content');
+  content_notify('install', 'location_cck');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function location_cck_uninstall() {
+  // Notify content module when this module is uninstalled.
+  drupal_load('module', 'content');
+  content_notify('uninstall', 'location_cck');
+}
+
+/**
+ * Implementation of hook_enable().
+ */
+function location_cck_enable() {
+  // Notify content module when this module is enabled.
+  drupal_load('module', 'content');
+  content_notify('enable', 'location_cck');
+}
+
+/**
+ * Implementation of hook_disable().
+ */
+function location_cck_disable() {
+  // Notify content module when this module is disabled.
+  drupal_load('module', 'content');
+  content_notify('disable', 'location_cck');
+}
+
+/**
+ * Drupal 6 location_cck 3.x update.
+ */
+function location_cck_update_6301() {
+  $ret = array();
+
+  $schema = drupal_get_schema('location_instance');
+  $schema['description'] = 'Temp table to repair data integrity of location_instance table.';
+  unset($schema['indexes']);
+
+  db_create_table($ret, 'location_instance_tmp', $schema);
+
+  $ret[] = update_sql("INSERT INTO {location_instance_tmp} (nid, vid, genid, lid) SELECT nid, vid, l.genid, l.lid FROM {node} n JOIN (SELECT SUBSTRING_INDEX(genid, ':', -1) as genvid, lid, genid FROM {location_instance}) as l ON n.vid = l.genvid");
+  $ret[] = update_sql("DELETE FROM {location_instance} WHERE genid like 'cck:%'");
+  $ret[] = update_sql("INSERT INTO {location_instance} (nid, vid, genid, lid) SELECT nid, vid, genid, lid FROM {location_instance_tmp} GROUP BY nid, vid, genid, lid");
+
+  db_drop_table($ret, 'location_instance_tmp');
+
+  return $ret;
+}
