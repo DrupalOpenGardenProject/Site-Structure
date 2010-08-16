@@ -1,0 +1,15 @@
+;$Id: feeds_view_parser.info,v 1.13 2010/06/22 18:45:17 adityakg Exp $
+name = Feeds View Parser
+description = Enable Feeds to parse a View output
+package = Feeds
+dependencies[] = ctools
+dependencies[] = feeds 
+dependencies[] = views
+dependencies[] = views_php_array
+core = 6.x
+; Information added by drupal.org packaging script on 2010-08-12
+version = "6.x-1.0.x-dev"
+core = "6.x"
+project = "feeds_view_parser"
+datestamp = "1281614881"
+

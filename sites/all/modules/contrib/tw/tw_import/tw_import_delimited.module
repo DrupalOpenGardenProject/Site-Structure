@@ -1,0 +1,289 @@
+<?php
+// $Id: tw_import_delimited.module,v 1.1.2.17 2010/06/29 01:22:23 mikeryan Exp $
+
+/**
+ * @file
+ * Implementation of delimited file import
+ */
+
+/**
+ * Implementation of hook_tw_form().
+ */
+function tw_import_delimited_tw_form() {
+  ////////////////////////////////////////////////////////////
+  // Upload delimited files
+  $fieldsets['delimited'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Upload delimited files'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    'uploadhelp' => array(
+      '#prefix' => '<div>',
+      '#value' => t('Uploading a new file imports the contents of the file into a database table and
+        adds it to the list above. Uploading a new copy of a previously-uploaded file replaces the
+        file data - it should be reanalyzed before doing anything further. Note that any existing
+        comments, ignored fields, and excluded rows are preserved when reloading the data. Also
+        note that the first line of the file is assumed to contain field names.'),
+      '#suffix' => '</div>',
+    ),
+    'file' => array(
+      '#type' => 'file',
+      '#title' => t('Upload file'),
+      '#size' => 48,
+      '#description' => t('File containing the data to be imported.'),
+    ),
+    'tablename' => array(
+      '#type' => 'textfield',
+      '#title' => t('Table name'),
+      '#size' => 64,
+      '#maxlength' => 64,
+      '#description' => t('Name of the database table to create from this file. If left blank,
+        the uploaded filename (without its extension) will be used to name the table. For example,
+        uploading <em>OldRecords.csv</em> will create the table <em>OldRecords</em>.')
+    ),
+    'delimitedsubmit' => array(
+      '#type' => 'submit',
+      '#value' => t('Import new file'),
+    ),
+  );
+
+  return $fieldsets;
+}
+
+/**
+ * Implementation of hook_tw_form_submit().
+ */
+function tw_import_delimited_tw_form_submit_delimited($values) {
+  $file = file_save_upload('delimited');
+  if ($file) {
+    // Move the uploaded file to the tw_delimited directory
+    $dest = _tw_delimited_file_name($file->filename);
+    if ($dest) {
+      file_move($file, $dest, FILE_EXISTS_REPLACE);
+    }
+    else {
+      drupal_set_message(t('Could not upload !filename',
+        array('!filename' => $file->filename)));
+      return NULL;
+    }
+
+    // Pick up the field names from the first row
+    $offset = 0;
+    $headers = _tw_delimited_get_row($file->filepath, $offset);
+    if ($headers === FALSE) {
+      return;
+    }
+
+    // If an explicit table name was not provided...
+    if ($values['tablename']) {
+      $tablename = trim($values['tablename']);
+    }
+    else {
+      // ... Derive one from the filename (minus extension)
+      $pieces = explode('.', $file->filename);
+      $tablename = trim($pieces[0]);
+    }
+
+    if (!$tablename) {
+      drupal_set_message(t('Could not derive a table name for !filename',
+        array('!filename' => $file->filename)));
+    }
+
+    // Lowercase table names make views integration much easier
+    $tablename = drupal_strtolower(preg_replace('/[^a-z0-9]/i', '_', $tablename));
+    // Truncate to 63 characters (valid for either MySQL or Postgres)
+    $tablename = drupal_substr($tablename, 0, 63);
+
+    // Build a schema definition for the table
+    $schema = array(
+        'description' => t('Uploaded data file'),
+    );
+    $seen = array();
+    $columns = array();
+    foreach ($headers as $i => $coltitle) {
+      // Normalize field names - replace non-alphanumerics with underscores
+      $colname = preg_replace('/[^a-z0-9]/i', '_', $coltitle);
+      // Field names must be unique, generate variations if necessary
+      if (!isset($seen[$coltitle])) {
+        $seen[$coltitle] = 1;
+      }
+      else {
+        $seen[$coltitle]++;
+      }
+      if ($seen[$coltitle] > 1) {
+        $colname = $coltitle . '_' . $seen[$coltitle];
+      }
+      // Default to big text fields, which can hold anything
+      $schema['fields'][$colname] = array(
+          'type' => 'text',
+          'size' => 'big',
+          'not null' => FALSE,
+      );
+      $columns[] = tw_quote_identifier($colname);
+    }
+    // TODO: Option to append instead of replace (i.e., skip the TRUNCATE)
+    if (db_table_exists($tablename)) {
+      $sql = "SELECT twtid FROM {tw_tables}
+              WHERE dbconnection='%s' AND tablename='%s'";
+      $twtid = db_result(db_query($sql, 'default', $tablename));
+      if ($twtid) {
+        db_query('TRUNCATE TABLE {' . $tablename . '}');
+        $prevexists = TRUE;
+      }
+      else {
+        drupal_set_message(t('"!tablename" is not a table managed by Table Wizard.
+            For initial import, please choose a table name that is not in use',
+          array('!tablename' => $tablename)));
+        return NULL;
+      }
+    }
+    else {
+      // Note that when using table prefixes, a prefix is prepended to the table name
+      db_create_table($ret, $tablename, $schema);
+      $prevexists = FALSE;
+    }
+
+    // Here we go - plug the data into the table using Batch API
+    $srcinfo = new stdClass;
+    $srcinfo->filepath = $file->filepath;
+    $srcinfo->tablename = $tablename;
+    $srcinfo->offset = $offset;
+    $srcinfo->sql = 'INSERT INTO {' . $tablename . '} ' .
+            '(' . implode(', ', $columns) . ') ' .
+            'VALUES(' . implode(', ', array_pad(array(), count($columns), "'%s'")) . ')';
+    if ($prevexists) {
+      $srcinfo->success_msg = t('%filename has been imported into table %tablename, replacing
+        the original data in that table',
+        array('%filename' => $file->filename, '%tablename' => $tablename));
+    }
+    else {
+      $srcinfo->success_msg = t('%filename has been imported into new table %tablename. All fields
+        have initially been defined as text, with no indexing - it is important to use your database
+        management software to set appropriate
+        data types for each field, and to define a single (unique, non-null) field as the
+        primary key. After you have done this, reanalyze the table.',
+        array('%filename' => $file->filename, '%tablename' => $tablename));
+    }
+    $batch = array(
+      'title' => t('Importing records from %filename into %tablename',
+        array('%filename' => $file->filename, '%tablename' => $tablename)),
+      'init_message' => t('Delimited file import initializing'),
+      'error_message' => t('Import failed'),
+      'progress_message' => '',
+      'operations' => array(
+        array('_tw_import_delimited_import_file', array($srcinfo)),
+      ),
+      'finished' => '_tw_import_delimited_finish',
+    );
+    batch_set($batch);
+
+    // Pass the table name back to Table Wizard
+    return array($tablename);
+  }
+  else {
+    drupal_set_message(t('Failed to upload delimited file'));
+  }
+}
+
+/**
+ * Generate the Drupal-relative path for storing imported files (creating the tw_delimited
+ * directory if necessary).
+ */
+function _tw_delimited_file_name($file) {
+  $dir = "";
+  if (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC) == FILE_DOWNLOADS_PUBLIC) {
+    $dir .= str_replace('\\', '/', getcwd()) . '/';
+  }
+  $dir .=  file_directory_path() . '/tw_delimited';
+
+  if (file_check_directory($dir, TRUE)) {
+    return $dir . '/' . $file;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Get one row from the delimited file and return it as an array of
+ * columns/fields.
+ */
+function _tw_delimited_get_row($filepath, &$offset = 0) {
+  static $handle, $separator, $size = 10000;
+
+  // If the requested file isn't already open...
+  if (!isset($handle)) {
+    $handle = fopen($filepath, 'r');
+    if ($handle === FALSE) {
+      drupal_set_message(t('Could not open !filename', array('!filename' => $filepath)));
+      return FALSE;
+    }
+
+    // If there's a tab character on the first line, use tab as the delimiter, otherwise comma
+    $sample = fgets($handle);
+    if (strpos($sample, "\t") === FALSE) {
+      $separator = ',';
+    }
+    else {
+      $separator = "\t";
+    }
+    fseek($handle, $offset);
+  }
+
+  $result = fgetcsv($handle, $size, $separator);
+  if ($result === FALSE) {
+    fclose($handle);
+    $handle = NULL;
+    $currpath = NULL;
+    $separator = NULL;
+  }
+  else {
+    $offset = ftell($handle);
+  }
+
+  return $result;
+}
+
+function _tw_import_delimited_import_file($srcinfo, &$context) {
+  if (!isset($context['sandbox']['total'])) {
+    $context['sandbox']['total'] = filesize($srcinfo->filepath);
+    $context['sandbox']['done'] = $srcinfo->offset;
+    $context['sandbox']['rows'] = 0;
+  }
+
+  // Return for feedback every 10 seconds
+  $timelimit = time() + 10;
+
+  while ($fields = _tw_delimited_get_row($srcinfo->filepath, $context['sandbox']['done'])) {
+    db_query($srcinfo->sql, $fields);
+    $context['sandbox']['rows']++;
+    if (time() > $timelimit) {
+      break;
+    }
+  }
+
+  if ($context['sandbox']['total'] > 0) {
+    $context['finished'] = $context['sandbox']['done'] / $context['sandbox']['total'];
+  }
+  else {
+    $context['finished'] = 1;
+  }
+  $context['message'] = t('%done of %total bytes imported<br />%rows rows inserted into %tablename',
+                          array('%done' => format_size($context['sandbox']['done']),
+                                '%total' => format_size($context['sandbox']['total']),
+                                '%rows' => $context['sandbox']['rows'],
+                                '%tablename' => $srcinfo->tablename));
+  if ($context['finished'] == 1) {
+    $context['results']['srcinfo'] = $srcinfo;
+    $context['message'] .= '<br />' . t('Analyzing table %tablename...', array('%tablename' => $srcinfo->tablename));
+  }
+}
+
+function _tw_import_delimited_finish($success, $results, $operations) {
+  if ($success) {
+    $srcinfo = $results['srcinfo'];
+    unlink($srcinfo->filepath);
+    drupal_set_message($srcinfo->success_msg);
+    tw_perform_analysis($srcinfo->tablename);
+  }
+}

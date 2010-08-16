@@ -1,0 +1,44 @@
+<?php
+// $Id: tw_import_delimited.test,v 1.1.2.2 2009/05/01 15:18:31 mikeryan Exp $
+/**
+ * @file
+ * Tests for the Table Wizard delimited import module.
+ *
+ */
+
+/**
+ * UI tests for the Table Wizard Import Delimited module
+ *
+ */
+class TwImportDelimitedFunctionalTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Table Wizard Import Delimited'),
+      'description' => t('Test Table Wizard delimited import'),
+      'group' => t('Table Wizard'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('views', 'schema', 'tw', 'tw_import_delimited');
+
+    // Create and login user
+    $tw_user = $this->drupalCreateUser(array('table wizard administration'));
+    $this->drupalLogin($tw_user);
+  }
+  
+  function tearDown() {
+    parent::tearDown();
+  }
+
+  /**
+   * Test UI for importing delimited tables
+   */
+  function testTwAddTables() {
+    $rpath = realpath(drupal_get_path('module', 'tw_import_delimited') . '/tests/simpletable.csv');
+    $this->drupalPost('admin/content/tw', array('files[delimited]' => $rpath), t('Import new file'));
+    $count = db_result(db_query("SELECT COUNT(*) FROM {tw_tables} 
+                                 WHERE tablename='simpletable' AND dbconnection='default'"));
+    $this->assertTrue($count == 1, t('Table added to tw_tables'));
+  }
+}

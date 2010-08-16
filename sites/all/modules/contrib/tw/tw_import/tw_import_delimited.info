@@ -1,0 +1,13 @@
+; $Id: tw_import_delimited.info,v 1.1 2009/03/04 21:43:00 mikeryan Exp $
+name = Table Wizard Import Delimited Files
+description = Provides default hooks for importing delimited files into a Drupal database
+package = Database
+core = 6.x
+dependencies[] = tw
+
+; Information added by drupal.org packaging script on 2010-07-21
+version = "6.x-1.3"
+core = "6.x"
+project = "tw"
+datestamp = "1279678809"
+

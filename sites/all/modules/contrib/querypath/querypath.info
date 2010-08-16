@@ -1,0 +1,13 @@
+;$Id: querypath.info,v 1.2 2009/03/05 15:27:35 mbutcher Exp $
+name = QueryPath
+description = QueryPath is a developer tool for working with HTML and XML.
+core = 6.x
+php = 5.2
+package = QueryPath
+
+; Information added by drupal.org packaging script on 2009-08-21
+version = "6.x-1.5"
+core = "6.x"
+project = "querypath"
+datestamp = "1250821878"
+

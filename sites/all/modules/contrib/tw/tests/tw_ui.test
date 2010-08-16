@@ -1,0 +1,83 @@
+<?php
+// $Id: tw_ui.test,v 1.1.2.2 2009/05/01 15:18:31 mikeryan Exp $
+/**
+ * @file
+ * Tests for the Table Wizard UI.
+ *
+ */
+
+/**
+ * UI tests for the Table Wizard module
+ *
+ */
+class TwFunctionalTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Table Wizard UI'),
+      'description' => t('Test Table Wizard user interface'),
+      'group' => t('Table Wizard'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('views', 'schema', 'tw');
+
+    // Create and login user
+    $tw_user = $this->drupalCreateUser(array('table wizard administration'));
+    $this->drupalLogin($tw_user);
+    
+    // Create test tables
+    // TODO: Tables with no PK, multi-column PK
+    $ret = array();
+    $schema = array(
+      'description' => t('Uploaded data file'),
+      'fields' => array(
+        'id' => array(
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'textfield' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'intfield' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array('id'),
+    );
+    db_create_table($ret, 'tw_simpletest_sample', $schema);
+    db_query("INSERT INTO {tw_simpletest_sample} (textfield, intfield)
+              VALUES('firstvalue', 5)");
+    db_query("INSERT INTO {tw_simpletest_sample} (textfield, intfield)
+              VALUES('secondvalue', 1)");
+    db_query("INSERT INTO {tw_simpletest_sample} (textfield, intfield)
+              VALUES('thirdvalue', 0)");
+    db_query("INSERT INTO {tw_simpletest_sample} (textfield, intfield)
+              VALUES('fourthvalue', 9)");
+    db_query("INSERT INTO {tw_simpletest_sample} (textfield, intfield)
+              VALUES('fifthvalue', 53)");
+  }
+  
+  function tearDown() {
+    $ret = array();
+    db_drop_table($ret, 'tw_simpletest_sample');
+    parent::tearDown();
+  }
+
+  /**
+   * Test UI for adding tables
+   */
+  function testTwAddTables() {
+    $edit = array('existing[lists][default][]' => 'tw_simpletest_sample');
+    $this->drupalPost('admin/content/tw', $edit, 'Add tables');
+    $count = db_result(db_query("SELECT COUNT(*) FROM {tw_tables} 
+                                 WHERE tablename='tw_simpletest_sample' AND dbconnection='default'"));
+    $this->assertTrue($count == 1, t('Table added to tw_tables'));
+  }
+}
+

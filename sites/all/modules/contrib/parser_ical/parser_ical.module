@@ -1,0 +1,49 @@
+<?php
+// $Id: parser_ical.module,v 1.5 2010/01/19 11:55:42 ekes Exp $
+
+/**
+ * @file
+ * Parse the incoming URL with date_api_ical
+ *
+ * TODO Figure out how to incorporate VVENUE information into the parser.
+ */
+
+/**
+ * Implementation of hook_ctools_plugin_api().
+ */
+function parser_ical_ctools_plugin_api($owner, $api) {
+  if ($owner == 'feeds' && $api == 'plugins') {
+    return array('version' => 1);
+  }
+}
+
+/**
+ * Implementation of ctools plugin for feeds hook_feeds_plugins().
+ */
+function parser_ical_feeds_plugins() {
+  $path = drupal_get_path('module', 'parser_ical');
+  $info = array();
+  $info['ParserIcalFeedsParser'] = array(
+    'name' => 'iCal dateapi parser',
+    'description' => 'Parse iCal feeds.',
+    'help' => 'Parse feeds in the iCal format using the dateapi.',
+    'handler' => array(
+      'parent' => 'FeedsParser',
+      'class' => 'ParserIcalFeedsParser',
+      'file' => 'ParserIcalFeedsParser.inc',
+      'path' => $path . '/includes',
+    ),
+  );
+
+  return $info;
+}
+
+/**
+ * Implementation of hook_help().
+ */
+function parser_ical_help($path, $arg) {
+  switch ($path) {
+    case 'admin/modules#description':
+      return t('Provide a common iCal parser for Feeds using dateapi.');
+  }
+}

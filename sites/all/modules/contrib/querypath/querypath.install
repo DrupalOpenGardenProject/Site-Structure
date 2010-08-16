@@ -1,0 +1,40 @@
+<?php
+// $Id: querypath.install,v 1.1.2.3 2009/05/13 19:49:00 mbutcher Exp $
+
+/**
+ * The installer file for querypath.
+ * @file
+ */
+ 
+/**
+ * Implementation of hook_requirements().
+ * Checks to see if the QueryPath library has been installed.
+ */
+function querypath_requirements($phase) {
+  $requirements = array();
+  switch ($phase) {
+    case 'install':
+    case 'runtime':
+      @include_once 'QueryPath/QueryPath.php';
+      if (function_exists('qp')) {
+        $requirements['querypath_lib'] = array(
+          'title' => t('QueryPath library'),
+          'severity' => REQUIREMENT_OK,
+          'value' => 'Present',
+        );
+      }
+      else {
+        $params = array(
+          '!path' => drupal_get_path('module','querypath') . '/QueryPath', 
+          '!link' => l('http://querypath.org', 'http://querypath.org', array('html' => TRUE))
+        );
+        $requirements['querypath_lib'] = array(
+          'title' => t('QueryPath library'),
+          'severity' => REQUIREMENT_ERROR,
+          'description' => t("You must install the QueryPath library from !link. Copy the library's QueryPath folder (querypath-x.x/src/QueryPath) to the QueryPath module directory (!path)", $params),
+          'value' => 'Not present',
+        );
+      }
+  }
+  return $requirements;
+}

@@ -1,0 +1,27 @@
+<?php
+// $Id: feeds_flickr.module,v 1.1 2010/05/08 04:05:21 dragonwize Exp $
+/**
+ * @file
+ * Adds a Flickr feed processor to the Feeds module.
+ */
+
+/**
+ * Implementation of hook_feeds_plugins().
+ */
+function feeds_flickr_feeds_plugins() {
+  $info = array();
+  if (feeds_library_exists('simplepie.inc', 'simplepie')) {
+    $info['FeedsFlickrParser'] = array(
+      'name' => 'Flickr parser',
+      'description' => 'Parse Flickr feeds.',
+      'help' => 'Use <a href="http://simplepie.org">SimplePie</a> to parse Flickr feeds.',
+      'handler' => array(
+        'parent' => 'FeedsSimplePieParser',
+        'class' => 'FeedsFlickrParser',
+        'file' => 'FeedsFlickrParser.inc',
+        'path' => drupal_get_path('module', 'feeds_flickr'),
+      ),
+    );
+  }
+  return $info;
+}

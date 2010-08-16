@@ -1,0 +1,13 @@
+; $Id: spatial_table.info,v 1.2 2010/02/09 01:17:10 phayes Exp $
+name = Spatial Table
+description = Expose database tables with spatial information as layers in OpenLayers
+package = Database
+core = 6.x
+dependencies[] = schema
+dependencies[] = openlayers
+; Information added by drupal.org packaging script on 2010-02-17
+version = "6.x-1.1-alpha2"
+core = "6.x"
+project = "spatial"
+datestamp = "1266445819"
+

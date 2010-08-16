@@ -1,0 +1,14 @@
+;$Id: feeds_flickr.info,v 1.1 2010/05/08 04:05:21 dragonwize Exp $
+name = Feeds: Flickr
+description = Adds a Flickr feed processor to the Feeds module.
+package = Feeds
+dependencies[] = feeds
+core = 6.x
+php = 5.2
+
+; Information added by drupal.org packaging script on 2010-07-11
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "feeds_flickr"
+datestamp = "1278834225"
+

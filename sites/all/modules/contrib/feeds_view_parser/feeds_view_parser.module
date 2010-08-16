@@ -1,0 +1,30 @@
+<?php
+// $Id: feeds_view_parser.module,v 1.13 2010/06/22 18:45:17 adityakg Exp $
+
+function feeds_view_parser_feeds_plugins() {
+  $path = drupal_get_path('module', 'feeds_view_parser');
+
+  $info = array();
+  $info['FeedsViewParser'] = array(
+    'name' => 'View Parser',
+    'description' => 'Parse view output',
+    'handler' => array(
+      'parent' => 'FeedsParser',
+      'class' => 'FeedsViewParser',
+      'file' => 'FeedsViewParser.inc',
+      'path' => $path,
+    ),
+  );
+  
+  $info['FeedsViewFetcher'] = array(
+    'name' => 'View Fetcher',
+    'description' => 'A dummy fetcher to pass PHP Array from a view output into View Parser',
+    'handler' => array(
+      'parent' => 'FeedsFetcher',
+      'class' => 'FeedsViewFetcher',
+      'file' => 'FeedsViewFetcher.inc',
+      'path' => $path,
+    ),
+  );
+  return $info;
+}

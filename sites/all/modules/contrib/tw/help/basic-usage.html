@@ -1,0 +1,20 @@
+<!-- $Id: basic-usage.html,v 1.1.2.1 2009/05/10 22:39:59 mikeryan Exp $ -->
+<p>To add existing tables in your Drupal default database to the Table Wizard, go to 
+<a href="&base_url&admin/content/tw">Content management => Table Wizard</a>, expand 
+<b>Add existing tables</b>, and 
+choose one or more tables to add. Once added, a table can be used as the base for a view, 
+and a default view of the table is provided (click on the table name in the list). The
+Analyze page for a table gives you information on the contents of the table (identifying 
+empty fields, data ranges, etc.) and allows you to identify fields which can be used to 
+join to other tables. You can Reanalyze tables if their contents have changed.</p>
+
+<p>Go to <a href="&base_url&admin/content/tw/relationships">Content management => 
+Table Wizard => Relationships</a> to create relationships 
+among the tables you've added to Table Wizard. When you create a relationships between, say,
+ExampleTbl1.key and ExampleTbl2.key, then in a view containing ExampleTbl1 you can add a 
+relationship to ExampleTbl2, and bring fields from that table into the view.</p>
+
+<p>External comma-separated and tab-delimited files can be imported into the default Drupal 
+database using the provided tw_import_delimited module. After enabling this module,
+the Table Wizard page has an additional fieldset, Upload delimited files. When you import 
+a file, it is automatically added to the Table Wizard and analyzed.</p>

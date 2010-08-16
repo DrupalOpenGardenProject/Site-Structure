@@ -1,0 +1,181 @@
+<?php
+// $Id: tw_api.test,v 1.1.2.4 2009/09/09 19:19:34 mikeryan Exp $
+/**
+ * @file
+ * Tests for the Table Wizard API.
+ *
+ */
+
+/**
+ * API tests for the Table Wizard module
+ *
+ */
+class TwUnitTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Table Wizard API'),
+      'description' => t('Test Table Wizard API functions'),
+      'group' => t('Table Wizard'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('views', 'schema', 'tw');
+
+    // Create and login user
+    $tw_user = $this->drupalCreateUser(array('table wizard administration'));
+    $this->drupalLogin($tw_user);
+
+    // Create test tables
+    $ret = array();
+    $schema = array(
+      'description' => t('Uploaded data file with a single-column PK'),
+      'fields' => array(
+        'id' => array(
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'textfield' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'intfield' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array('id'),
+    );
+    db_create_table($ret, 'tw_simpletest_sample', $schema);
+    db_query("INSERT INTO {tw_simpletest_sample} (textfield, intfield)
+              VALUES('firstvalue', 5)");
+    db_query("INSERT INTO {tw_simpletest_sample} (textfield, intfield)
+              VALUES('secondvalue', 1)");
+    db_query("INSERT INTO {tw_simpletest_sample} (textfield, intfield)
+              VALUES('thirdvalue', 0)");
+    db_query("INSERT INTO {tw_simpletest_sample} (textfield, intfield)
+              VALUES('fourthvalue', 9)");
+    db_query("INSERT INTO {tw_simpletest_sample} (textfield, intfield)
+              VALUES('fifthvalue', 53)");
+
+     $schema = array(
+      'description' => t('Uploaded data file with no PK'),
+      'fields' => array(
+        'id' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'textfield' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'intfield' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+      ),
+    );
+    db_create_table($ret, 'tw_simpletest_sample_nopk', $schema);
+    db_query("INSERT INTO {tw_simpletest_sample_nopk} (id, textfield, intfield)
+              VALUES(1, 'firstvalue', 5)");
+    db_query("INSERT INTO {tw_simpletest_sample_nopk} (id, textfield, intfield)
+              VALUES(2, 'secondvalue', 1)");
+    db_query("INSERT INTO {tw_simpletest_sample_nopk} (id, textfield, intfield)
+              VALUES(3, 'thirdvalue', 0)");
+    db_query("INSERT INTO {tw_simpletest_sample_nopk} (id, textfield, intfield)
+              VALUES(4, 'fourthvalue', 9)");
+    db_query("INSERT INTO {tw_simpletest_sample_nopk} (id, textfield, intfield)
+              VALUES(5, 'fifthvalue', 53)");
+
+    $schema = array(
+      'description' => t('Uploaded data file with multi-column PK'),
+      'fields' => array(
+        'id1' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'id2' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'textfield' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'intfield' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array('id1', 'id2'),
+    );
+    db_create_table($ret, 'tw_simpletest_sample_multpk', $schema);
+    db_query("INSERT INTO {tw_simpletest_sample_multpk} (id1, id2, textfield, intfield)
+              VALUES(1, 1, 'firstvalue', 5)");
+    db_query("INSERT INTO {tw_simpletest_sample_multpk} (id1, id2, textfield, intfield)
+              VALUES(1, 2, 'secondvalue', 1)");
+    db_query("INSERT INTO {tw_simpletest_sample_multpk} (id1, id2, textfield, intfield)
+              VALUES(2, 1, 'thirdvalue', 0)");
+    db_query("INSERT INTO {tw_simpletest_sample_multpk} (id1, id2, textfield, intfield)
+              VALUES(2, 2, 'fourthvalue', 9)");
+    db_query("INSERT INTO {tw_simpletest_sample_multpk} (id1, id2, textfield, intfield)
+              VALUES(2, 3, 'fifthvalue', 53)");
+
+  }
+
+  function tearDown() {
+    $ret = array();
+    db_drop_table($ret, 'tw_simpletest_sample');
+    db_drop_table($ret, 'tw_simpletest_sample_nopk');
+    db_drop_table($ret, 'tw_simpletest_sample_multpk');
+    parent::tearDown();
+  }
+
+  /**
+   * Test API for adding tables
+   */
+  function testAddTables() {
+    // Test adding a single table with a single-field PK
+    tw_add_tables('tw_simpletest_sample');
+    $twtid = db_result(db_query("SELECT twtid FROM {tw_tables}
+                                 WHERE tablename='tw_simpletest_sample' AND dbconnection='default'"));
+    $this->assertTrue(isset($twtid) && $twtid > 0, t('Table added to tw_tables'));
+
+    $idtwcid = db_result(db_query("SELECT twcid FROM {tw_columns}
+                                   WHERE twtid=%d AND colname='id' AND primarykey=1
+                                     AND availablefk=1 AND ignorecol=0 AND isempty=0
+                                     AND coltype='serial' AND minlength IS NULL AND maxlength IS NULL
+                                     AND minvalue=1 AND maxvalue=5
+                                     AND minstring IS NULL AND maxstring IS NULL AND comments IS NULL",
+                                  $twtid));
+    $this->assertTrue(isset($idtwcid) && $idtwcid > 0, 'id field added to tw_columns');
+
+    $textfieldtwcid = db_result(db_query("SELECT twcid FROM {tw_columns}
+                                   WHERE twtid=%d AND colname='textfield' AND primarykey=0
+                                     AND availablefk=0 AND ignorecol=0 AND isempty=0
+                                     AND coltype='varchar' AND minlength=10 AND maxlength=11
+                                     AND minvalue IS NULL AND maxvalue IS NULL
+                                     AND minstring='fifthvalue' AND maxstring='thirdvalue' AND comments IS NULL",
+                                  $twtid));
+    $this->assertTrue(isset($textfieldtwcid) && $textfieldtwcid > 0, 'textfield field added to tw_columns');
+
+    $intfieldtwcid = db_result(db_query("SELECT twcid FROM {tw_columns}
+                                   WHERE twtid=%d AND colname='intfield' AND primarykey=0
+                                     AND availablefk=0 AND ignorecol=0 AND isempty=0
+                                     AND coltype='int' AND minlength IS NULL AND maxlength IS NULL
+                                     AND minvalue=0 AND maxvalue=53
+                                     AND minstring IS NULL AND maxstring IS NULL AND comments IS NULL",
+                                  $twtid));
+    $this->assertTrue(isset($intfieldtwcid) && $intfieldtwcid > 0, 'intfield field added to tw_columns');
+  }
+}

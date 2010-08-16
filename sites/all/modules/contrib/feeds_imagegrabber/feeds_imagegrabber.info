@@ -1,0 +1,13 @@
+; $Id: feeds_imagegrabber.info,v 1.1.4.3 2010/03/03 08:22:52 publicmind Exp $
+name = "Feeds Image Grabber"
+description = "Grabs image for each feed-item from their respective web pages and stores it in an image field."
+core = 6.x
+package = Feeds Addon
+dependencies[] = feeds
+dependencies[] = imagefield
+; Information added by drupal.org packaging script on 2010-03-28
+version = "6.x-1.0-beta2"
+core = "6.x"
+project = "feeds_imagegrabber"
+datestamp = "1269747615"
+

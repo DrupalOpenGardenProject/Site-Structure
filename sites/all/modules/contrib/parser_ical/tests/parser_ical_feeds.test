@@ -1,0 +1,162 @@
+<?php
+// $Id: parser_ical_feeds.test,v 1.1 2010/01/19 11:55:42 ekes Exp $
+
+/**
+ * @file
+ * Test case for CCK ical date field mapper mappers/content.inc.
+ */
+
+require_once(drupal_get_path('module', 'feeds') . '/tests/feeds_mapper_test.inc');
+
+/**
+ * Class for testing Feeds <em>content</em> mapper.
+ *
+ * @todo: Add test method iCal
+ * @todo: Add common feeds tests to mapping test
+ *   Apple (School.ics), Google, Upcoming, include one with only feed timezone, not per item
+ * @todo: Repeating rules 
+ */
+class ParserIcalFeedsTestCase extends  FeedsMapperTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => t('Feeds integration'),
+      'description' => t('Test Feeds iCal parser support and date mapping. <strong>Requires Feeds and Date module.</strong>'),
+      'group' => t('iCal Parser'),
+    );
+  }
+
+  public function absolutePath() {
+    return $this->absolute() . '/'. drupal_get_path('module', 'parser_ical');
+  }
+
+  /**
+   * Set up the test.
+   */
+  public function setUp() { 
+    // Call parent setup with the required module.
+    parent::setUp('feeds', 'feeds_ui', 'ctools', 'content', 'date_api', 'date', 'parser_ical');
+
+    // Create user and login.
+    $this->drupalLogin($this->drupalCreateUser(
+        array(
+          'administer content types',
+          'administer feeds',
+          'administer nodes',
+          'administer site configuration',
+        )
+    ));
+
+    // consistent site timezone to against
+    variable_set('date_default_timezone_name', 'Pacific/Apia');
+    // and just because I'll make mistakes working with tests with the US date format
+    variable_set('date_format_short', 'Y-m-d H:i');
+  }
+
+  /**
+   * Basic test configured feed item, to import feed into.
+   */
+  public function createConfiguredFeed() {
+    // Create content type.
+    $typename = $this->createContentType(NULL, array(
+      'datefield' => array('type' => 'date', 'settings' => array('todate' => 'optional', 'tz_handling' => 'date'), ),
+      'datesite' => array('type' => 'date', 'settings' => array('todate' => 'optional', 'tz_handling' => 'site'), ),
+    ));
+
+    // Create and configure importer.
+    $this->createFeedConfiguration('iCal Feed', 'ical');
+    $this->setSettings('ical', NULL, array('content_type' => '', 'import_period' => FEEDS_SCHEDULE_NEVER, ));
+    $this->setPlugin('ical', 'FeedsFileFetcher');
+    $this->setPlugin('ical', 'ParserIcalFeedsParser');
+    $this->setSettings('ical', 'FeedsNodeProcessor', array('content_type' => $typename));
+    $this->addMappings('ical', array(
+      array(
+        'source' => 'title',
+        'target' => 'title',
+      ),
+      array(
+        'source' => 'description',
+        'target' => 'body',
+      ),
+      array(
+        'source' => 'ical_date',
+        'target' => 'field_datefield:start',
+      ),
+      array(
+        'source' => 'ical_date',
+        'target' => 'field_datesite:start',
+      ),
+    ));
+
+    return $typename;
+  }
+
+  /**
+   * Basic test using Basic.ics
+   */
+  public function testBasicFeed() {
+    $typename = $this->createConfiguredFeed();
+    // Import iCal file.
+    $this->importFile('ical', $this->absolutePath() .'/tests/feeds/Basic.ics');
+    $this->assertText('Created 7 '. $typename .' nodes.');
+    // Check the imported nodes.
+    // Timezones
+    $data = array(
+      array('title' => 'Simple start and end', 'field' => '2009-01-31 19:30', 'site' => '2009-01-31 19:30', 'field2' => '2009-01-31 20:30', 'site2' => '2009-01-31 20:30', 'timezone' => 'Pacific/Apia'),
+      array('title' => 'Different start and end', 'field' => '2009-01-01 19:00', 'site' => '2009-01-01 07:00', 'field2' => '2009-01-01 20:00', 'site2' => '2009-01-01 08:00', 'timezone' => 'Europe/Paris'),
+      array('title' => 'No timezone this time', 'field' => '2009-09-01 19:00', 'site' => '2009-09-01 19:00', 'field2' => '2009-09-01 20:00', 'site2' => '2009-09-01 20:00', 'timezone' => 'Pacific/Apia'),
+      array('title' => 'UTC demarked with Z, over midnight.', 'field' => '2009-09-30 19:00', 'site' => '2009-09-30 08:00', 'field2' => '2009-10-01 20:00', 'site2' => '2009-10-01 09:00', 'timezone' => 'UTC'),
+      // FAILING :: next is taking the time and then moving the zone so it doesn't end up all day
+      array('title' => 'No timezone whole day', 'field' => '2009-10-02 00:00', 'site' => '2009-10-02 00:00', 'field2' => '2009-10-02 00:00', 'site2' => '2009-10-02 00:00', 'timezone' => 'Pacific/Apia'),
+      // FAILING :: working out the all day but then moving the timezone as above
+      array('title' => 'Single day as created by ms and google.', 'field' => '2009-01-05 00:00', 'site' => '2009-01-05 00:00', 'field2' => '2009-01-05 00:00', 'site2' => '2009-01-05 00:00', 'timezone' => 'Pacific/Apia'),
+      // FAILING :: as above plus it's putting in the wrong end date using whole single day rule rather than multiple day
+      array('title' => 'Multiple whole days', 'field' => '2009-10-05 00:00', 'site' => '2009-10-05 00:00', 'field2' => '2009-10-08 00:00', 'site2' => '2009-10-08 00:00', 'timezone' => 'Pacific/Apia'),
+    );
+    foreach ($data as $d) {
+      $n = node_load(array('title' => $d['title']), NULL, TRUE);
+      $this->drupalGet('node/' . $n->nid . '/edit');
+      $this->assertCCKFieldValue('datefield', $d['field']);
+      $this->assertCCKFieldValue('datesite', $d['site']);
+      $this->assertCCKFieldValue2('datefield', $d['field2']);
+      $this->assertCCKFieldValue2('datesite', $d['site2']);
+      $this->assertCCKFieldTimezone('datefield', $d['timezone']);
+    }
+  }
+
+  /**
+   * assertCCKFieldValue uses an XPath on the CCK fields on the form,
+   * the method looks in 'value' and for plain text the end date is a 'value2'
+   *
+   * Can't quickly see a nice extend on it so this _yet_ but sure it's there
+   * so this is a simple version of the function making assumtions that we 
+   * know of the date field.
+   * 
+   * @todo this properly.
+   */
+  private function assertCCKFieldValue2($field_name, $value) {
+    $xpath = '//input[@name="field_' . $field_name . '[0][value2][date]"]';
+    $message = t('Found form %field_name with the expected value.', array('%field_name' => $field_name));
+    $this->assertFieldByXPath($xpath, $value, $message);
+  }
+
+  private function assertCCKFieldTimezone($field_name, $value) {
+    $xpath = '//select[@name="field_' . $field_name . '[0][timezone][timezone]"]';
+    $message = t('Found form %field_name timezone with the expected value.', array('%field_name' => $field_name));
+    $this->assertFieldByXPath($xpath, $value, $message);
+  }
+
+  /**
+   * Return the form field name for a given CCK field. Special handling for date
+   * fields.
+   */
+  protected function getFormFieldsNames($field_name, $index) {
+    if (in_array($field_name, array('date', 'datetime', 'datestamp', 'datefield', 'datesite'))) {
+      return array("field_{$field_name}[{$index}][value][date]");
+    }
+    else {
+      return parent::getFormFieldsNames($field_name, $index);
+    }
+  }
+
+}

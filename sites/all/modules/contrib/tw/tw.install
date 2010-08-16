@@ -1,0 +1,331 @@
+<?php
+// $Id: tw.install,v 1.1.2.12 2009/10/21 00:32:58 mikeryan Exp $
+
+/**
+ * @file
+ */
+
+/**
+ * Implementation of hook_schema().
+ */
+function tw_schema() {
+  $schema['tw_tables'] = array(
+    'description' => 'Tables tracked by the Table Wizard module.',
+    'fields' => array(
+      'twtid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Unique ID for table.',
+      ),
+      'tablename' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Name of table.',
+      ),
+      'dbconnection' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'non null' => TRUE,
+        'default' => 'default',
+        'description' => "Which \$db_url connection from settings.php is used to connect to the table (defaults to 'default', Drupal's own database connection).",
+      ),
+      'provide_view' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => (int)TRUE,
+        'description' => 'A boolean flag indicating whether to provide a default view for the Views module.',
+      ),
+      'view_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Name of the default view provided by Table Wizard for this table.',
+      ),
+    ),
+    'primary key' => array('twtid'),
+  );
+
+  $schema['tw_columns'] = array(
+    'description' => 'Information on fields (columns) in tables managed by Table Wizard.',
+    'fields' => array(
+      'twcid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Unique ID for column.',
+      ),
+      'twtid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => "The column's associated table. Links to {tw_table}.twtid.",
+      ),
+      'colname' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Name of the column.',
+      ),
+      'weight' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Weight of column. Used for positioning fields within the view.',
+      ),
+      'primarykey' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => (int)FALSE,
+        'description' => "Flag to indicate whether this column is part of the table's primary key.",
+      ),
+      'availablefk' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => (int)FALSE,
+        'description' => 'Flag to indicate whether this column is available as a foreign key for creating relationships.'
+      ),
+      'secure' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => (int)FALSE,
+        'description' => 'Flag indicating the column contains data, such as passwords or credit card numbers, to be treated with care.',
+      ),
+      'ignorecol' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => (int)FALSE,
+        'description' => 'A flag to indicate whether the column should be ignored, or hidden, in default views.'
+      ),
+      'isempty' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => (int)FALSE,
+        'description' => 'A flag to indicate whether the column contains no data for any row after analysis.',
+      ),
+      'coltype' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'description' => "A string indicating the column's data type. For example, 'varchar', 'int', etc. Maps to hook_schema()'s definitions.",
+      ),
+      'minlength' => array(
+        'type' => 'int',
+        'description' => 'For varchar and text columns, the minimum number of characters found in the table data after analysis.',
+      ),
+      'maxlength' => array(
+        'type' => 'int',
+        'description' => 'For varchar and text columns, the maximum number of characters found in the table data after analysis.',
+      ),
+      'minvalue' => array(
+        'type' => 'float',
+        'description' => 'For numeric columns, the smallest value found in the table data after analysis.',
+      ),
+      'maxvalue' => array(
+        'type' => 'float',
+        'description' => 'For numeric columns, the largest value found in the table data after analysis.',
+      ),
+      'minstring' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'description' => 'For varchar and text columns, the shortest string found in the table data after analysis.',
+      ),
+      'maxstring' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'description' => 'For varchar and text columns, the longest string found in the table data after analysis.',
+      ),
+      'comments' => array(
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => FALSE,
+        'description' => 'User-entered comments on each column to document such things as its suitability for data import and any transformation that needs to occur.',
+      ),
+    ),
+    'primary key' => array('twcid'),
+    'unique keys' => array(
+      'colkey' => array('twtid', 'colname'),
+    ),
+  );
+
+  $schema['tw_relationships'] = array(
+    'description' => 'Information on relationships between tables.',
+    'fields' => array(
+      'twrid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Unique ID for relationship.',
+      ),
+      'leftcol' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The {tw_columns}.twcid for the left side of the join.',
+      ),
+      'rightcol' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The {tw_columns}.twcid for the right side of the join.',
+      ),
+      'automatic' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => (int)FALSE,
+        'description' => 'A flag indicating whether relationship should be inferred as a join (1 = Automatic) or a relationship (0 = Manual) that is specified explicitly.',
+      ),
+    ),
+    'primary key' => array('twrid'),
+    'unique keys' => array(
+      'colkey' => array('leftcol', 'rightcol'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function tw_install() {
+  // Create tables
+  drupal_install_schema('tw');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function tw_uninstall() {
+  // Remove tables
+  drupal_uninstall_schema('tw');
+}
+
+// Add database field to tw_tables
+function tw_update_6000() {
+  $ret = array();
+  $field = array(
+    'type' => 'varchar',
+    'length' => 255,
+    'non null' => TRUE,
+    'default' => 'default',
+  );
+  db_add_field($ret, 'tw_tables', 'tabledb', $field);
+  return $ret;
+}
+
+// Remove prefixes from tables in the default connection
+function tw_update_6001() {
+  $ret = array();
+  $sql = "SELECT * FROM {tw_tables}";
+  $result = db_query($sql);
+  while ($row = db_fetch_object($result)) {
+    $unprefixed = schema_unprefix_table($row->tablename);
+    $ret[] = update_sql("UPDATE {tw_tables}
+                         SET tablename='" . $unprefixed ."'
+                         WHERE twtid=" . $row->twtid);
+  }
+  return $ret;
+}
+
+// Rename tabledb field to connection
+function tw_update_6002() {
+  $ret = array();
+  db_change_field($ret, 'tw_tables', 'tabledb', 'connection',
+    array(
+        'type' => 'varchar',
+        'length' => 255,
+        'non null' => TRUE,
+        'default' => 'default',
+      )
+  );
+  return $ret;
+}
+
+// "connection" is a reserved word in earlier versions of MySQL, rename to dbconnection
+function tw_update_6003() {
+  $ret = array();
+  db_change_field($ret, 'tw_tables', 'connection', 'dbconnection',
+    array(
+        'type' => 'varchar',
+        'length' => 255,
+        'non null' => TRUE,
+        'default' => 'default',
+      )
+  );
+  return $ret;
+}
+
+// Add support for distinguishing between automatic and manual relationships
+function tw_update_6004() {
+  $ret = array();
+  db_add_field($ret, 'tw_relationships', 'automatic',
+    array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE,
+          'default' => (int)FALSE));
+  return $ret;
+}
+
+// Flag to
+function tw_update_6005() {
+  $ret = array();
+  db_add_field($ret, 'tw_tables', 'existing_view_data',
+    array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE,
+          'default' => (int)FALSE));
+  return $ret;
+}
+
+// Add support for customizing default views
+function tw_update_6006() {
+  $ret = array();
+  $field = array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => (int)TRUE,
+  );
+  db_add_field($ret, 'tw_tables', 'provide_view', $field);
+  $field = array(
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => TRUE,
+    'default' => '',
+  );
+  db_add_field($ret, 'tw_tables', 'view_name', $field);
+  $sql = "SELECT twtid, tablename, existing_view_data FROM {tw_tables}";
+  $result = db_query($sql);
+  while ($row = db_fetch_object($result)) {
+    $provide_view = FALSE;
+    $view_name = '';
+    if (!$row->existing_view_data) {
+      $sql = "SELECT COUNT(*) FROM {tw_columns} WHERE twtid=%d AND primarykey=1";
+      $pks = db_result(db_query($sql, $row->twtid));
+      if ($pks == 1) {
+        $provide_view = TRUE;
+        $view_name = $row->tablename;
+      }
+    }
+    $sql = "UPDATE {tw_tables} SET provide_view=%d, view_name='%s' WHERE twtid=%d";
+    db_query($sql, $provide_view, $view_name, $row->twtid);
+  }
+
+  // provide_view effectively supercedes existing_view_data
+  db_drop_field($ret, 'tw_tables', 'existing_view_data');
+
+  return $ret;
+}

@@ -1,0 +1,362 @@
+<?php
+
+/**
+ * Implementation of hook_openlayers_layers_info().
+ *
+ * Let openlayers know that there is spatial data that can be used as a layer
+ */
+function spatial_table_openlayers_layers_info() {
+  $file = drupal_get_path('module', 'spatial_table') .'/spatial_table.layers.inc';
+  $info = array();
+  
+  $spatial_table_layers = variable_get('spatial_table_layers',array());
+  
+  foreach ($spatial_table_layers as $layer) {
+    $info['spatial_table_'.$layer['spatial_table']] = array(
+      'id' => 'spatial_table_'.$layer['spatial_table'],
+      'name' => $layer['title'],
+      'description' => $layer['description'],
+      'file' => $file,
+      'data' => $layer,
+      'callback' => 'spatial_table_process_layers',
+    );
+  }
+  
+  return $info;  
+}
+
+function spatial_table_menu() {
+
+  $items = array();
+
+  $items['admin/settings/openlayers/spatial_table'] = array(
+    'title' => 'Spatial Table Layers',
+    'description' => 'Expose database tables with spatial information as layers in OpenLayers',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('spatial_table_admin'),
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_LOCAL_TASK,
+   );
+
+  return $items;
+}
+
+function spatial_table_admin($form_state = NULL) {
+	
+	// Determine which op we are in
+	if (arg(4) == 'edit') $op = 'edit';
+	else if (arg(4) == 'delete') $op = 'delete';
+	else {
+	  $op = isset($form_state['storage']['op']) ? $form_state['storage']['op'] : 'view';
+	}
+  
+  $form = array();
+  
+  if ($op == 'view') {
+  	$form = spatial_table_admin_view();
+  }
+  if ($op == 'new' || $op == 'edit') {
+    $form = spatial_table_admin_new_edit($op, $form_state);
+  }
+  if ($op == 'delete') {
+    $form = spatial_table_admin_delete();
+  }
+  return $form;
+  
+}
+
+
+function spatial_table_admin_delete() {
+  
+  $form = array();
+  
+  $spatial_table_layers = variable_get('spatial_table_layers',array());
+  $layer_title = $spatial_table_layers[arg(5)]['title'];
+  
+  $form['confirm'] = array (
+    '#value' => 'Are you sure you wish to delete <span style="font-weight:bold">'.$layer_title.'</span>?<br/>',
+  );
+  	
+  $form['submit_delete'] = array(
+	  '#type' => 'submit',
+	  '#value' => t('Delete')
+	);
+	
+	return $form;
+}
+
+function spatial_table_admin_new_edit($op, $form_state) {
+  $form = array();
+   	// Get the table
+  	if ($op == 'new') {
+  	  $table = $form_state['values']['spatial_table_select'];
+  	}
+  	if ($op == 'edit') {
+  	  $table = arg(5);
+  	}
+  	
+  	$table_schema = schema_invoke('inspect',$table);
+  	$table_schema = $table_schema[$table];
+  	$fields = $table_schema['fields'];
+
+  	// Get possible fields for geometry and attributes
+  	$field_geometry = array();
+  	$field_attributes = array();
+  	foreach ($fields as $name => $field) {
+  		$field_attributes[$name] = $name;
+  		if (in_array($field['type'], array('text','geometry','point','line','polygon','multipoint','multiline','multipolygon'))) {
+  			$field_geometry[$name] = $name;
+  		}
+  	}
+
+	  $spatial_table_layers = variable_get('spatial_table_layers',array());
+	  $default = $spatial_table_layers[$table];
+	  
+	  $table_options = _spatial_table_admin_table_options();
+	  
+	  // If it's a data_table, then we can get the default title.
+	  if (module_exists('data')) {
+  	  $data_tables = data_get_all_tables();
+  	  foreach ($data_tables as $data_table) {
+  	  	if ($data_table->get('name') == $table) {
+  	  		$data_title = $data_table->get('title');
+  	  	}
+  	  }
+	  }
+	  
+    $form['spatial_table'] = array(
+	    '#type' => 'select',
+	    '#title' => t('Table'),
+	    '#options' => $table_options,
+	    '#default_value' => $table,
+	    '#disabled' => TRUE,
+	    '#required' => TRUE,
+	  );
+	 
+	 	$form['title'] = array(
+	    '#type' => 'textfield',
+	    '#title' => t('Title'),
+	    '#default_value' => $default['title'] ? $default['title'] : ($title ? $title : ''),
+	    '#description' => t('Layer title presented to the user'),
+	    '#required' => TRUE,
+	  );
+	  
+	 	$form['description'] = array(
+	    '#type' => 'textfield',
+	    '#default_value' => $default['description'] ? $default['description'] : '',
+	    '#title' => t('Description'),
+	  );
+	  
+	  $form['field_geometry'] = array(
+	    '#type' => 'select',
+	    '#title' => t('Geometry Field'),
+	    '#options' => $field_geometry,
+	    '#description' => t('Field that contains location and geometric information'),
+	    '#default_value' => $default['field_geometry'] ? $default['field_geometry'] : '',
+	    '#required' => TRUE,
+	  );
+	 
+	 $form['field_fid'] = array(
+	    '#type' => 'select',
+	    '#title' => t('Feature ID Field'),
+	    '#options' => $field_attributes,
+	    '#default_value' => $default['field_fid'] ? $default['field_fid'] : '',
+	    '#description' => t('Field that contains a unqiue feature ID'),
+	  );
+	  
+	  $form['field_attributes'] = array(
+	    '#type' => 'checkboxes',
+	    '#title' => t('Attribute Fields'),
+	    '#options' => $field_attributes,
+	    '#default_value' => $default['field_attributes'] ? $default['field_attributes'] : array(),
+	    '#description' => t('Fields that contains attribute information'),
+	  );
+	  
+	  $form['submit_save'] = array(
+	  	'#type' => 'submit',
+	  	'#value' => t('Save')
+	  );
+
+	  return $form; 
+    
+}
+
+function spatial_table_admin_view() {
+   	$form = array();
+   	
+  	$spatial_table_layers = variable_get('spatial_table_layers',array());
+  	
+  	$table_options = _spatial_table_admin_table_options();
+  	
+  	// Generate the table list
+  	if (count($spatial_table_layers)) {
+  		$header = array (
+  		  array('data' => t('Table')),
+  			array('data' => t('Title')),
+  			array('data' => t('Description')),
+  			array('data' => t('Geometry Field')),
+  			array('data' => t('Type')),
+  			array('data' => t('FID Field')),
+  			array('data' => t('Attributes Field')),
+  			array('data' => t('Operations')),
+  	  );
+  		
+  		$rows = array();
+  		foreach ($spatial_table_layers as $layer) {
+  			$rows[] = array(
+  			  array('data' => $layer['spatial_table']),
+  			  array('data' => $layer['title']),
+  			  array('data' => '<span style="font-size:smaller">'.$layer['description'].'</span>'),
+  			  array('data' => $layer['field_geometry']),
+  			  array('data' => $layer['field_type']),
+  			  array('data' => $layer['field_fid']),
+  			  array('data' => implode(', ',$layer['field_attributes'])),
+  			  array('data' => '<span>'.l('Edit','admin/settings/openlayers/spatial_table/edit/'.$layer['spatial_table']).'</span>'.
+  			                  '<span style="margin-left:1em">'.l('Delete','admin/settings/openlayers/spatial_table/delete/'.$layer['spatial_table']).'</span>'),
+  			);
+  		}
+  		$list_table = theme_table($header, $rows);
+  	}
+  	
+  	
+  	// The actual form
+  	$form['list_table'] = array (
+  	  '#value' => $list_table,
+  	);
+  	
+	  $form['spatial_table_select'] = array(
+	    '#type' => 'select',
+	    '#title' => t('Create new layer from table'),
+	    '#options' => $table_options,
+	    '#description' => t("Select the table you wish to create the layer from"),
+	    '#required' => TRUE,
+	  );
+	  $form['submit_next'] = array(
+	  	'#type' => 'submit',
+	  	'#value' => t('Next')
+	  ); 
+  
+  return $form;
+}
+
+function spatial_table_admin_submit($form, &$form_state) {
+  // Determine which op we are in
+	if (arg(4) == 'edit') $op = 'edit';
+	else if (arg(4) == 'delete') $op = 'delete';
+	else {
+	  $op = isset($form_state['storage']['op']) ? $form_state['storage']['op'] : 'view';
+	}
+  
+  // Check to see which op we should be in
+  if ($op == 'view' && $form['spatial_table_select']) {
+    $op = $form_state['storage']['op'] = 'new';
+    $form_state['rebuild'] = TRUE;
+  }
+  if (($op == 'new' || $op == 'edit') && $form['spatial_table']) {
+    $op = $form_state['storage']['op'] = 'save';
+  }
+  
+  if ($op == 'save') {
+    $values = array();
+    $values['spatial_table'] = $form['spatial_table']['#value'];
+    $values['title'] = $form['title']['#value'];
+    $values['description'] = $form['description']['#value'];
+    $values['field_geometry'] = $form['field_geometry']['#value'];
+    $values['field_fid'] = $form['field_fid']['#value'];
+    $values['field_attributes'] = $form['field_attributes']['#value'];
+    
+    $table_schema = schema_invoke('inspect',$table);
+    $values['field_type'] =  $table_schema[$values['spatial_table']]['fields'][$values['field_geometry']]['type'];
+    
+    // Save the data
+    $spatial_table_layers = variable_get('spatial_table_layers',array());
+    $spatial_table_layers[$values['spatial_table']] = $values;
+    variable_set('spatial_table_layers',$spatial_table_layers);
+    
+    drupal_set_message('Spatial Table Layer Saved');
+    drupal_goto('admin/settings/openlayers/spatial_table');
+  }
+  
+  if ($op == 'delete' && $form['submit_delete']) {
+    
+    $spatial_table_layers = variable_get('spatial_table_layers',array());
+    unset($spatial_table_layers[arg(5)]);
+    variable_set('spatial_table_layers',$spatial_table_layers);
+    
+    drupal_set_message('Spatial Table Layer Deleted');
+    drupal_goto('admin/settings/openlayers/spatial_table');  
+  }
+  
+}
+
+
+
+
+function _spatial_table_admin_table_options() {
+  
+  $options = array();
+	
+  $drupal_schema = drupal_get_schema(NULL, TRUE);
+  $db_schema = schema_invoke('inspect');
+  
+  // Data Tables
+  if (module_exists('data')) {
+    $data_tables = data_get_all_tables();
+    if ($data_tables) {
+    	$options['#data_tables'] = 'Data Tables';
+  	  foreach ($data_tables as $table) {
+  	  	$options[$table->get('name')] = '- '.$table->get('title');
+  	  }
+    }
+  }
+  
+  // Table Wizard Tables
+  if (module_exists('tw')) {
+    $sql = "SELECT * FROM {tw_tables} twt";
+    $result = db_query($sql);
+    while ($tw_table = db_fetch_object($result)) {
+    	// If this table is not already listed, then add it
+    	if (!array_key_exists($tw_table->tablename,$options)) {
+    	  $tw_tables[$tw_table->tablename] = $tw_table->tablename;
+      }
+    }
+    // If there are any tw tables, list them as options
+    if ($tw_tables) {
+    	$options['#tw_tables'] = 'Table Wizard';
+  	  foreach ($tw_tables as $table) {
+  	  	$options[$table] = '- '.$table;
+  	  	// TW does not register it's tables, so we need to manually remove them from orphans list
+  	  	if ($orphaned_tables[$table]) {
+  	  	  unset($orphaned_tables[$table]);
+  	    }
+  	  }
+    }
+  }
+  
+  // Orphaned Tables
+  // We can only find orphaned tables with the schema module (for now). 
+  if ($db_schema) {
+    $orphaned_tables = array();
+    foreach ($db_schema as $name => $table) {
+      if (!isset($drupal_schema[$name])) {
+        $orphaned_tables[$name] = $name;
+      }
+    }
+    if ($orphaned_tables) {
+    	$options['#or_tables'] = 'Orphaned Tables';
+  	  foreach ($orphaned_tables as $table) {
+  	  	$options[$table] = '- '.$table;
+  	  }
+    }
+  }
+  
+  // All others
+  $options['#other_tables'] = 'Module Tables';
+  foreach ($drupal_schema as $table) {
+  	if (!$options[$table['name']]) {
+      $options[$table['name']] = '- '.$table['name'];
+    }
+	}
+	
+	return $options;
+}

@@ -1,0 +1,119 @@
+<?php
+// $Id: qpcache.install,v 1.1.2.3 2009/07/23 07:29:08 pebosi Exp $
+
+/**
+ * The installer file for qpcache.
+ * @file
+ */
+
+function qpcache_update_6100() {
+  
+  $spec = array(
+    'type' => 'int',
+    'not null' => TRUE,
+    'unsigned' => FALSE,
+    'default' => 0,
+  );
+  $indexes = array(
+    //'primary key' => array('cid'),
+    'unique keys' => array('hash' => array('crckey', 'hashkey')),
+    // 'indexes' => array(
+    //       'by_key' => array('crckey', 'hashkey', 'expire'),
+    //       'cacheexpire' => array('expire'),
+    //     )
+  );
+  
+  
+  $ret = array();
+  // None of these work on MySQL: Illegal to drop primary key index,
+  // illegal to drop other indices.
+  //db_drop_primary_key($ret, 'qpcache_xmlcache');
+  //db_drop_index($ret, 'qpcache_xmlcache', 'by_key');
+  //db_drop_index($ret, 'qpcache_xmlcache', 'expire');
+  db_change_field($ret, 'qpcache_xmlcache', 'crckey', 'crckey', $spec, $indexes);
+  return $ret;
+}
+
+function qpcache_update_6101() {
+  $spec = array(
+    'type' => 'int',
+    'size' => 'big',    
+    'not null' => TRUE,
+    'unsigned' => FALSE,
+    'default' => 0,
+  );
+  $ret = array();
+  db_change_field($ret, 'qpcache_xmlcache', 'crckey', 'crckey', $spec);
+  return $ret;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function qpcache_install() {
+  drupal_install_schema('qpcache');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function qpcache_uninstall() {
+  drupal_uninstall_schema('qpcache');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function qpcache_schema() {
+  $schema['qpcache_xmlcache'] = array(
+    'fields' => array(
+      // Cache ID
+      'cid' => array(
+        'type' => 'serial', 
+        'not null' => TRUE, 
+        'unsigned' => TRUE,
+      ),
+      // CRC32 checksum
+      'crckey' => array(
+        'type' => 'int',
+        'size' => 'big',     
+        'not null' => TRUE,
+        'unsigned' => FALSE,
+        'default' => 0,
+      ),
+      // Expiration timestamp
+      'expire' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+      ),
+      // Hash key
+      'hashkey' => array(
+        'type' => 'varchar',
+        'length' => 32,
+      ),
+      // Cleartext key (for DBAs)
+      'clearkey' => array(
+        'type' => 'text',
+      ),
+      
+      // XML content
+      'body' => array(
+        'type' => 'text',
+        'size' => 'big',
+      ),
+    ),
+    'primary key' => array('cid'),
+    // Collision space for the combination of these two should be miniscule.
+    'unique keys' => array('hash' => array('crckey', 'hashkey')),
+    'indexes' => array(
+      // Used for fast seeking
+      'by_key' => array('crckey', 'hashkey', 'expire'),
+      // Used by cache maintanance
+      'cacheexpire' => array('expire'),
+    ), 
+  );
+
+  return $schema;
+}

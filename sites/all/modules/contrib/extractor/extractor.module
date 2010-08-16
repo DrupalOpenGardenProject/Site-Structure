@@ -1,0 +1,108 @@
+<?php
+// $Id: extractor.module,v 1.3 2010/03/30 21:49:02 alexb Exp $
+
+/**
+ * @file
+ * Main API functions.
+ *
+ * Variables:
+ *
+ * Name: extractor_engine
+ */
+
+/**
+ * Implementation of hook_plugins().
+ */
+function extractor_feeds_plugins() {
+  $info['ExtractorSyndicationParser'] = array(
+    'name' => 'Common syndication parser with term extraction',
+    'description' => 'Parse XML feeds in RSS 1, RSS 2 or Atom format, extract terms from titles and descriptions.',
+    'handler' => array(
+      'parent' => 'FeedsSyndicationParser',
+      'class' => 'ExtractorSyndicationParser',
+      'file' => 'ExtractorSyndicationParser.inc',
+      'path' => drupal_get_path('module', 'extractor'),
+    ),
+  );
+  if (feeds_library_exists('simplepie.inc', 'simplepie')) {
+    $info['ExtractorSimplePieParser'] = array(
+      'name' => 'SimplePie parser with term extraction',
+      'description' => 'Use <a href="http://simplepie.org/">SimplePie</a> to parse XML feeds in RSS 1, RSS 2 or Atom format, extract terms from titles and descriptions.',
+      'handler' => array(
+        'parent' => 'FeedsSimplePieParser',
+        'class' => 'ExtractorSimplePieParser',
+        'file' => 'ExtractorSimplePieParser.inc',
+        'path' => drupal_get_path('module', 'extractor'),
+      ),
+    );
+  }
+  return $info;
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function extractor_menu() {
+  $items = array();
+  $items['admin/settings/extractor'] = array(
+    'title' => 'Extractor',
+    'description' => 'Set vocabulary for simple term extractor API.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('extractor_settings_form'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+  );
+  return $items;
+}
+
+/**
+ * Menu callback for administration form.
+ */
+function extractor_settings_form() {
+  $form = array();
+
+  $options = array(0 => t('Select a vocabulary'));
+  foreach (taxonomy_get_vocabularies() as $vid => $vocab) {
+    $options[$vid] = $vocab->name;
+  }
+  $form['extractor_simple_vid'] = array(
+    '#type' => 'select',
+    '#title' => t('Vocabulary'),
+    '#description' => t('Select vocabulary for simple term extraction engine. Terms in this vocabulary will be looked up in text to be extracted.'),
+    '#options' => $options,
+    '#default_value' => variable_get('extractor_simple_vid', 0),
+  );
+  return system_settings_form($form);
+}
+
+/**
+ * Main API function.
+ *
+ * @param $text
+ *   The text to perform the term extraction on.
+ * @param $library
+ *   The extraction library to use. Possible options: 'extractor_simple' or
+ *   'placemaker'.
+ * @param $config
+ *   An array containing a configuration for the library in use.
+ *
+ * @return
+ *   An array of terms found in $text. They keys of the array contain the
+ *   taxonomy term ids and the values the term names.
+ */
+function extractor_extract($text, $library = 'extractor_simple', $config = array()) {
+  extractor_include($library);
+  $extract = "{$library}_extract";
+  return $extract($text, $config);
+}
+
+/**
+ * Include from libraries.
+ */
+function extractor_include($name) {
+  static $included;
+  if (!$included[$name]) {
+    include drupal_get_path('module', 'extractor') .'/libraries/'. $name .'.inc';
+    $included[$name] = TRUE;
+  }
+}

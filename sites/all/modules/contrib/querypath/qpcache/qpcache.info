@@ -1,0 +1,15 @@
+;$Id: qpcache.info,v 1.1.2.1 2009/05/22 20:48:00 mbutcher Exp $
+
+name = QPCache
+package = QueryPath
+description = An XML caching layer for QueryPath or other tools.
+core = 6.x
+php = 5.1
+dependencies[] = querypath
+
+; Information added by drupal.org packaging script on 2009-08-21
+version = "6.x-1.5"
+core = "6.x"
+project = "querypath"
+datestamp = "1250821878"
+

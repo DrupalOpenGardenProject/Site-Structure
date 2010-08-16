@@ -1,0 +1,18 @@
+<!-- $Id: external-tables.html,v 1.1.2.1 2009/05/10 22:39:59 mikeryan Exp $ -->
+<p>Table Wizard is also capable of managing tables which are in a different database from 
+your default Drupal installation. The external database needs to be defined in settings.php:</p>
+
+<pre>
+$db_url['default'] = 'mysqli://root:pass1@localhost/drupaldb';
+$db_url['extdb'] =   'mysqli://root:pass1@localhost/otherdb';
+</pre>
+
+<p><b>$db_url['default']</b> defines your Drupal database (i.e., this is what you are most 
+likely already assigning to $db_url). 'example' represents another connection, and the 
+text you use in place of 'example' will appear in the Table Wizard pages to qualify tables 
+as coming from the external database.</p>
+
+<p>Once you do this, the <b>Available tables</b> list on the Table Wizard page will also 
+show tables in the external database, in a separate select list. At this time, although 
+Table Wizard does not prevent you from creating relationships across databases, the Views
+module does not support this.</p>

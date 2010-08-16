@@ -1,0 +1,839 @@
+<?php
+// $Id: feeds_imagegrabber.module,v 1.1.4.7 2010/03/28 03:31:13 publicmind Exp $
+
+
+/**
+ * @file
+ *  Grabs image for each feed-item from their respective web pages and stores
+ *  it in an image field. Requires Feeds module.
+ *
+ */
+
+/**
+ * Error code indicating that the request made by feeds_imagegrabber_http_request() exceeded
+ * the specified timeout.
+ */
+define('FIG_HTTP_REQUEST_TIMEOUT', 1);
+
+//=============
+//DRUPAL HOOKS.
+//=============
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function feeds_imagegrabber_form_alter(&$form, $form_state, $form_id) {
+  if ($form['#id'] == 'node-form') {
+    if ($importer = feeds_get_importer_id($form['type']['#value'])) {
+      $settings = array();
+      if (!isset($form['#node']->nid) || ($settings = feeds_imagegrabber_get_settings($form['#node']->nid)) === FALSE) {
+        $settings = array(
+          'enabled' => 0,
+          'id_class' => 0,
+          'id_class_desc' => '',
+          'exec_time' => 10,
+          'feeling_lucky' => 0,
+        );
+      }
+
+      $form['feeds_imagegrabber'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Feeds Image Grabber'),
+        '#tree' => TRUE,
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      );
+
+      $form['feeds_imagegrabber']['enabled'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Enable Feeds Image Grabber'),
+        '#description' => t('Check if you want to download images of the feed items for this feed.'),
+        '#default_value' => $settings['enabled'],
+      );
+
+      $form['feeds_imagegrabber']['id_class'] = array(
+        '#type' => 'radios',
+        '#title' => t('Search for an image between the tag which is identified by'),
+        '#options' => array(
+          t('None, search the whole web-page for the image.'),
+          t('an Id'),
+          t('a Class'),
+        ),
+        '#default_value' => $settings['id_class'],
+      );
+
+      $form['feeds_imagegrabber']['id_class_desc'] = array(
+        '#type' => 'textfield',
+        '#title' => t('<i>Id</i> or <i>Class</i> of the HTML tag (Leave empty if you selected <i>None</i> above.)'),
+        '#default_value' => $settings['id_class_desc'],
+        '#maxlength' => 100,
+      );
+
+      $form['feeds_imagegrabber']['feeling_lucky'] = array(
+        '#type' => 'radios',
+        '#title' => t('Feeling lucky, huh?'),
+        '#options' => array(
+          t('No, select the largest image between the tag.'),
+          t('Yes, select the first image between the tag. (Recommended)'),
+        ),
+        '#default_value' => $settings['feeling_lucky'],
+      );
+      $form['feeds_imagegrabber']['exec_time'] = array(
+        '#type' => 'select',
+        '#title' => t('Execution time[%]'),
+        '#options' => drupal_map_assoc(array(10, 20, 30, 50, 75)),
+        '#default_value' => $settings['exec_time'],
+        '#description' => t('Select the percentage of maximum PHP execution time to take while grabbing image for a feed item.'),
+      );
+
+      $form['#validate'][] = 'feeds_imagegrabber_form_node_validate';
+    }
+  }
+}
+
+function feeds_imagegrabber_form_node_validate($form, &$form_state) {
+  if ($form_state['values']['feeds_imagegrabber']['enabled'] == 1) {
+    $id_class = $form_state['values']['feeds_imagegrabber']['id_class'];
+    $id_class_desc = $form_state['values']['feeds_imagegrabber']['id_class_desc'];
+    if ($id_class) {
+      if (!isset($id_class_desc) || empty($id_class_desc) || $id_class_desc == '') {
+        form_set_error('feeds_imagegrabber][id_class_desc', "Specify the id/class of the desired tag.");
+      }
+      if (!preg_match('/^[a-zA-Z]+[_a-zA-Z0-9-]*$/', $id_class_desc)) {
+        form_set_error('feeds_imagegrabber][id_class_desc', "id/class is not valid. Only alphabets, digits, hyphens and underscores are allowed.");
+      }
+    }
+    else {
+      form_set_value($form['feeds_imagegrabber']['id_class_desc'], '', $form_state);
+    }
+    $temp = $form_state['values']['feeds_imagegrabber']['exec_time'];
+    if (!is_numeric($temp) || $temp < 10 || $temp != round($temp) || $temp > 75) {
+      form_set_error('feeds_imagegrabber][exec_time', t('Select the correct option for FIG execution time.'));
+    }
+  }
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function feeds_imagegrabber_nodeapi(&$node, $op, $form) {
+  switch ($op) {
+    case 'insert':
+    case 'update':
+      if ($importer_id = feeds_get_importer_id($node->type)) {
+        if ($node->feeds_imagegrabber['enabled']) {
+          $settings = array(
+            'feed_nid' => $node->nid,
+            'enabled' => $node->feeds_imagegrabber['enabled'],
+            'id_class' => $node->feeds_imagegrabber['id_class'],
+            'id_class_desc' => $node->feeds_imagegrabber['id_class_desc'],
+            'exec_time' => $node->feeds_imagegrabber['exec_time'],
+            'feeling_lucky' => $node->feeds_imagegrabber['feeling_lucky'],
+          );
+          // Make sure a source record is present at all time, try to update first,
+          // then insert.
+          drupal_write_record('feeds_imagegrabber', $settings, array('feed_nid'));
+          if (!db_affected_rows()) {
+            drupal_write_record('feeds_imagegrabber', $settings);
+          }
+        }
+        else {
+          db_query("UPDATE {feeds_imagegrabber} SET enabled = %d WHERE feed_nid = %d", 0, $node->nid);
+        }
+      }
+      break;
+
+    case 'delete':
+      @db_query("DELETE FROM {feeds_imagegrabber} where feed_nid = %d", $node->nid);
+      break;
+  }
+}
+
+//==================
+// FEEDS HOOKS
+//==================
+
+/**
+ * Implementation of hook_feeds_node_processor_targets_alter().
+ */
+function feeds_imagegrabber_feeds_node_processor_targets_alter($targets, $content_type) {
+  $info = content_types($content_type);
+  $fields = array();
+  if (isset($info['fields']) && count($info['fields'])) {
+    foreach ($info['fields'] as $field_name => $field) {
+      if (isset($field['widget']['type']) && $field['widget']['type'] == 'imagefield_widget') {
+        $name = isset($field['widget']['label']) ? $field['widget']['label'] : $field_name;
+        $targets[$field_name .':fig'] = array(
+          'name' => $name .' (FIG)',
+          'callback' => 'feeds_imagegrabber_feeds_set_target',
+          'description' => t('The Item URL for the CCK @name imagefield of the node.', array('@name' => $name)),
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_feeds_set_target().
+ *
+ * @param $node
+ *   The target node.
+ * @param $target
+ *   The name of field on the target node to map to.
+ * @param $page_url
+ *   This should contain a valid URL for the feed item, from
+ *   which the target image is to be grabbed.
+ */
+function feeds_imagegrabber_feeds_set_target($node, $target, $page_url) {
+  $feed_nid     = $node->feeds_node_item->feed_nid;
+  $settings     = feeds_imagegrabber_get_settings($feed_nid);
+  if(!$settings || !$settings['enabled']) {
+    return;
+  }
+  
+  $path = drupal_get_path('module', 'feeds_imagegrabber') .'/url_to_absolute.php';
+  if (!file_exists($path)) {
+    drupal_set_message(t('Feeds Image Grabber: The URL conversion script is missing. Go to <a href="!admin-reports-status">Status Report page</a>', array('!admin-reports-status' => url('admin/reports/status'))), 'error');
+    return;
+  }
+  require_once($path);
+
+  list($field_name) = split(':', $target);
+  $field        = content_fields($field_name, $node->type);
+  $max_filesize = parse_size(file_upload_max_size());
+  if (!empty($field['widget']['max_filesize_per_file']) && parse_size($field['widget']['max_filesize_per_file']) < $max_filesize) {
+    $max_filesize = parse_size($field['widget']['max_filesize_per_file']);
+  }
+  $max_exec_time = ini_get('max_execution_time');
+  $timeout = $max_exec_time == 0 ? 10 : ($settings['exec_time'] * $max_exec_time / 100);
+  $page_time = timer_read('page')/1000;
+  if(function_exists('encode_url')) {
+    $page_url = encode_url($page_url);
+  }
+  
+  if (valid_url($page_url)) {
+    $xml = feeds_imagegrabber_webpage_scraper($page_url, $settings['id_class'], $settings['id_class_desc'], $timeout);
+    if ($xml == FALSE) {
+      return;
+    }
+  $timeout = $timeout - timer_read('page')/1000 + $page_time;
+  
+    $options = array(
+      'max_imagesize' => $max_filesize,
+      'timeout' => $timeout,
+      'feeling_lucky' => $settings['feeling_lucky'],
+    );
+
+    $images = feeds_imagegrabber_scrape_images($xml, $page_url, $options);
+    if ($images == FALSE || count($images) <= 0) {
+      return;
+    }
+
+    asort($images);
+    $images = array_reverse($images, TRUE);
+
+    // Map enclosures.
+    $items = isset($node->$field_name) ? $node->$field_name : array();
+
+    foreach ($images as $url => $size) {
+      $enclosure = new FeedsEnclosure($url, 'application/octet-stream');
+      if ($file = $enclosure->getFile()) {
+        $target_dir       = filefield_widget_file_path($field, user_load($node->uid));
+        $file_validators  = filefield_widget_upload_validators($field);
+        $image_validators = imagefield_widget_upload_validators($field);
+        $validators       = array_merge($file_validators, $image_validators);
+        $info             = field_file_save_file($enclosure->getFile(), $validators, $target_dir, user_load($node->uid));
+        if ($info) {
+          $info['list'] = array();
+          $info['data'] = array('description' => '');
+          if ($field['list_field']) {
+            $info['list'] = $field['list_default'];
+          }
+          $items[] = $info;
+          break;
+        }
+      }
+    }
+    $node->$field_name = $items;
+  }
+}
+
+//==================
+//HELPER FUNCTIONS
+//==================
+
+/**
+ * Retrieve settings for a feed node from the database.
+ *
+ * @param $feed_nid
+ *   The nid of the feed node.
+ *
+ * @return
+ *   An array of settings or FALSE if settings not found.
+ *
+ */
+function feeds_imagegrabber_get_settings($feed_nid) {
+  $settings = db_fetch_array(db_query("SELECT enabled, id_class, id_class_desc, feeling_lucky, exec_time FROM {feeds_imagegrabber} WHERE feed_nid = %d", $feed_nid));
+  return $settings;
+}
+
+/**
+ * Checks whether a file is a valid Drupal image or not.
+ *
+ * @param $filepath
+ *   A string specifying the filepath.
+ *
+ * @return
+ *   A boolean TRUE for a valid image, else FALSE
+ *
+ * @see image_get_info()
+ */
+function feeds_imagegrabber_is_image($filepath) {
+  $info = image_get_info($filepath);
+  if (!$info || empty($info['extension'])) {
+    return FALSE;
+  }
+  return TRUE;
+}
+
+/**
+ * Downloads a file from an external website and saves it to the given destination.
+ *
+ * This function is usually used to download a file from external website. The size
+ * of the file is validated *after* downloading the file, hence check download size first
+ * using feeds_imagegrabber_validate_download_size().
+ *
+ * @param $file_url
+ *   A string specifying the formatted file url.
+ * @param $destination
+ *   A filepath where the downloaded file must be saved.
+ * @param $max_size
+ *   Maximum size of the file to be downloaded.
+ * @param $timeout
+ *   A float representing the maximum number of seconds the function call
+ *   may take. The default is 10 seconds. If a timeout occurs, the retuen
+ *   code is set to the FIG_HTTP_REQUEST_TIMEOUT constant.
+ * @param $max_redirects
+ *   An integer representing how many times a redirect may be followed.
+ *   Defaults to 3.
+ *
+ * @return
+ *   An integer code containing 200 in case of success otherwise error code as returned
+ *   by feeds_imagegrabber_http_request().
+ *
+ * @see feeds_imagegrabber_http_request()
+ * @see feeds_imagegrabber_validate_download_size()
+ * @note validate the file extension before calling this function.
+ */
+function feeds_imagegrabber_download_file($file_url, $destination, $max_size, $timeout = 10, $max_redirects = 3) {
+  $options = array(
+    'headers' => array(),
+    'method' => 'GET',
+    'data' => NULL,
+    'max_redirects' => $max_redirects,
+    'timeout' => $timeout,
+  );
+
+  $result = feeds_imagegrabber_http_request($file_url, $options);
+  if ($result->code != 200) {
+    return $result->code;
+  }
+
+  if (!isset($result->headers['Content-Length']) || $result->headers['Content-Length'] > $max_size || $result->headers['Content-Length'] < 0) {
+    //content length unacceptable
+    return - 1100;
+  }
+
+  //SAVE THE FILE
+  if (file_put_contents($destination, $result->data) === FALSE) {
+    //file could not be created
+    return - 1101;
+  }
+
+  return $result->code;
+}
+
+/**
+ * Validates the size of an file accessible through a http url.
+ *
+ * @param $file_url
+ *   A string specifying the formatted file url.
+ * @param $max_size
+ *   Maximum size of the file to be downloaded.
+ * @param $timeout
+ *   A float representing the maximum number of seconds the function call
+ *   may take. The default is 10 seconds. If a timeout occurs, the retuen
+ *   code is set to the FIG_HTTP_REQUEST_TIMEOUT constant.
+ * @param $max_redirects
+ *   An integer representing how many times a redirect may be followed.
+ *   Defaults to 3.
+ *
+ * @return
+ *   An integer code containing filesize in case the file exists and conforms to the
+ *   size limit, -1 otherwise.
+ *
+ */
+function feeds_imagegrabber_validate_download_size($file_url, $max_size, $timeout = 10, $max_redirects = 3) {
+  $options = array(
+    'headers' => array(),
+    'method' => 'HEAD',
+    'data' => NULL,
+    'max_redirects' => $max_redirects,
+    'timeout' => $timeout,
+  );
+  $result = feeds_imagegrabber_http_request($file_url, $options);
+  if ($result->code == 200 && isset($result->headers['Content-Length']) && $result->headers['Content-Length'] <= $max_size) {
+    return $result->headers['Content-Length'];
+  }
+  return - 1;
+}
+
+/**
+ * Scrape the webpage using the id or the css class of a tag and returns the
+ * HTML between the tag.
+ *
+ * @param $page_url
+ *   A string specifying the page url to scrape. If there is a redirect, it is
+ *   changed to the redirect_url.
+ * @param $itype
+ *   A positive integer value representing the identifier type for the tag:
+ *     - 0 : selects content between <body> </body>.
+ *     - 1 : selects content between the tag identified by an ID.
+ *     - 2 : selects content between the first tag identified by a CSS class.
+ * @param $ivalue
+ *   A string specifying the ID or the CSS class.
+ * @param $timeout
+ *   A float representing the maximum number of seconds the function call
+ *   may take. The default is 15 seconds. If a timeout occurs, the retuen
+ *   code is set to the FIG_HTTP_REQUEST_TIMEOUT constant.
+ * @param $max_redirects
+ *   An integer representing how many times a redirect may be followed.
+ *   Defaults to 3.
+ * @param $error_log
+ *   An array which contains the error codes and messages in case the functions fails.
+ *
+ * @return
+ *   FALSE on failure, OR content between the tags as XML on success
+ *
+ */
+function feeds_imagegrabber_webpage_scraper(&$page_url, $itype, $ivalue = '', $timeout = 15, $max_redirects = 3, &$error_log = array()) {
+  $options = array(
+    'headers' => array(),
+    'method' => 'GET',
+    'data' => NULL,
+    'max_redirects' => $max_redirects,
+    'timeout' => $timeout,
+  );
+
+  $result = feeds_imagegrabber_http_request($page_url, $options);
+  if(in_array($result->redirect_code, array(301, 302, 307))) {
+    $page_url = $result->redirect_url;
+  }
+  
+  if ($result->code != 200) {
+    $error_log['code'] = $result->code;
+    $error_log['error'] = "unable to retrieve content from web page";
+    return FALSE;
+  }
+  if (empty($result->data) || drupal_strlen($result->data) <= 0) {
+    $error_log['code'] = -1;
+    $error_log['error'] = "no data available on url";
+    return FALSE;
+  }
+
+  $doc = new DOMDocument();
+  if (@$doc->loadHTML($result->data) === FALSE) {
+    $error_log['code'] = -2;
+    $error_log['error'] = "unable to parse the html content";
+    return FALSE;
+  }
+
+  if ($itype == 0) {
+    $items = @$doc->getElementsByTagName("body");
+    if ($items != NULL && $items->length > 0) {
+      $dist = $items->item(0);
+    }
+    else $dist = NULL;
+  }
+  elseif ($itype == 1) {
+    $dist = @$doc->getElementById($ivalue);
+  }
+  elseif ($itype == 2) {
+    $xpath = new DOMXPath($doc);
+    $items = @$xpath->query("//*[@class and contains(concat(' ',normalize-space(@class),' '),' $ivalue ')]");
+    if ($items != NULL && $items->length > 0) {
+      $dist = $items->item(0);
+    }
+    else $dist = NULL;
+  }
+  else {
+    //not supported yet
+    $dist = NULL;
+  }
+
+  if ($dist == NULL) {
+    $error_log['code'] = -3;
+    $error_log['error'] = "tag not found";
+    return FALSE;
+  }
+  $content = '';
+  if (($content = @$dist->ownerDocument->saveXML($dist)) === FALSE) {
+    $error_log['code'] = -4;
+    $error_log['error'] = "error converting content to XML";
+    return FALSE;
+  }
+
+  return $content;
+}
+
+function feeds_imagegrabber_scrape_images($content, $base_url, array $options = array(), &$error_log = array()) {
+
+  // Merge the default options.
+  $options += array(
+    'expression' => "//img",
+    'getsize' => TRUE,
+    'max_imagesize' => 512000,
+    'timeout' => 10,
+    'max_redirects' => 3,
+    'feeling_lucky' => 0,
+  );
+
+  $doc = new DOMDocument();
+  if (@$doc->loadXML($content) === FALSE && @$doc->loadHTML($content) === FALSE) {
+    $error_log['code'] = -2;
+    $error_log['error'] = "unable to parse the xml//html content";
+    return FALSE;
+  }
+
+  $xpath = new DOMXPath($doc);
+  $hrefs = @$xpath->evaluate($options['expression']);
+
+  if ($options['getsize']) {
+    timer_start(__FUNCTION__);
+  }
+
+  $images = array();
+  $imagesize = 0;
+  for ($i = 0; $i < $hrefs->length; $i++) {
+    $url = $hrefs->item($i)->getAttribute('src');
+    if (!isset($url) || empty($url) || $url == '') {
+      continue;
+    }
+    if(function_exists('encode_url')) {
+      $url = encode_url($url);
+    }
+    $url = url_to_absolute($base_url, $url);
+
+    if ($url == FALSE) {
+      continue;
+    }
+
+    if ($options['getsize']) {
+      if (($imagesize = feeds_imagegrabber_validate_download_size($url, $options['max_imagesize'], ($options['timeout'] - timer_read(__FUNCTION__) / 1000))) != -1) {
+        $images[$url] = $imagesize;
+        if ($settings['feeling_lucky']) {
+          break;
+        }
+      }
+      if (($options['timeout'] - timer_read(__FUNCTION__) / 1000) <= 0) {
+        $error_log['code'] = FIG_HTTP_REQUEST_TIMEOUT;
+        $error_log['error'] = "timeout occured while scraping the content";
+        break;
+      }
+    }
+    else {
+      $images[$url] = $imagesize;
+      if ($settings['feeling_lucky']) {
+        break;
+      }
+    }
+  }
+
+  return $images;
+}
+
+/**
+ * Perform an HTTP request. Directly ported from D7 for the timeout feature.
+ *
+ * This is a flexible and powerful HTTP client implementation. Correctly
+ * handles GET, POST, PUT or any other HTTP requests. Handles redirects.
+ *
+ * @param $url
+ *   A string containing a fully qualified URI.
+ * @param $options
+ *   (optional) An array which can have one or more of following keys:
+ *   - headers
+ *       An array containing request headers to send as name/value pairs.
+ *   - method
+ *       A string containing the request method. Defaults to 'GET'.
+ *   - data
+ *       A string containing the request body. Defaults to NULL.
+ *   - max_redirects
+ *       An integer representing how many times a redirect may be followed.
+ *       Defaults to 3.
+ *   - timeout
+ *       A float representing the maximum number of seconds the function call
+ *       may take. The default is 30 seconds. If a timeout occurs, the error
+ *       code is set to the FIG_HTTP_REQUEST_TIMEOUT constant.
+ *
+ * @return
+ *   An object which can have one or more of the following parameters:
+ *   - request
+ *       A string containing the request body that was sent.
+ *   - code
+ *       An integer containing the response status code, or the error code if
+ *       an error occurred.
+ *   - protocol
+ *       The response protocol (e.g. HTTP/1.1 or HTTP/1.0).
+ *   - status_message
+ *       The status message from the response, if a response was received.
+ *   - redirect_code
+ *       If redirected, an integer containing the initial response status code.
+ *   - redirect_url
+ *       If redirected, a string containing the redirection location.
+ *   - error
+ *       If an error occurred, the error message. Otherwise not set.
+ *   - headers
+ *       An array containing the response headers as name/value pairs.
+ *   - data
+ *       A string containing the response body that was received.
+ */
+function feeds_imagegrabber_http_request($url, array$options = array()) {
+  global $db_prefix;
+
+  $result = new stdClass();
+
+  // Parse the URL and make sure we can handle the schema.
+  $uri = @parse_url($url);
+
+  if ($uri == FALSE) {
+    $result->error = 'unable to parse URL';
+    $result->code = -1001;
+    return $result;
+  }
+
+  if (!isset($uri['scheme'])) {
+    $result->error = 'missing schema';
+    $result->code = -1002;
+    return $result;
+  }
+
+  timer_start(__FUNCTION__);
+
+  // Merge the default options.
+  $options += array(
+    'headers' => array(),
+    'method' => 'GET',
+    'data' => NULL,
+    'max_redirects' => 3,
+    'timeout' => 30,
+  );
+
+  switch ($uri['scheme']) {
+    case 'http':
+      $port = isset($uri['port']) ? $uri['port'] : 80;
+      $host = $uri['host'] . ($port != 80 ? ':'. $port : '');
+      $fp   = @fsockopen($uri['host'], $port, $errno, $errstr, $options['timeout']);
+      break;
+
+    case 'https':
+      // Note: Only works when PHP is compiled with OpenSSL support.
+      $port = isset($uri['port']) ? $uri['port'] : 443;
+      $host = $uri['host'] . ($port != 443 ? ':'. $port : '');
+      $fp   = @fsockopen('ssl://'. $uri['host'], $port, $errno, $errstr, $options['timeout']);
+      break;
+
+    default:
+      $result->error = 'invalid schema '. $uri['scheme'];
+      $result->code = -1003;
+      return $result;
+  }
+
+  // Make sure the socket opened properly.
+  if (!$fp) {
+    // When a network error occurs, we use a negative number so it does not
+    // clash with the HTTP status codes.
+    $result->code = -$errno;
+    $result->error = trim($errstr);
+
+    // Mark that this request failed. This will trigger a check of the web
+    // server's ability to make outgoing HTTP requests the next time that
+    // requirements checking is performed.
+    // @see system_requirements()
+    variable_set('drupal_http_request_fails', TRUE);
+
+    return $result;
+  }
+
+  // Construct the path to act on.
+  $path = isset($uri['path']) ? $uri['path'] : '/';
+  if (isset($uri['query'])) {
+    $path .= '?'. $uri['query'];
+  }
+
+  // Merge the default headers.
+  $options['headers'] += array(
+    'User-Agent' => 'Drupal (+http://drupal.org/)',
+  );
+
+  // RFC 2616: "non-standard ports MUST, default ports MAY be included".
+  // We don't add the standard port to prevent from breaking rewrite rules
+  // checking the host that do not take into account the port number.
+  $options['headers']['Host'] = $host;
+
+  // Only add Content-Length if we actually have any content or if it is a POST
+  // or PUT request. Some non-standard servers get confused by Content-Length in
+  // at least HEAD/GET requests, and Squid always requires Content-Length in
+  // POST/PUT requests.
+  $content_length = strlen($options['data']);
+  if ($content_length > 0 || $options['method'] == 'POST' || $options['method'] == 'PUT') {
+    $options['headers']['Content-Length'] = $content_length;
+  }
+
+  // If the server URL has a user then attempt to use basic authentication.
+  if (isset($uri['user'])) {
+    $options['headers']['Authorization'] = 'Basic '. base64_encode($uri['user'] . (!empty($uri['pass']) ? ":". $uri['pass'] : ''));
+  }
+
+  // If the database prefix is being used by SimpleTest to run the tests in a copied
+  // database then set the user-agent header to the database prefix so that any
+  // calls to other Drupal pages will run the SimpleTest prefixed database. The
+  // user-agent is used to ensure that multiple testing sessions running at the
+  // same time won't interfere with each other as they would if the database
+  // prefix were stored statically in a file or database variable.
+  if (is_string($db_prefix) && preg_match("/simpletest\d+/", $db_prefix, $matches)) {
+    $options['headers']['User-Agent'] = drupal_generate_test_ua($matches[0]);
+  }
+
+  $request = $options['method'] .' '. $path ." HTTP/1.0\r\n";
+  foreach ($options['headers'] as $name => $value) {
+    $request .= $name .': '. trim($value) ."\r\n";
+  }
+  $request .= "\r\n". $options['data'];
+  $result->request = $request;
+
+  fwrite($fp, $request);
+
+  // Fetch response.
+  $response = '';
+  while (!feof($fp)) {
+    // Calculate how much time is left of the original timeout value.
+    $timeout = $options['timeout'] - timer_read(__FUNCTION__) / 1000;
+    if ($timeout <= 0) {
+      $result->code = FIG_HTTP_REQUEST_TIMEOUT;
+      $result->error = 'request timed out';
+      return $result;
+    }
+    stream_set_timeout($fp, floor($timeout), floor(1000000 * fmod($timeout, 1)));
+    $response .= fread($fp, 1024);
+  }
+  fclose($fp);
+
+  // Parse response headers from the response body.
+  list($response, $result->data) = explode("\r\n\r\n", $response, 2);
+  $response = preg_split("/\r\n|\n|\r/", $response);
+
+  // Parse the response status line.
+  list($protocol, $code, $status_message) = explode(' ', trim(array_shift($response)), 3);
+  $result->protocol = $protocol;
+  $result->status_message = $status_message;
+
+  $result->headers = array();
+
+  // Parse the response headers.
+  while ($line = trim(array_shift($response))) {
+    list($header, $value) = explode(':', $line, 2);
+    if (isset($result->headers[$header]) && $header == 'Set-Cookie') {
+      // RFC 2109: the Set-Cookie response header comprises the token Set-
+      // Cookie:, followed by a comma-separated list of one or more cookies.
+      $result->headers[$header] .= ','. trim($value);
+    }
+    else {
+      $result->headers[$header] = trim($value);
+    }
+  }
+
+  $responses = array(
+    100 => 'Continue',
+    101 => 'Switching Protocols',
+    200 => 'OK',
+    201 => 'Created',
+    202 => 'Accepted',
+    203 => 'Non-Authoritative Information',
+    204 => 'No Content',
+    205 => 'Reset Content',
+    206 => 'Partial Content',
+    300 => 'Multiple Choices',
+    301 => 'Moved Permanently',
+    302 => 'Found',
+    303 => 'See Other',
+    304 => 'Not Modified',
+    305 => 'Use Proxy',
+    307 => 'Temporary Redirect',
+    400 => 'Bad Request',
+    401 => 'Unauthorized',
+    402 => 'Payment Required',
+    403 => 'Forbidden',
+    404 => 'Not Found',
+    405 => 'Method Not Allowed',
+    406 => 'Not Acceptable',
+    407 => 'Proxy Authentication Required',
+    408 => 'Request Time-out',
+    409 => 'Conflict',
+    410 => 'Gone',
+    411 => 'Length Required',
+    412 => 'Precondition Failed',
+    413 => 'Request Entity Too Large',
+    414 => 'Request-URI Too Large',
+    415 => 'Unsupported Media Type',
+    416 => 'Requested range not satisfiable',
+    417 => 'Expectation Failed',
+    500 => 'Internal Server Error',
+    501 => 'Not Implemented',
+    502 => 'Bad Gateway',
+    503 => 'Service Unavailable',
+    504 => 'Gateway Time-out',
+    505 => 'HTTP Version not supported',
+  );
+  // RFC 2616 states that all unknown HTTP codes must be treated the same as the
+  // base code in their class.
+  if (!isset($responses[$code])) {
+    $code = floor($code / 100) * 100;
+  }
+  $result->code = $code;
+
+  switch ($code) {
+    case 200:
+      // OK
+    case 304:
+      // Not modified
+      break;
+
+    case 301:
+      // Moved permanently
+    case 302:
+      // Moved temporarily
+    case 307:
+      // Moved temporarily
+      $location = $result->headers['Location'];
+      $options['timeout'] -= timer_read(__FUNCTION__) / 1000;
+      if ($options['timeout'] <= 0) {
+        $result->code = FIG_HTTP_REQUEST_TIMEOUT;
+        $result->error = 'request timed out';
+      }
+      elseif ($options['max_redirects']) {
+        // Redirect to the new location.
+        $options['max_redirects']--;
+        $result = feeds_imagegrabber_http_request($location, $options);
+        $result->redirect_code = $code;
+      }
+      $result->redirect_url = $location;
+      break;
+
+    default:
+      $result->error = $status_message;
+  }
+
+  return $result;
+}
+

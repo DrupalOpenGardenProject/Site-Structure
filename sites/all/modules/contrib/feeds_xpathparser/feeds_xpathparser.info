@@ -1,0 +1,13 @@
+; $Id: feeds_xpathparser.info,v 1.1 2010/06/28 01:45:50 twistor Exp $
+name = Feeds XPath Parser
+description = Scrapes pages using XPath.
+package = Feeds
+dependencies[] = feeds
+core = 6.x
+
+; Information added by drupal.org packaging script on 2010-06-28
+version = "6.x-1.01"
+core = "6.x"
+project = "feeds_xpathparser"
+datestamp = "1277698510"
+

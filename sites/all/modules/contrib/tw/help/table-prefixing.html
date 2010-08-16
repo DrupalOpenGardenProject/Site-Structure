@@ -1,0 +1,22 @@
+<!-- $Id: table-prefixing.html,v 1.1.2.1 2009/05/10 22:39:59 mikeryan Exp $ -->
+<p>If you use table prefixing (http://drupal.org/node/2622), to make tables that are 
+in the same physical database as your Drupal installation but are not part of it
+(i.e., are not prefixed) available to Table Wizard, you need to add the database 
+as if it were external:</p>
+
+<pre>
+$db_url['default'] = 'mysqli://root:pass1@localhost/drupaldb';
+$db_url['defaultnotdrupal'] =   'mysqli://root:pass1@localhost/drupaldb';
+</pre>
+
+<p>When using external tables in a table prefix environment, Drupal will prefix the 
+external tables by default, which in most cases is not what you want. To get around 
+this, you can set empty prefixes in settings.php for the external tables you are using:</p>
+
+<pre>
+$db_prefix = array(
+  'default' => 'pf1_',
+  'externaltbl1' => '',
+  'externaltbl2' => '',
+);
+</pre>

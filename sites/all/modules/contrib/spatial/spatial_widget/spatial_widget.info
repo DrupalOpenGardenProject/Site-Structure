@@ -1,0 +1,12 @@
+; $Id: spatial_widget.info,v 1.1 2010/01/26 19:52:42 phayes Exp $
+name = Spatial Widget
+description = Provides a shapefile upload widget for geo and openlayers
+package = CCK
+core = 6.x
+
+; Information added by drupal.org packaging script on 2010-02-17
+version = "6.x-1.1-alpha2"
+core = "6.x"
+project = "spatial"
+datestamp = "1266445819"
+

@@ -1,0 +1,111 @@
+<?php
+// $Id: feeds_imagegrabber.install,v 1.1.2.2 2010/03/12 14:46:55 publicmind Exp $
+
+/**
+ * @file
+ * Schema definitions install/update/uninstall hooks.
+ */
+
+/**
+ * Implementation of hook_schema().
+ */
+function feeds_imagegrabber_schema() {
+  $schema['feeds_imagegrabber'] = array(
+    'description' => t('stores the settings of feeds image grabber per feed node'),
+    'fields' => array(
+      'feed_nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => t('The feed nid for which the feeds image grabber is enabled'),
+      ),
+      'enabled' => array(
+        'description' => t('Current enabled status for this feed nid'),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'unsigned' => TRUE,
+        'length' => '1',
+      ),
+      'id_class' => array(
+        'description' => t('Identifying tag attribute an ID (1) or Class(2) or nothing (0)?'),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'unsigned' => TRUE,
+        'length' => '2',
+      ),
+      'id_class_desc' => array(
+        'description' => t('Identifying tag attribute value.'),
+        'type' => 'varchar',
+        'length' => '128',
+      ),
+      'feeling_lucky' => array(
+        'description' => t('Get the first image from between the tags or not'),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'unsigned' => TRUE,
+        'length' => '1',
+      ),
+      'exec_time' => array(
+        'description' => t('Percentage of PHP maximum execution time to utilize for grabbing image for each feed item.'),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 10,
+        'unsigned' => TRUE,
+        'length' => '3',
+      ),
+    ),
+    'primary key' => array('feed_nid',
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function feeds_imagegrabber_install() {
+  $path = drupal_get_path('module', 'feeds_imagegrabber') .'/url_to_absolute.php';
+  if (!file_exists($path)) {
+    drupal_set_message('<b>'. t("To use Feeds Image Grabber, obtain the !conversion package and copy url_to_absolute.php to the feeds_imagegrabber directory.",
+      array('!conversion' => l('UrlToAbsolute', 'http://sourceforge.net/projects/absoluteurl', array('absolute' => TRUE)))) .'</b>');
+  }
+  drupal_install_schema('feeds_imagegrabber');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function feeds_imagegrabber_uninstall() {
+  //Delete the schema table
+  drupal_uninstall_schema('feeds_imagegrabber');
+}
+
+/**
+ * Implementation of hook_requirements().
+ */
+function feeds_imagegrabber_requirements($phase) {
+  $requirements = array();
+  $t = get_t();
+  switch ($phase) {
+    case 'install':
+    case 'runtime':
+      $path = drupal_get_path('module', 'feeds_imagegrabber') .'/url_to_absolute.php';
+      if (!file_exists($path)) {
+        $requirements['feeds_imagegrabber_absoluteurl'] = array(
+          'title' => $t("Feeds Image Grabber"),
+          'description' => $t("Obtain the !conversion package and copy <b>url_to_absolute.php</b> to the feeds_imagegrabber directory.",
+            array('!conversion' => l('UrlToAbsolute', 'http://sourceforge.net/projects/absoluteurl', array('absolute' => TRUE)))
+          ),
+          'severity' => $phase == 'install' ? REQUIREMENT_WARNING : REQUIREMENT_ERROR,
+          'value' => $t('url_to_absolute.php file missing'),
+        );
+      }
+  }
+  
+  return $requirements;
+}

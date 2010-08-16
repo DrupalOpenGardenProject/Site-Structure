@@ -1,0 +1,46 @@
+<?php
+// $Id: querypath.module,v 1.3.2.1 2009/03/11 20:38:13 mbutcher Exp $
+
+/**
+ * The QueryPath module.
+ *
+ * This module adds support for QueryPath, a tool for working with DOM/XML/HTML.
+ *
+ * @author Matt Butcher <mbutcher@aleph-null.tv>
+ * @file
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function querypath_help($path, $args) {
+  if ($path == 'admin/help#querypath') {
+    $out = '<p>' . t('This module provides developers with access to the QueryPath library.') . '</p>';
+    $out = '<p>' . t('To use this module, you must put the QueryPath library in your PHP path or in @path.', array('@path' => drupal_get_path('module', 'querypath') . '/QueryPath')) . '</p>';
+    $out .= l('Learn more about QueryPath (and download the official release)', 'http://querypath.org');
+  }
+}
+
+/**
+ * Implementation of hook_boot().
+ * Attempt to load the QueryPath library early in the boot cycle.
+ */
+function querypath_boot() {  
+  
+  // I'm not entirely happy with this particular method of including stuff.
+  // But this seems to be the best way. (Note that there is already a check
+  // in the install file.)
+  
+  @include_once 'QueryPath/QueryPath.php';
+  if (function_exists('qp')) {
+    // module_load_include is sorta... meh. Just adds another stat call to a 
+    // require_once call.... plus it is apparently not ready in hook_boot.
+    //module_load_include('inc', 'querypath', 'classes');
+    require_once 'querypath.classes.inc';
+  }
+  else {
+    watchdog('querypath', 'The QueryPath library is missing.', array(), WATCHDOG_ERROR);
+  }
+}
+
+
