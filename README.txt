@@ -2,6 +2,26 @@
 
 This is the main project file architecture that we will all share. We will try to not update the structure very much.
 
+What to do with this repository:
+GitHub is hosting these files so we can all obtain them to run on our local machines.
+
+You will want to 'clone' this entire repository.
+'clone' is a git command, which will download this entire repository and all its history.
+You will need to have installed git on your computer to run git clone.
+
+To install, we recommend that you navigate into your webservers public documents folder.
+On MAMP/XAMP/WAMP/LAMP - this is usually htdocs.
+
+Basically, you want to clone this whole repository into your webserver folder.
+
+git clone http://github.com/DrupalOpenGardenProject/Site-Structure.git
+
+This will download a bunch of files, and create a new folder called Site-Structure.
+
+Next, you will probably want to get your drupal files.
+See the README.txt in d6/README.txt
+
+
 Overview of components:
 
 1. d6/ a place to put Drupal 6 core files
