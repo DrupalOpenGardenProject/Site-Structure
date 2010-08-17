@@ -1,0 +1,139 @@
+body {
+  background-color: #fffff;
+  color: #33302C;
+}
+#header-group-wrapper {
+  background-color: #eeeeee;
+  padding-bottom: 30px;
+}
+.block .views-field-title {
+  font-family: 'Georgia', sans-serif;
+  font-size:142.85%;
+}
+.block .views-field-created {
+  padding-bottom: 5px;
+  color: #48635f;
+}
+.block h2 {
+  color: #686258;
+}
+a {
+  color: #686258;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.block ul, .block ol, div.item-list {
+  margin-left: 0;
+  padding:0;
+}
+.block li.leaf, 
+div.item-list ul li{
+  list-style: none;
+  list-style-image: none;
+}
+li.leaf li.leaf,
+li.expanded, 
+li.collapsed, 
+li.active-trail  {
+  list-style-position: inside;
+  list-style-type:none;
+  list-style-image: none;
+}
+div.item-list ul li,
+li.expanded a,
+li.collapsed a,
+li.active-trail a{
+/*   background: url(../images/bullet.png) 0 0 no-repeat; */
+  color: #48635f;
+  padding-left: 18px;
+  line-height: 90%;
+  font-weight: normal;
+}
+div.item-list ul li a,
+li.collapsed a {
+  color:#686258;
+  font-weight: normal;
+}
+li.active-trail a {
+
+}
+li.expanded li a,
+li.collapsed li a,
+li.active-trail li a {
+  background: none;
+  padding-left: 18px;
+}
+li.leaf a,
+li.expanded a, 
+li.active-trail a,
+.contact-info a,
+div.item-list ul li a {
+  font-weight: normal;
+}
+div.item-list ul li {
+  margin-bottom: 20px;
+}
+li.leaf {
+/*   text-indent: 18px; */
+}
+li.leaf ul.menu li.leaf {
+/*   text-indent: 36px; */
+}
+li.expanded ul.menu,
+li.active-trail ul.menu {
+/* text-indent: 18px; */
+}
+.contact-info {
+  padding-bottom: 10px;
+}
+#main-wrapper {
+  padding-top: 60px;
+}
+#content-group h1, 
+#content-group h2, 
+#content-group h3, 
+#content-group h4, 
+#content-group h5, 
+#content-group h6 {
+  color: #48635f;
+}
+.terms a {
+  font-weight: normal;
+  padding-right: 20px;
+  color: #48635f;
+}
+.terms {
+  padding-top: 20px;
+}
+ul li{
+  list-style-position: inside;
+}
+
+a:hover, a:active, a:focus {
+  text-decoration: none;
+}
+
+ul.pager li.pager-current {
+  background-color:none;
+  color:#FFFFFF;
+}
+ul.pager a, ul.pager li.pager-current {
+  border-color:#48635f;
+}
+ul.pager a, ul.pager li.pager-current {
+  border-style:solid;
+  border-width:1px;
+  padding:3px 6px 2px;
+  text-decoration:none;
+}
+ul.pager li.pager-current {
+  background-color:transparent;
+  padding: 5px;
+}
+
+.view-display-id-page_1 .views-view-grid td { 
+  height: 300px;
+  overflow-y: hidden;
+  vertical-align: top;
+}
