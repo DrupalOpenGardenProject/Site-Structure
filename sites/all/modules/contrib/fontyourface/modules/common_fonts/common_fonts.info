@@ -1,0 +1,12 @@
+; $Id: common_fonts.info,v 1.1 2010/05/24 00:12:13 sreynen Exp $
+name = Common fonts
+description = @font-your-face provider of fonts usually already available in browsers, with fallbacks.
+dependencies[] = fontyourface
+package = @font-your-face
+core = 6.x
+; Information added by drupal.org packaging script on 2010-07-25
+version = "6.x-1.3"
+core = "6.x"
+project = "fontyourface"
+datestamp = "1280037308"
+

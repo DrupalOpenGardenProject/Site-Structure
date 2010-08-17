@@ -1,0 +1,558 @@
+<?php
+// $Id: google_fonts_api.module,v 1.1.2.2 2010/06/15 05:10:41 sreynen Exp $
+
+/**
+ * Implements hook_fontyourface_info().
+ */
+function google_fonts_api_fontyourface_info() {
+
+  $info = array(
+    'google_fonts_api' => array(
+      'name' => 'Google',
+      'url' => 'http://code.google.com/webfonts',
+      'fonts' => google_fonts_api_list(),
+    ),
+  );
+
+  return $info;
+
+} // google_fonts_api_fontyourface_info
+
+/**
+ * Implements hook_fontyourface_preview().
+ */
+function google_fonts_api_fontyourface_preview($font) {
+
+  return '<span style="font-family:' . "'" . $font['family'] . "'; font-style: " . $font['style'] . '; font-weight: ' . $font['weight'] .'; font-size: 24px;">' . $font['family'] . '</span>';
+
+} // google_fonts_api_fontyourface_preview
+
+/**
+ * Implements hook_fontyourface_view().
+ */
+function google_fonts_api_fontyourface_view($font, $text) {
+
+  $output = '';
+  $sizes = array(32, 24, 18, 14, 12, 10);
+
+  foreach ($sizes as $size) {
+
+    $output .= '<div style="font-family:' . "'" . $font['family'] . "'; font-style: " . $font['style'] . '; font-weight: ' . $font['weight'] .'; font-size: ' . $size . 'px; line-height: ' . $size . 'px;">' . $text . '</div>';
+
+  } // foreach
+
+  return $output;
+
+} // google_fonts_api_fontyourface_preview
+
+/**
+ * Implements template_preprocess_page().
+ */
+function google_fonts_api_preprocess_page(&$vars) {
+
+  if (!empty($vars['fontyourface'])) {
+
+    $paths = array();
+    $fonts = google_fonts_api_list();
+
+    foreach ($vars['fontyourface'] as $used_font) {
+
+      if ($used_font->provider == 'google_fonts_api') {
+        $paths[] = $fonts[$used_font->group_name]['fonts'][$used_font->name]['path'];
+      } // if
+
+    } // foreach
+
+    if (count($paths) > 0) {
+
+      $vars['styles'] = '<link href="http://fonts.googleapis.com/css?family=' . implode('|', $paths) . '" rel="stylesheet" type="text/css" />' . $vars['styles'];
+
+    } // if
+
+  } // if
+
+} // google_fonts_api_preprocess_page
+
+/**
+ * Implements hook_fontyourface_css().
+ */
+function google_fonts_api_fontyourface_css($used_font) {
+
+  $css = array(
+    '@font-face' => '',
+    'font-family' => '',
+  );
+
+  $list = google_fonts_api_list();
+  $font = $list[$used_font->group_name]['fonts'][$used_font->name];
+
+  $css['font-family'] = "'" . $font['family'] . "'";
+
+  return $css;
+
+} // google_fonts_api_fontyourface_css
+
+/**
+ * Implements hook_fontyourface_license().
+ */
+function google_fonts_api_fontyourface_license($used_font) {
+
+  $list = google_fonts_api_list();
+  $font = $list[$used_font->group_name]['fonts'][$used_font->name];
+
+  return $font['license'];
+
+} // google_fonts_api_fontyourface_license
+
+/**
+ * Provides all needed details about Google fonts.
+ */
+function google_fonts_api_list() {
+
+  $sil_license = array(
+    'name' => 'SIL Open Font License, 1.1',
+    'url' => 'http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL',
+  );
+
+  $apache_license = array(
+    'name' => 'Apache License, version 2.0',
+    'url' => 'http://www.apache.org/licenses/LICENSE-2.0.html',
+  );
+
+  return array(
+    'Cantarell' => array(
+      'path' => 'Cantarell',
+      'fonts' => array(
+        'Cantarell' => array(
+          'family' => 'Cantarell',
+          'path' => 'Cantarell',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'Cantarell italic' => array(
+          'family' => 'Cantarell',
+          'path' => 'Cantarell:italic',
+          'style' => 'italic',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'Cantarell bold' => array(
+          'family' => 'Cantarell',
+          'path' => 'Cantarell:bold',
+          'style' => 'normal',
+          'weight' => 'bold',
+          'license' => $sil_license,
+        ),
+        'Cantarell bold italic' => array(
+          'family' => 'Cantarell',
+          'path' => 'Cantarell:bolditalic',
+          'style' => 'italic',
+          'weight' => 'bold',
+          'license' => $sil_license,
+        ),
+      ),
+    ),
+    'Cardo' => array(
+      'path' => 'Cardo',
+      'fonts' => array(
+        'Cardo' => array(
+          'family' => 'Cardo',
+          'path' => 'Cardo',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+      ),
+    ),
+    'Crimson Text' => array(
+      'path' => 'Crimson+Text',
+      'fonts' => array(
+        'Crimson Text' => array(
+          'family' => 'Crimson Text',
+          'path' => 'Crimson+Text',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+      ),
+    ),
+    'Droid Sans' => array(
+      'path' => 'Droid+Sans',
+      'fonts' => array(
+        'Droid Sans' => array(
+          'family' => 'Droid Sans',
+          'path' => 'Droid+Sans',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $apache_license,
+        ),
+        'Droid Sans bold' => array(
+          'family' => 'Droid Sans',
+          'path' => 'Droid+Sans:bold',
+          'style' => 'normal',
+          'weight' => 'bold',
+          'license' => $apache_license,
+        ),
+      ),
+    ),
+    'Droid Sans Mono' => array(
+      'path' => 'Droid+Sans+Mono',
+      'fonts' => array(
+        'Droid Sans Mono' => array(
+          'family' => 'Droid Sans Mono',
+          'path' => 'Droid+Sans+Mono',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $apache_license,
+        ),
+      ),
+    ),
+    'Droid Serif' => array(
+      'path' => 'Droid+Serif',
+      'fonts' => array(
+        'Droid Serif' => array(
+          'family' => 'Droid Serif',
+          'path' => 'Droid+Serif',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $apache_license,
+        ),
+        'Droid Serif italic' => array(
+          'family' => 'Droid Serif',
+          'path' => 'Droid+Serif:italic',
+          'style' => 'italic',
+          'weight' => 'normal',
+          'license' => $apache_license,
+        ),
+        'Droid Serif bold' => array(
+          'family' => 'Droid Serif',
+          'path' => 'Droid+Serif:bold',
+          'style' => 'normal',
+          'weight' => 'bold',
+          'license' => $apache_license,
+        ),
+        'Droid Serif bold italic' => array(
+          'family' => 'Droid Serif',
+          'path' => 'Droid+Serif:bolditalic',
+          'style' => 'italic',
+          'weight' => 'bold',
+          'license' => $apache_license,
+        ),
+      ),
+    ),
+    'IM Fell' => array(
+      'path' => 'IM+Fell',
+      'fonts' => array(
+        'IM Fell DW Pica' => array(
+          'family' => 'IM Fell DW Pica',
+          'path' => 'IM+Fell+DW+Pica',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'IM Fell DW Pica italic' => array(
+          'family' => 'IM Fell DW Pica',
+          'path' => 'IM+Fell+DW+Pica',
+          'style' => 'italic',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'IM Fell DW Pica SC' => array(
+          'family' => 'IM Fell DW Pica SC',
+          'path' => 'IM+Fell+DW+Pica+SC',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'IM Fell Double Pica' => array(
+          'family' => 'IM Fell Double Pica',
+          'path' => 'IM+Fell+Double+Pica',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'IM Fell Double Pica italic' => array(
+          'family' => 'IM Fell Double Pica',
+          'path' => 'IM+Fell+Double+Pica:italic',
+          'style' => 'italic',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'IM Fell Double Pica SC' => array(
+          'family' => 'IM Fell Double Pica SC',
+          'path' => 'IM+Fell+Double+Pica+SC',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'IM Fell English' => array(
+          'family' => 'IM Fell English',
+          'path' => 'IM+Fell+English',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'IM Fell English italic' => array(
+          'family' => 'IM Fell English',
+          'path' => 'IM+Fell+English:italic',
+          'style' => 'italic',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'IM Fell English SC' => array(
+          'family' => 'IM Fell English SC',
+          'path' => 'IM+Fell+English+SC',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'IM Fell French Canon' => array(
+          'family' => 'IM Fell French Canon',
+          'path' => 'IM+Fell+French+Canon',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'IM Fell French Canon italic' => array(
+          'family' => 'IM Fell French Canon',
+          'path' => 'IM+Fell+French+Canon:italic',
+          'style' => 'italic',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'IM Fell French Canon SC' => array(
+          'family' => 'IM Fell French Canon SC',
+          'path' => 'IM+Fell+French+Canon+SC',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'IM Fell Great Primer' => array(
+          'family' => 'IM Fell Great Primer',
+          'path' => 'IM+Fell+Great+Primer',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'IM Fell Great Primer italic' => array(
+          'family' => 'IM Fell Great Primer',
+          'path' => 'IM+Fell+Great+Primer:italic',
+          'style' => 'italic',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'IM Fell Great Primer SC' => array(
+          'family' => 'IM Fell Great Primer SC',
+          'path' => 'IM+Fell+Great+Primer+SC',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+      ),
+    ),
+    'Inconsolata' => array(
+      'path' => 'Inconsolata',
+      'fonts' => array(
+        'Inconsolata' => array(
+          'family' => 'Inconsolata',
+          'path' => 'Inconsolata',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+      ),
+    ),
+    'Josefin Sans Std Light' => array(
+      'path' => 'Josefin+Sans+Std+Light',
+      'fonts' => array(
+        'Josefin Sans Std Light' => array(
+          'family' => 'Josefin Sans Std Light',
+          'path' => 'Josefin+Sans+Std+Light',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+      ),
+    ),
+    'Lobster' => array(
+      'path' => 'Lobster',
+      'fonts' => array(
+        'Lobster' => array(
+          'family' => 'Lobster',
+          'path' => 'Lobster',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+      ),
+    ),
+    'Molengo' => array(
+      'path' => 'Molengo',
+      'fonts' => array(
+        'Molengo' => array(
+          'family' => 'Molengo',
+          'path' => 'Molengo',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+      ),
+    ),
+    'Nobile' => array(
+      'path' => 'Nobile',
+      'fonts' => array(
+        'Nobile' => array(
+          'family' => 'Nobile',
+          'path' => 'Nobile',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'Nobile italic' => array(
+          'family' => 'Nobile',
+          'path' => 'Nobile:italic',
+          'style' => 'italic',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'Nobile bold' => array(
+          'family' => 'Nobile',
+          'path' => 'Nobile:bold',
+          'style' => 'normal',
+          'weight' => 'bold',
+          'license' => $sil_license,
+        ),
+        'Nobile bold italic' => array(
+          'family' => 'Nobile',
+          'path' => 'Nobile:bolditalic',
+          'style' => 'italic',
+          'weight' => 'bold',
+          'license' => $sil_license,
+        ),
+      ),
+    ),
+    'OFL Sorts Mill Goudy TT' => array(
+      'path' => 'OFL+Sorts+Mill+Goudy+TT',
+      'fonts' => array(
+        'OFL Sorts Mill Goudy TT' => array(
+          'family' => 'OFL Sorts Mill Goudy TT',
+          'path' => 'OFL+Sorts+Mill+Goudy+TT',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'OFL Sorts Mill Goudy TT italic' => array(
+          'family' => 'OFL Sorts Mill Goudy TT',
+          'path' => 'OFL+Sorts+Mill+Goudy+TT:italic',
+          'style' => 'italic',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+      ),
+    ),
+    'Old Standard TT' => array(
+      'path' => 'Old+Standard+TT',
+      'fonts' => array(
+        'Old Standard TT' => array(
+          'family' => 'Old Standard TT',
+          'path' => 'Old+Standard+TT',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'Old Standard TT italic' => array(
+          'family' => 'Old Standard TT',
+          'path' => 'Old+Standard+TT:italic',
+          'style' => 'italic',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'Old Standard TT bold' => array(
+          'family' => 'Old Standard TT',
+          'path' => 'Old+Standard+TT:bold',
+          'style' => 'normal',
+          'weight' => 'bold',
+          'license' => $sil_license,
+        ),
+      ),
+    ),
+    'Reenie Beanie' => array(
+      'path' => 'Reenie+Beanie',
+      'fonts' => array(
+        'Reenie Beanie' => array(
+          'family' => 'Reenie Beanie',
+          'path' => 'Reenie+Beanie',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+      ),
+    ),
+    'Tangerine' => array(
+      'path' => 'Tangerine',
+      'fonts' => array(
+        'Tangerine' => array(
+          'family' => 'Tangerine',
+          'path' => 'Tangerine',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+      ),
+    ),
+    'Vollkorn' => array(
+      'path' => 'Vollkorn',
+      'fonts' => array(
+        'Vollkorn' => array(
+          'family' => 'Vollkorn',
+          'path' => 'Vollkorn',
+          'style' => 'normal',
+          'weight' => 'normal',
+          'license' => $sil_license,
+        ),
+        'Vollkorn bold' => array(
+          'family' => 'Vollkorn',
+          'path' => 'Vollkorn:bold',
+          'style' => 'normal',
+          'weight' => 'bold',
+          'license' => $sil_license,
+        ),
+      ),
+    ),
+    'Yanone Kaffeesatz' => array(
+      'path' => 'Yanone+Kaffeesatz',
+      'fonts' => array(
+        'Yanone Kaffeesatz 200' => array(
+          'family' => 'Yanone Kaffeesatz',
+          'path' => 'Yanone+Kaffeesatz',
+          'style' => 'normal',
+          'weight' => '200',
+          'license' => $sil_license,
+        ),
+        'Yanone Kaffeesatz 300' => array(
+          'family' => 'Yanone Kaffeesatz',
+          'path' => 'Yanone+Kaffeesatz:300',
+          'style' => 'normal',
+          'weight' => '300',
+          'license' => $sil_license,
+        ),
+        'Yanone Kaffeesatz 400' => array(
+          'family' => 'Yanone Kaffeesatz',
+          'path' => 'Yanone+Kaffeesatz:400',
+          'style' => 'normal',
+          'weight' => '400',
+          'license' => $sil_license,
+        ),
+        'Yanone Kaffeesatz 700' => array(
+          'family' => 'Yanone Kaffeesatz',
+          'path' => 'Yanone+Kaffeesatz:700',
+          'style' => 'normal',
+          'weight' => '700',
+          'license' => $sil_license,
+        ),
+      ),
+    ),
+  );
+
+} // google_fonts_api_list

@@ -1,0 +1,608 @@
+<?php
+// $Id: fontyourface.module,v 1.1.2.11 2010/07/17 04:15:05 sreynen Exp $
+
+define('FONTYOURFACE_ADD_PAGE_COUNT', 20);
+
+/**
+ * Implements hook_perm().
+ */
+function fontyourface_perm() {
+
+  return array('administer @font-your-face');
+
+} // fontyourface_perm
+
+/**
+ * Implements hook_menu().
+ */
+function fontyourface_menu() {
+
+  $items = array();
+
+  $items['admin/build/themes/fontyourface'] = array(
+    'title' => '@font-your-face',
+    'page callback' => 'fontyourface_admin_page',
+    'access arguments' => array('administer @font-your-face'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 10
+  );
+
+  $items['admin/build/themes/fontyourface/add/%'] = array(
+    'title' => 'Add font',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fontyourface_admin_add_form', 5, 6, 7),
+    'access arguments' => array('administer @font-your-face'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['admin/build/themes/fontyourface/add'] = array(
+    'title' => 'Add font',
+    'page callback' => 'fontyourface_admin_add_page',
+    'access arguments' => array('administer @font-your-face'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['admin/build/themes/fontyourface/edit/%'] = array(
+    'title' => 'Edit font',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fontyourface_admin_edit_form', 5),
+    'access arguments' => array('administer @font-your-face'),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+
+} // fontyourface_menu
+
+/**
+ * Implements template_preprocess_page().
+ */
+function fontyourface_preprocess_page(&$vars) {
+
+  $fonts = array();
+
+  $destination = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . file_directory_path() . '/fontyourface/font.css';
+
+  if (file_check_directory(dirname($destination),  FILE_CREATE_DIRECTORY)) {
+
+    $font_face = '';
+    $font_family = '';
+
+    if ($_GET['q'] == 'admin/build/themes/fontyourface/add') {
+
+      $available_fonts = fontyourface_available_fonts();
+
+      foreach ($available_fonts as $module_name => $module_info) {
+
+        $font_providers[$module_name] = array();
+
+        foreach ($module_info['fonts'] as $group_name => $group_info) {
+
+          foreach ($group_info['fonts'] as $font_name => $group_font) {
+
+            $font = new stdClass;
+            $font->provider = $module_name;
+            $font->group_name = $group_name;
+            $font->name = $font_name;
+
+            $fonts[] = $font;
+
+          } // foreach
+
+        } // foreach
+
+      } // foreach
+
+      usort($fonts, 'fontyourface_by_font_name');
+
+      $fonts = array_slice($fonts, intval($_GET['page']) * FONTYOURFACE_ADD_PAGE_COUNT, FONTYOURFACE_ADD_PAGE_COUNT);
+
+    } // if
+    elseif (strpos($_GET['q'], 'admin/build/themes/fontyourface/add/') === 0) {
+
+      $adding_font = fontyourface_get_font_from_path(arg(5), arg(6), arg(7));
+
+      if (!$adding_font) {
+
+        $module_name = arg(6, $_SERVER['REDIRECT_URL']);
+        $group_path = arg(7, $_SERVER['REDIRECT_URL']);
+        $font_path = arg(8, $_SERVER['REDIRECT_URL']);
+
+        $adding_font = fontyourface_get_font_from_path($module_name, $group_path, $font_path);
+
+      } // if
+
+      if ($adding_font) {
+
+        $font = new stdClass;
+        $font->provider = $adding_font['module'];
+        $font->group_name = $adding_font['group'];
+        $font->name = $adding_font['font name'];
+
+        $fonts[] = $font;
+
+      } // if
+
+    } // elseif
+
+    $used_fonts = fontyourface_get_fonts();
+
+    foreach ($used_fonts as $font) {
+
+      if (module_exists($font->provider)) {
+
+        $css_function = $font->provider . '_fontyourface_css';
+        $font_css = $css_function($font);
+
+        if ($font_css['@font-face'] != '') {
+          $font_face .= '@font-face { ' . $font_css['@font-face'] . ' }' . "\n";
+        } // if
+
+        if ($font_css['font-family'] != '' && $font->css != '') {
+          $font_family .= $font->css . ' { font-family: ' . $font_css['font-family'] . '; }' . "\n";
+        } // if
+
+        $fonts[] = $font;
+
+      } // if
+
+    } // foreach
+
+    $css = $font_face . $font_family;
+
+    file_save_data($css, $destination, FILE_EXISTS_REPLACE);
+
+  } // if
+
+  if ($css != '') {
+
+    $vars['css']['all']['theme'][file_directory_path() . '/fontyourface/font.css'] = TRUE;
+    $vars['styles'] = drupal_get_css($vars['css']);
+
+  } // if
+
+  $vars['fontyourface'] = $fonts;
+
+} // fontyourface_preprocess_page
+
+/**
+ * Admin page shows enabled fonts with link to add.
+ */
+function fontyourface_admin_page() {
+
+  $fonts = fontyourface_get_fonts();
+  $available_fonts = fontyourface_available_fonts();
+
+  $rows = array();
+
+  if (empty($fonts)) {
+    $rows[] = array(array('data' => t('No fonts added.'), 'colspan' => '3'));
+  } // if
+  else {
+
+    foreach ($fonts as $font) {
+
+      if (module_exists($font->provider)) {
+        $provider = l($available_fonts[$font->provider]['name'], $available_fonts[$font->provider]['url']);
+      } // if
+      else {
+        $provider = '<i class="error">Disabled</i>';
+      } // else
+
+      $rows[] = array($font->name, $provider, l('Edit', 'admin/build/themes/fontyourface/edit/' . $font->fid));
+
+    } // foreach
+
+  } // else
+
+  $header = array(t('Name'), t('Provider'), t('Operations'));
+
+  return theme('table', $header, $rows, array('id' => 'font-your-face')) . '<div>' . l('Add a new font', 'admin/build/themes/fontyourface/add') . '</div>';
+
+} // fontyourface_admin_page
+
+/**
+ * Add page shows available fonts.
+ */
+function fontyourface_admin_add_page() {
+
+  global $pager_page_array, $pager_total;
+
+  $page = isset($_GET['page']) ? $_GET['page'] : '';
+  $pager_page_array = explode(',', $page);
+
+  $available_fonts = fontyourface_available_fonts();
+  $fonts = array();
+  $fonts_by_module = array();
+
+  foreach ($available_fonts as $module_name => $module_info) {
+
+    $fonts_by_module[$module_name] = array();
+
+    foreach ($module_info['fonts'] as $group_name => $group_info) {
+
+      foreach ($group_info['fonts'] as $font_name => $group_font) {
+
+        $fonts_by_module[$module_name][] = $group_font;
+
+        $fonts[] = array(
+          'module' => $module_name,
+          'provider' => $module_info['name'],
+          'provider url' => $module_info['url'],
+          'group' => $group_name,
+          'group path' => $group_info['path'],
+          'font name' => $font_name,
+          'font' => $group_font,
+        );
+
+      } // foreach
+
+    } // foreach
+
+  } // foreach
+
+  $header = array(t('Name'), t('Sample'), t('Provider'), t('Group'));
+
+  usort($fonts, 'fontyourface_by_font_name');
+
+  $pager_total[] = ceil(count($fonts)/FONTYOURFACE_ADD_PAGE_COUNT);
+
+  $page_fonts = array_slice($fonts, intval($_GET['page']) * FONTYOURFACE_ADD_PAGE_COUNT, FONTYOURFACE_ADD_PAGE_COUNT);
+
+  foreach ($page_fonts as $font) {
+
+    $preview = $font['module'] . '_fontyourface_preview';
+
+    $view_link = l($font['font name'], 'admin/build/themes/fontyourface/add/' . $font['module'] . '/' . $font['group path'] . '/' . $font['font']['path']);
+
+    $rows[] = array($view_link, $preview($font['font']), l($font['provider'], $font['provider url']), check_plain($font['group']));
+
+  } // foreach
+
+  return '<h1>Add font</h1><div>Click a font name to view details and add the font.</div>' . theme('table', $header, $rows, array('id' => 'font-your-face-options')) . theme('pager', NULL, FONTYOURFACE_ADD_PAGE_COUNT);
+
+} // fontyourface_admin_add_page
+
+/**
+ * Add form shows detail and enables a single font.
+ */
+function fontyourface_admin_add_form(&$form_state, $module_name, $group_path, $font_path) {
+
+  drupal_add_js(drupal_get_path('module', 'fontyourface') . '/js/add_form.js');
+
+  $font = fontyourface_get_font_from_path($module_name, $group_path, $font_path);
+
+  if (!$font) {
+
+    $font_path = str_replace(array(' ','!'), array('+', '%21'), $font_path);
+    $group_path = str_replace(array(' ','!'), array('+', '%21'), $group_path);
+
+    $font = fontyourface_get_font_from_path($module_name, $group_path, $font_path);
+
+  } // if
+
+  if ($font) {
+
+    $view = $module_name . '_fontyourface_view';
+
+    $font_in_use = new stdClass;
+    $font_in_use->name = $font['font name'];
+    $font_in_use->group_name = $font['group'];
+    $font_in_use->provider = $font['module'];
+
+    $css_function = $font_in_use->provider . '_fontyourface_css';
+    $font_css = $css_function($font_in_use);
+
+    $form = array(
+      'module' => array(
+        '#type' => 'hidden',
+        '#value' => $font['module'],
+      ),
+      'font' => array(
+        '#type' => 'hidden',
+        '#value' => $font['font name'],
+      ),
+      'group' => array(
+        '#type' => 'hidden',
+        '#value' => $font['group'],
+      ),
+      'font_title' => array(
+        '#value' => '<h2>' . check_plain($font['font name']) . '</h2>',
+      ),
+    );
+
+    $license_function = $font_in_use->provider . '_fontyourface_license';
+
+    if (function_exists($license_function)) {
+
+      $license = $license_function($font_in_use);
+
+      if ($license) {
+
+        if ($license['url']) {
+          $license_markup = l($license['name'], $license['url'], array('attributes' => array('rel' => 'license')));
+        } // if
+        else {
+          $license_markup = check_plain($license['name']);
+        } // else
+
+        $form['license'] = array(
+          '#value' => '<div class="license">' . t('License: !license', array('!license' => $license_markup)) . '</div>',
+        );
+
+      } // if
+
+    } // if
+
+    $form += array(
+      'sample_text' => array(
+        '#type' => 'textfield',
+        '#title' => t('Sample text'),
+        '#default_value' => variable_get('fontyourface_sample_text', 'The quick brown fox jumps over the lazy dog'),
+        '#size' => 60,
+      ),
+      'font_view' => array(
+        '#value' => '<div class="fontyourface-view">' . $view($font['font'], variable_get('fontyourface_sample_text', 'The quick brown fox jumps over the lazy dog')) . '</div>',
+      ),
+      'css' => array(
+        '#type' => 'textarea',
+        '#title' => t('CSS selector'),
+        '#default_value' => 'body',
+        '#description' => t('Use commas to separate multiple selectors, just like you would in CSS. Leave blank to handle application of the font in your theme.'),
+      ),
+      'font-family' => array(
+        '#value' => '<div>' . t('To apply in your own CSS, use:') . '</div><div><code>font-family: ' . check_plain($font_css['font-family']) . ';</code></div>',
+      ),
+      'buttons' => array(
+        'submit' => array(
+          '#type' => 'submit',
+          '#value' => t('Add font'),
+        ),
+        'cancel' => array(
+          '#type' => 'submit',
+          '#value' => t('Cancel'),
+        ),
+      ),
+    );
+
+    return $form;
+
+  } // if
+  else {
+
+    $form = array(
+      'not_found' => array(
+        '#value' => t('Font not found. Looking for: !font', array('!font' => $font_path)),
+      ),
+    );
+
+    return $form;
+
+  } // else
+
+} // fontyourface_admin_add_form
+
+/**
+ * Add form submit handler.
+ */
+function fontyourface_admin_add_form_submit($form, &$form_state) {
+
+  variable_set('fontyourface_sample_text', $form['sample_text']['#value']);
+
+  if ($form['#post']['op'] == t('Add font')) {
+
+    $font = new stdClass;
+    $font->provider = $form['module']['#value'];
+    $font->group_name = $form['group']['#value'];
+    $font->name = $form['font']['#value'];
+    $font->css = $form['css']['#value'];
+
+    drupal_write_record('fontyourface', $font);
+    $enabled = TRUE;
+
+    $enable_function = $font->provider . '_fontyourface_enable';
+
+    if (function_exists($enable_function)) {
+      $enabled = $enable_function($font);
+    } // if
+
+  } // if
+
+  if ($enabled) {
+    drupal_set_message(t('Added font') . ' <i>' . $font->name .'</i>.');
+  } // if
+
+  drupal_goto('admin/build/themes/fontyourface');
+
+} // fontyourface_admin_add_form_submit
+
+/**
+ * Edit form changes CSS selector or disables a single font.
+ */
+function fontyourface_admin_edit_form(&$form_state, $fid) {
+
+  $font = new stdClass;
+  $font->fid = $fid;
+  $font = fontyourface_get_font($font);
+
+  $css_function = $font->provider . '_fontyourface_css';
+
+  if (function_exists($css_function)) {
+    $font_css = $css_function($font);
+  } // if
+
+  $form = array(
+    'fid' => array(
+      '#type' => 'hidden',
+      '#value' => $font->fid,
+    ),
+    'font_name' => array(
+      '#value' => '<h2>' . check_plain($font->name) . '</h2>',
+    ),
+    'css' => array(
+      '#type' => 'textarea',
+      '#title' => t('CSS selector'),
+      '#default_value' => $font->css,
+      '#description' => t('Use commas to separate multiple selectors, just like you would in CSS. Leave blank to handle application of the font in your theme.'),
+    ),
+  );
+
+  if ($font_css) {
+
+    $form += array(
+      'font-family' => array(
+        '#value' => '<div>' . t('To apply in your own CSS, use:') . '</div><div><code>font-family: ' . check_plain($font_css['font-family']) . ';</code></div>',
+      ),
+    );
+
+  } // if
+
+  $form += array(
+    'buttons' => array(
+      'submit' => array(
+        '#type' => 'submit',
+        '#value' => t('Edit font'),
+      ),
+      'delete' => array(
+        '#type' => 'submit',
+        '#value' => t('Disable'),
+      ),
+    )
+  );
+
+  return $form;
+
+} // fontyourface_admin_add_form
+
+/**
+ * Edit form submit handler.
+ */
+function fontyourface_admin_edit_form_submit($form, &$form_state) {
+
+  $font = new stdClass;
+  $font->fid = $form['fid']['#value'];
+  $font = fontyourface_get_font($font);
+
+  if ($form['#post']['op'] == t('Disable')) {
+
+    fontyourface_delete_font($font);
+    drupal_set_message(t('Disabled font') . ' <i>' . $font->name .'</i>.');
+    drupal_goto('admin/build/themes/fontyourface');
+
+  } // if
+  else {
+
+    $font->css = $form['css']['#value'];
+
+    drupal_write_record('fontyourface', $font, 'fid');
+    drupal_set_message(t('Updated font') . ' <i>' . $font->name .'</i>.');
+    drupal_goto('admin/build/themes/fontyourface');
+
+  } // else
+
+} // fontyourface_admin_edit_form_submit
+
+/**
+ * Gets all enabled fonts.
+ */
+function fontyourface_get_fonts() {
+
+  $fonts = array();
+  $results = db_query('SELECT * FROM {fontyourface}');
+
+  while ($result = db_fetch_object($results)) {
+    $fonts[] = $result;
+  } // while
+
+  return $fonts;
+
+} // fontyourface_get_fonts
+
+/**
+ * Gets a single font.
+ */
+function fontyourface_get_font($font) {
+
+  return db_fetch_object(db_query('SELECT * FROM {fontyourface} WHERE fid = %d', $font->fid));
+
+} // fontyourface_get_font
+
+/**
+ * Deletes a single font.
+ */
+function fontyourface_delete_font($font) {
+
+  db_query("DELETE FROM {fontyourface} WHERE fid = %d", $font->fid);
+
+} // fontyourface_delete_font
+
+/**
+ * Gets a font based on path parameters.
+ */
+function fontyourface_get_font_from_path($module_path, $group_path, $font_path) {
+
+  $font = FALSE;
+  $available_fonts = fontyourface_available_fonts();
+  $module_info = $available_fonts[$module_path];
+
+  if ($module_info) {
+
+    foreach ($module_info['fonts'] as $group_name => $group_info) {
+
+      if ($group_info['path'] == $group_path) {
+
+        foreach ($group_info['fonts'] as $font_name => $group_font) {
+
+          if ($group_font['path'] == $font_path) {
+
+            $font  = array(
+              'module' => $module_path,
+              'provider' => $module_info['name'],
+              'group' => $group_name,
+              'group path' => $group_info['path'],
+              'font name' => $font_name,
+              'font' => $group_font,
+            );
+
+          } // if
+
+        } // foreach
+
+      } // if
+
+    } // foreach
+
+  } // if
+
+  return $font;
+
+} // fontyourface_get_font
+
+/**
+ * Gets and caches all available fonts.
+ */
+function fontyourface_available_fonts() {
+
+  static $available_fonts = FALSE;
+
+  if (!$available_fonts) {
+    $available_fonts = module_invoke_all('fontyourface_info');
+  } // if
+
+  return $available_fonts;
+
+} // fontyourface_available_fonts
+
+function fontyourface_by_font_name($a, $b) {
+
+  if (is_object($a)) {
+
+    if ($a->name == $b->name) return 0;
+    return ($a->name > $b->name) ? 1 : -1;
+
+  } // if
+
+  if ($a['font name'] == $b['font name']) return 0;
+  return ($a['font name'] > $b['font name']) ? 1 : -1;
+
+} // fontyourface_by_name

@@ -1,0 +1,20 @@
+<?php
+// $Id: google_fonts_api.install,v 1.1.2.2 2010/07/25 05:48:05 sreynen Exp $
+
+/**
+ * @file
+ * Sets weight above admin.module
+ */
+
+/**
+ * Implements hook_install().
+ */
+function google_fonts_api_install() {
+
+  $results = db_query("SELECT weight FROM {system} WHERE name = 'admin'");
+
+  if ($result = db_fetch_object($results)) {
+    db_query("UPDATE {system} SET weight = %d WHERE name = 'google_fonts_api'", $result->weight + 1);
+  } // if
+
+} // google_fonts_api_install

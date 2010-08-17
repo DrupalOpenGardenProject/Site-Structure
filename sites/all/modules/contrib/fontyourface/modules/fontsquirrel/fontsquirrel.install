@@ -1,0 +1,104 @@
+<?php
+// $Id: fontsquirrel.install,v 1.1.2.5 2010/07/25 05:48:05 sreynen Exp $
+
+/**
+ * @file
+ * Adds fontsquirrel tables for caching API data.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function fontsquirrel_install() {
+
+  drupal_install_schema('fontsquirrel');
+
+  $results = db_query("SELECT weight FROM {system} WHERE name = 'admin'");
+
+  if ($result = db_fetch_object($results)) {
+    db_query("UPDATE {system} SET weight = %d WHERE name = 'fontsquirrel'", $result->weight + 1);
+  } // if
+
+} // fontsquirrel_install
+
+/**
+ * Implements hook_uninstall().
+ */
+function fontsquirrel_uninstall() {
+
+  drupal_uninstall_schema('fontsquirrel');
+  variable_del('fontsquirrel_last_api_update');
+
+} // fontsquirrel_uninstall
+
+/**
+ * Implements hook_schema.
+ */
+function fontsquirrel_schema() {
+
+  $schema = array();
+
+  $schema['fontsquirrel_group'] = array(
+    'description' => 'Stores Font Squirrel group information.',
+    'fields' => array(
+      'gid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique group ID.',
+      ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The font group name.',
+      ),
+      'path' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The font group path.',
+      ),
+      'foundry_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The foundry name.',
+      ),
+      'foundry_path' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The foundry path.',
+      ),
+      'classification' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The classification.',
+      ),
+      'filename' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The font file.',
+      ),
+      'font_family' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The font file.',
+      ),
+    ),
+    'primary key' => array('gid'),
+  );
+  return $schema;
+
+} // fontsquirrel_schema

@@ -1,0 +1,66 @@
+<?php
+// $Id: fontyourface.install,v 1.1 2010/05/24 00:05:05 sreynen Exp $
+
+/**
+ * @file
+ * Adds fontyourface table for tracking used fonts.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function fontyourface_install() {
+
+  drupal_install_schema('fontyourface');
+
+} // fontyourface_install
+
+/**
+ * Implements hook_schema.
+ */
+function fontyourface_schema() {
+
+  $schema = array();
+
+  $schema['fontyourface'] = array(
+    'description' => 'Stores font information.',
+    'fields' => array(
+      'fid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique font ID.',
+      ),
+      'provider' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The module providing the font.',
+      ),
+      'group_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The group containing the font.',
+      ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The font name.',
+      ),
+      'css' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+        'size' => 'big',
+        'description' => 'CSS selector for applying the font.',
+      ),
+    ),
+    'primary key' => array('fid'),
+  );
+  return $schema;
+
+} // fontyourface_schema

@@ -1,0 +1,97 @@
+<?php
+// $Id: kernest.install,v 1.1.2.5 2010/07/25 05:48:05 sreynen Exp $
+
+/**
+ * @file
+ * Adds KERNEST tables for caching API data.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function kernest_install() {
+
+  drupal_install_schema('kernest');
+  
+  $results = db_query("SELECT weight FROM {system} WHERE name = 'admin'");
+
+  if ($result = db_fetch_object($results)) {
+    db_query("UPDATE {system} SET weight = %d WHERE name = 'kernest'", $result->weight + 1);
+  } // if
+
+} // kernest_install
+
+/**
+ * Implements hook_uninstall().
+ */
+function kernest_uninstall() {
+
+  drupal_uninstall_schema('kernest');
+  variable_del('kernest_last_api_update');
+
+} // kernest_uninstall
+
+/**
+ * Implements hook_schema.
+ */
+function kernest_schema() {
+
+  $schema = array();
+
+  $schema['kernest'] = array(
+    'description' => 'Stores KERNEST group information.',
+    'fields' => array(
+      'fid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique group ID.',
+      ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The font name.',
+      ),
+      'url' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The font url.',
+      ),
+      'css' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Recommended CSS for the font.',
+      ),
+      'foundry' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The foundry name.',
+      ),
+      'license' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The license name.',
+      ),
+      'license_url' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The license URL.',
+      ),
+    ),
+    'primary key' => array('fid'),
+  );
+  return $schema;
+
+} // kernest_schema

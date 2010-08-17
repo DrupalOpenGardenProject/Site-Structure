@@ -1,0 +1,12 @@
+; $Id: google_fonts_api.info,v 1.1 2010/05/24 00:12:13 sreynen Exp $
+name = Google Fonts API
+description = @font-your-face provider with Google fonts.
+dependencies[] = fontyourface
+package = @font-your-face
+core = 6.x
+; Information added by drupal.org packaging script on 2010-07-25
+version = "6.x-1.3"
+core = "6.x"
+project = "fontyourface"
+datestamp = "1280037308"
+

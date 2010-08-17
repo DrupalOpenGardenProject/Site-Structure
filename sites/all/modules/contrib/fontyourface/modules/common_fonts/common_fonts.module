@@ -1,0 +1,130 @@
+<?php
+// $Id: common_fonts.module,v 1.1 2010/05/24 00:12:13 sreynen Exp $
+
+/**
+ * Implements hook_fontyourface_info().
+ */
+function common_fonts_fontyourface_info() {
+
+  $info = array(
+    'common_fonts' => array(
+      'name' => 'Common Fonts',
+      'url' => 'http://en.wikipedia.org/wiki/Web_typography#Web-safe_fonts',
+      'fonts' => common_fonts_list(),
+    ),
+  );
+
+  return $info;
+
+} // common_fonts_fontyourface_info
+
+/**
+ * Implements hook_fontyourface_preview().
+ */
+function common_fonts_fontyourface_preview($font) {
+
+  return '<span style="font-family: ' . $font['family'] . '; font-size: 24px;">' . $font['sample text'] . '</span>';
+
+} // common_fonts_fontyourface_preview
+
+/**
+ * Implements hook_fontyourface_view().
+ */
+function common_fonts_fontyourface_view($font, $text) {
+
+  $output = '';
+  $sizes = array(32, 24, 18, 14, 12, 10);
+
+  foreach ($sizes as $size) {
+
+    $output .= '<div style="font-family: ' . $font['family'] . '; font-size: ' . $size . 'px; line-height: ' . $size . 'px;">' . $text . '</div>';
+
+  } // foreach
+
+  return $output;
+
+} // common_fonts_fontyourface_preview
+
+/**
+ * Implements hook_fontyourface_css().
+ */
+function common_fonts_fontyourface_css($used_font) {
+
+  $css = array(
+    '@font-face' => '',
+    'font-family' => '',
+  );
+
+  $list = common_fonts_list();
+  $font = $list[$used_font->group_name]['fonts'][$used_font->name];
+
+  $css['font-family'] = $font['family'];
+
+  return $css;
+
+} // common_fonts_fontyourface_css
+
+/**
+ * Provides all needed details about common fonts.
+ */
+function common_fonts_list() {
+
+  return array(
+    'Sans-Serif' => array(
+      'path' => 'sans-serif',
+      'fonts' => array(
+        'Helvetica' => array(
+          'family' => "'Helvetica', 'Arial', sans-serif",
+          'path' => 'Helvetica',
+          'sample text' => 'Helvetica',
+        ),
+        'Verdana' => array(
+          'family' => "'Verdana', 'Arial', sans-serif",
+          'path' => 'Verdana',
+          'sample text' => 'Verdana',
+        ),
+        'Arial' => array(
+          'family' => "'Arial', sans-serif",
+          'path' => 'Arial',
+          'sample text' => 'Arial',
+        ),
+      ),
+    ),
+    'Serif' => array(
+      'path' => 'serif',
+      'fonts' => array(
+        'Times New Roman' => array(
+          'family' => "'Times New Roman', serif",
+          'path' => 'Times+New+Roman',
+          'sample text' => 'Times New Roman',
+        ),
+        'Georgia' => array(
+          'family' => "'Georgia', 'Times New Roman', sans-serif",
+          'path' => 'Georgia',
+          'sample text' => 'Georgia',
+        ),
+      ),
+    ),
+    'Monospace' => array(
+      'path' => 'monospace',
+      'fonts' => array(
+        'Courier' => array(
+          'family' => "'Courier', 'Courier New', monospace",
+          'path' => 'Courier',
+          'sample text' => 'Courier',
+        ),
+      ),
+    ),
+    'Cursive' => array(
+      'path' => 'cursive',
+      'fonts' => array(
+        'Comic Sans MS' => array(
+          'family' => "'Comic Sans MS', monospace",
+          'path' => 'Comic+Sans+MS',
+          'sample text' => 'Comic Sans MS',
+        ),
+      ),
+    ),
+  );
+
+} // common_fonts_list

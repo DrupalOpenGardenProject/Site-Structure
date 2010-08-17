@@ -21,13 +21,16 @@ class FeedsFlickrParser extends FeedsSimplePieParser {
       return;
     }
 
+
     $item['media_link']     = $enclosure->get_link();
     $item['media_width']    = $enclosure->get_width();
     $item['media_height']   = $enclosure->get_height();
     $item['media_title']    = $enclosure->get_title();
     $item['media_desc']     = $enclosure->get_description();
     $item['media_credit']   = $enclosure->get_credit();
-    $item['media_category'] = $enclosure->get_category();
+    // Adding special treatment for Flickr style tags.
+    $flickr_categories = $enclosure->get_categories();
+    $item['media_category'] = explode(' ', $flickr_categories[0]->term);
     $item['media_thumbnail_75x75'] = $enclosure->get_thumbnail();
     $item['media_thumbnail_100']   = str_replace('_s.', '_t.', $item['media_thumbnail_75x75']);
     $item['media_thumbnail_240']   = str_replace('_s.', '_m.', $item['media_thumbnail_75x75']);
