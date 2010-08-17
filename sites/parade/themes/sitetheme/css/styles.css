@@ -116,7 +116,7 @@ a:hover, a:active, a:focus {
 
 ul.pager li.pager-current {
   background-color:none;
-  color:#FFFFFF;
+  color:#666666;
 }
 ul.pager a, ul.pager li.pager-current {
   border-color:#48635f;
@@ -136,4 +136,8 @@ ul.pager li.pager-current {
   height: 300px;
   overflow-y: hidden;
   vertical-align: top;
+}
+
+.view .widget {
+  background: none;
 }
