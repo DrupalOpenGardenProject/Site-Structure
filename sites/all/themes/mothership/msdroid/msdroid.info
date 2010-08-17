@@ -1,0 +1,36 @@
+name        = msdroid
+description = motherships little kid: MS: Droid an example theme.
+screenshot  = screenshot.png
+core        = 6.x
+engine      = phptemplate
+base theme = mothership
+;--------------------- regions -----------------------------
+regions[header]         = header
+regions[content_top]    = content top
+regions[content_bottom] = content bottom
+regions[node_region_one] = node region one
+regions[node_region_two] = node region two
+regions[left]           = left sidebar
+regions[right]          = right sidebar
+regions[footer]         = footer
+
+;--------------------- features ----------------------------
+features[] = logo
+features[] = name
+features[] = node_user_picture
+features[] = comment_user_picture
+features[] = search
+features[] = favicon
+features[] = slogan
+features[] = primary_links
+features[] = secondary_links
+
+;--------------------- styles ------------------------------
+stylesheets[all][]    = style.css
+
+; Information added by drupal.org packaging script on 2010-01-18
+version = "6.x-1.2"
+core = "6.x"
+project = "mothership"
+datestamp = "1263846306"
+

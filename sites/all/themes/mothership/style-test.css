@@ -1,0 +1,20 @@
+body{background:#FFE3C1;}
+.left{width: 220px;}
+.right{width: 220px;}
+.main {width: 460px;}
+
+.header,.body, .footer{width: 960px; margin: 0 auto; background:#eee; min-height:1px; clear:both;}
+
+.left,.main
+{
+  display: inline; float:left; margin:0 10px;
+  min-height: 1%;
+  min-height: 1px;
+}
+.right{float:right;}
+
+
+/* -----clearfix -----*/
+.clearfix:after {content: "."; display: block; height: 0;  clear: both; visibility: hidden;}
+.clearfix {display:inline-block;} /*ie7 dosnt validate - but fixes the prob ...*/
+.clearfix {display:block;} /*opera & safari */

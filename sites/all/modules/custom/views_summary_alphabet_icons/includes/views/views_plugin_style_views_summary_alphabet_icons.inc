@@ -27,16 +27,6 @@ class views_plugin_style_views_summary_alphabet_icons extends views_plugin_style
       '#default_value' => $this->options['separator'],
     );
   }
-
-  /**
-   * Get the formula for this argument.
-   *
-   * $this->ensure_my_table() MUST have been called prior to this.
-   */
-  function get_formula() {
-    return "SUBSTR(REPLACE($this->table_alias.$this->real_field, '\"', ''), 1, " . intval($this->options['limit']) . ")";
-  }
-
 }
 
 

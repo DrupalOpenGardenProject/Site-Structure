@@ -1,0 +1,13 @@
+/* $Id: fusion-starter-style-rtl.css,v 1.1.2.3 2010/05/13 02:01:36 sociotech Exp $ */
+
+/* Tab Menus
+/-------------------------------------------------------------- */
+#content-tabs ul.primary,
+#content-tabs ul.secondary {
+  float: right;
+}
+
+#content-tabs ul.primary li,
+#content-tabs ul.secondary li {
+  float: right;
+}
