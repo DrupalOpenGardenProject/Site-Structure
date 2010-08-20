@@ -142,15 +142,3 @@ ul.pager li.pager-current {
   background: none;
 }
 
-iframe body#widget a {
-  color: #666666;
-}
-iframe body#widget h1,
-iframe body#widget h2,
-iframe body#widget h3,
-iframe body#widget h4,
-iframe body#widget h5,
-iframe body#widget h6 {
-  color: #666666;
-  font-family: "Georgia", sans-serif;
-}

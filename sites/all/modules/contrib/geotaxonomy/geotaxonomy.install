@@ -1,5 +1,5 @@
 <?php
-// $Id: geotaxonomy.install,v 1.1.2.1.2.3 2010/08/06 16:46:53 diggersf Exp $
+// $Id: geotaxonomy.install,v 1.1.2.1.2.1 2010/06/24 14:04:46 tmcw Exp $
 /**
  * @file
  * Install functions for geotaxonomy module.
@@ -127,6 +127,16 @@ function geotaxonomy_update_2() {
   return $ret;
 }
 
+function geotaxonomy_update_3() {
+  $ret = array();
+  $geometry = array(
+    'type' => 'text',
+    'description' => 'Geometry.',
+  );
+  db_add_field($ret, 'term_geo', 'geometry', $geometry);
+  return $ret;
+}
+
 /**
  * Add external_id, parent_name and parent_external_id field.
  *
@@ -142,35 +152,5 @@ function geotaxonomy_update_6001() {
     db_add_field($ret, 'term_geo', $name, $fields[$name]);
     db_add_index($ret, 'term_geo', $name, $indexes[$name]);
   }
-  return $ret;
-}
-
-/**
- * Migrate geotaxonomy settings storage.
- */
-function geotaxonomy_update_6002() {
-  $vocabularies = taxonomy_get_vocabularies();
-  $vocabulary_settings = variable_get('geotaxonomy_vocabularies', array());
-  foreach ($vocabularies as $voc) {
-    if (variable_get("geotaxonomy_$voc->vid", 0)) {
-      $vocabulary_settings[$voc->vid] = TRUE;
-    }
-    variable_del("geotaxonomy_$voc->vid");
-  }
-  variable_set('geotaxonomy_vocabularies', $vocabulary_settings);
-  
-  return array();
-}
-
-/**
- * Add geometry column to schema.
- */
-function geotaxonomy_update_6003() {
-  $ret = array();
-  $geometry = array(
-    'type' => 'text',
-    'description' => 'Geometry.',
-  );
-  db_add_field($ret, 'term_geo', 'geometry', $geometry);
   return $ret;
 }
