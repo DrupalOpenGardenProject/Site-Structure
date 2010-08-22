@@ -39,9 +39,21 @@ function views_summary_alphabet_icons_views_handlers() {
       'path' => drupal_get_path('module', 'views_summary_alphabet_icons') . '/includes/views',
     ),
     'handlers' => array(
-      'views_handler_argument_string_alphabet_icons' => array(
+      'views_handler_field_title_filter' => array(
+        'parent' => 'views_handler_field',
+      ),
+      'views_handler_argument_title_filter' => array(
         'parent' => 'views_handler_argument_string',
       ),
     ),
   );
+}
+
+function views_summary_alphabet_icons_views_data_alter(&$data) {
+  $data['node']['title']['title'] = t('Node Title passed through filtering.');
+  $data['node']['title']['help'] = t('Field !field', array('!field' => 'Node Title'));
+  $data['node']['title']['field']['handler'] = 'views_handler_field_title_filter';
+  $data['node']['title']['argument']['handler'] = 'views_handler_argument_title_filter';
+  $data['node']['title']['field']['group'] = 'Views Alphabet Summary';
+  return $data;
 }
