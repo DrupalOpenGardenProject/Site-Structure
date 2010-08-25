@@ -50,10 +50,12 @@ function views_summary_alphabet_icons_views_handlers() {
 }
 
 function views_summary_alphabet_icons_views_data_alter(&$data) {
-  $data['node']['title']['title'] = t('Node Title passed through filtering.');
-  $data['node']['title']['help'] = t('Field !field', array('!field' => 'Node Title'));
-  $data['node']['title']['field']['handler'] = 'views_handler_field_title_filter';
-  $data['node']['title']['argument']['handler'] = 'views_handler_argument_title_filter';
-  $data['node']['title']['field']['group'] = 'Views Alphabet Summary';
+  $data['node']['title_alphabet'] = $data['node']['title'];
+  $data['node']['title_alphabet']['real field'] = 'title';
+  $data['node']['title_alphabet']['title'] = t('Node Title passed through filtering.');
+  $data['node']['title_alphabet']['help'] = t('Field !field', array('!field' => 'Node Title'));
+  $data['node']['title_alphabet']['field']['handler'] = 'views_handler_field_title_filter';
+  $data['node']['title_alphabet']['argument']['handler'] = 'views_handler_argument_title_filter';
+  $data['node']['title_alphabet']['field']['group'] = 'Views Alphabet Summary';
   return $data;
 }

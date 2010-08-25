@@ -12,7 +12,7 @@ class views_handler_argument_title_filter extends views_handler_argument_string 
     $options = parent::option_definition();
     $options['filter_punctuation'] = array('default' => '');
     $options['filter_numeric'] = array('default' => FALSE);
-
+    $options['glossary'] = array('default' => 1);
     return $options;
   }
 
@@ -50,7 +50,7 @@ class views_handler_argument_title_filter extends views_handler_argument_string 
     else {
       // Add the field.
       $formula = $this->get_formula();
-      $this->base_alias = $this->name_alias = $this->query->add_field(NULL, $formula, $this->field . '_truncated');
+      $this->base_alias = $this->name_alias = $this->query->add_field(NULL, $formula, $this->real_field . '_truncated');
       $this->query->set_count_field(NULL, $formula, $this->field, $this->field . '_truncated');
     }
 
@@ -84,10 +84,10 @@ class views_handler_argument_title_filter extends views_handler_argument_string 
       $trim_left .= 'TRIM(LEADING \'' . $value . '\' FROM ';   
       $trim_right .= ') ';      
     }
+
     $query = "SUBSTR(" . $trim_left . "
       $this->table_alias.$this->real_field " 
       . $trim_right . ", 1, " . intval($this->options['limit']) . ")";
-
     return $query;
   }
 
