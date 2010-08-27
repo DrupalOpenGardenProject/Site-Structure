@@ -133,7 +133,7 @@ ul.pager li.pager-current {
 }
 
 .view-display-id-page_1 .views-view-grid td { 
-/*   height: 300px; */
+  width: 200px;
   overflow-y: hidden;
   vertical-align: top;
 }
