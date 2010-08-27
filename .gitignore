@@ -1,6 +1,8 @@
 d6/drupal
 mn/Permaculturenews
 *.sql
+sites/*/files
+sites/*/settings.php
 sites/*.localhost
 *.kpf
 *.txt
