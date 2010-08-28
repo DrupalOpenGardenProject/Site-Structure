@@ -141,4 +141,15 @@ ul.pager li.pager-current {
 .view .widget {
   background: none;
 }
+.font-size-16 #site-name,
+.font-size-16 h1,
+.font-size-16 h2,
+.font-size-16 h3,
+.font-size-16 h4,
+.font-size-16 h5,
+.font-size-16 h6,
+.font-size-16 #primary-menu a
+{
+  font-size: 150%;
+}
 
