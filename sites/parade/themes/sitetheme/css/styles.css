@@ -1,24 +1,28 @@
 body {
-  background-color: #fffff;
-  color: #33302C;
+  background-color: #ffffff;
+  color: #1d1a15;
 }
 #header-group-wrapper {
-  background-color: #eeeeee;
-  padding-bottom: 30px;
+
+}
+#sidebar-last .block {
+  background-color: #e4eca3;
+  padding: 20px 0 20px 0;
 }
 .block .views-field-title {
-  font-family: 'Georgia', sans-serif;
-  font-size:142.85%;
+  font-family: 'Arial', sans-serif;
+  font-size: 200%;
 }
 .block .views-field-created {
   padding-bottom: 5px;
-  color: #48635f;
+  color: #477624;
 }
 .block h2 {
-  color: #686258;
+  color: #477624;
+  font-weight: bold;
 }
 a {
-  color: #686258;
+  color: #477624;
   text-decoration: none;
   font-weight: bold;
 }
@@ -45,14 +49,14 @@ li.expanded a,
 li.collapsed a,
 li.active-trail a{
 /*   background: url(../images/bullet.png) 0 0 no-repeat; */
-  color: #48635f;
+  color: #1d1a15;
   padding-left: 18px;
   line-height: 90%;
   font-weight: normal;
 }
 div.item-list ul li a,
 li.collapsed a {
-  color:#686258;
+  color:#1d1a15;
   font-weight: normal;
 }
 li.active-trail a {
@@ -96,12 +100,12 @@ li.active-trail ul.menu {
 #content-group h4, 
 #content-group h5, 
 #content-group h6 {
-  color: #48635f;
+  color: #be6108;
 }
 .terms a {
   font-weight: normal;
   padding-right: 20px;
-  color: #48635f;
+  color: #5f852e;
 }
 .terms {
   padding-top: 20px;
@@ -119,7 +123,7 @@ ul.pager li.pager-current {
   color:#666666;
 }
 ul.pager a, ul.pager li.pager-current {
-  border-color:#48635f;
+  border-color:#5f852e;
 }
 ul.pager a, ul.pager li.pager-current {
   border-style:solid;
@@ -143,13 +147,25 @@ ul.pager li.pager-current {
 }
 .font-size-16 #site-name,
 .font-size-16 h1,
-.font-size-16 h2,
+.font-size-16 h2{
+  font-size: 150%;
+}
 .font-size-16 h3,
 .font-size-16 h4,
 .font-size-16 h5,
-.font-size-16 h6,
-.font-size-16 #primary-menu a
+.font-size-16 h6
 {
-  font-size: 150%;
+  font-size: 120%;
 }
-
+.font-size-16 #primary-menu a {
+  font-size: 120%;
+}
+.primary-menu ul li a, .primary-menu ul li .nolink {
+  padding: 0 30px 0 0;
+}
+li, li.leaf, ul.menu li, .item-list ul li {
+  line-height:100%;
+}
+#footer-message {
+font-size: 80%;
+}
