@@ -13,6 +13,9 @@ body {
   font-family: 'Arial', sans-serif;
   font-size: 200%;
 }
+#main-content-inner .block .views-field-title {
+  font-size: 120%;
+}
 .block .views-field-created {
   padding-bottom: 5px;
   color: #477624;
