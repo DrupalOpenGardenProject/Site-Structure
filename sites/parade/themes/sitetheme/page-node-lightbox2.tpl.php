@@ -14,9 +14,6 @@
     <?php print $head ?>
     <?php print $styles ?>
     <?php print $scripts ?>
-    <!--[if lt IE 7]>
-      <?php print phptemplate_get_ie_styles(); ?>
-    <![endif]-->
   </head>
   <body>
 
