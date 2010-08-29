@@ -24,7 +24,7 @@
 
 
       <div id="center"><div id="squeeze"><div class="right-corner"><div class="left-corner">
-<?php phptemplate_comment_wrapper(NULL, $node->type); ?>
+
 
 <?php if ($page == 0): ?>
   <h2><a href="<?php print $node_url ?>" title="<?php print $title ?>"><?php print $title ?></a></h2>
