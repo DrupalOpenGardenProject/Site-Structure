@@ -1,0 +1,85 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * This module provides a set of alphabet icons to a views summary listing.
+ */
+
+function views_glossary_images_theme() {
+  return array(
+    'views_view_glossary_images' => array(
+      'arguments' => array(
+      ),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_views_api().
+ */
+function views_glossary_images_views_api() {
+
+/**
+ * Development Note:
+ * This is where we tell Drupal that our module wants to connect to views.
+ * We tell it to use the Views 2 API.
+ * Then we tell it where our views module files are located.
+ */
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'views_glossary_images'),
+  );
+}
+
+
+/**
+ * Provide a theme function for views summary alphabet icons.
+ */
+function theme_views_view_glossary_images(&$vars) {
+  // This is data that should be preprocess data.
+  // Would need to add preprocess function as a hook (or invoke the hook or something?
+
+  $output = '';
+  $view = $vars;
+  $argument = $view->argument[$view->build_info['summary_level']];
+  $vars->classes = array();
+
+  $url_options = array();
+
+  if (!empty($view->exposed_raw_input)) {
+    $url_options['query'] = $view->exposed_raw_input;
+  }
+
+  $count = 0;
+
+  foreach ($view->result as $id => $row) {
+    // Only false on first time:
+    if ($count++) {
+      $view->result[$id]->separator = filter_xss_admin($view->style_options['separator']);
+    }
+
+    $output .= ' ' . $view->result[$id]->separator . ' ';
+
+    $view->result[$id]->link = $argument->summary_name($row);
+    $args = $view->args;
+    $args[$argument->position] = $argument->summary_argument($row);
+
+    $view->result[$id]->url = url($view->get_url($args), $url_options);
+    $view->result[$id]->count = intval($row->{$argument->count_alias});
+    if ($view->result[$id]->url == base_path() . $_GET['q'] || $view->result[$id]->url == base_path() . drupal_get_path_alias($_GET['q'])) {
+      $vars->classes[$id] = 'active';
+    }
+
+    $output .= views_glossary_images_links($view->result[$id], $view);
+
+  }
+  return $output;
+}
+
+function views_glossary_images_links($row) {
+  $output = '';
+  $output .= '<a href="' . $row->url . '">' . $row->title_truncated . '</a>';
+  // @TODO See why the l() function is double encoding the url.
+  return $output;
+}

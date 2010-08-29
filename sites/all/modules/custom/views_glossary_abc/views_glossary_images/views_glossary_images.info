@@ -1,0 +1,6 @@
+; $Id$
+name = "Views Glossary: Images"
+description = "Provide \"Alphabet Icon\" image sets for Views glossary summaries."
+package = "Views"
+core = 6.x
+dependencies[] = views_glossary_title

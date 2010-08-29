@@ -1,0 +1,33 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * This module provides a set of alphabet icons to a views summary listing.
+ */
+
+function views_glossary_title_theme() {
+  return array(
+    'views_view_glossary_title' => array(
+      'arguments' => array(
+      ),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_views_api().
+ */
+function views_glossary_title_views_api() {
+
+/**
+ * Development Note:
+ * This is where we tell Drupal that our module wants to connect to views.
+ * We tell it to use the Views 2 API.
+ * Then we tell it where our views module files are located.
+ */
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'views_glossary_title'),
+  );
+}
