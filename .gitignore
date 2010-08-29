@@ -1,4 +1,5 @@
 d6/drupal
+sites/all/modules/contrib/file_defer
 mn/Permaculturenews
 *.sql
 sites/*/files
