@@ -79,7 +79,8 @@ function theme_views_view_glossary_images(&$vars) {
 
 function views_glossary_images_links($row) {
   $output = '';
-  $output .= '<a href="' . $row->url . '">' . $row->title_truncated . '</a>';
-  // @TODO See why the l() function is double encoding the url.
+
+  $output .= '<a href="' . $row->url . '">' . $image . '</a>';
+
   return $output;
 }
