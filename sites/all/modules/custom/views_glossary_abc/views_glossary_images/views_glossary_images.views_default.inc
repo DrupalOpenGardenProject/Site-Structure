@@ -11,7 +11,7 @@
  * Implementation of hook_views_default_views().
  */
 function views_glossary_images_views_default_views() {
-  // --- Paste any default views here:
+  // --- Paste default view here:
   $view = new view;
   $view->name = 'alphabet';
   $view->description = 'A list of all feed content, by letter.';
@@ -51,38 +51,6 @@ function views_glossary_images_views_default_views() {
       'id' => 'title',
       'table' => 'node',
       'field' => 'title',
-      'override' => array(
-        'button' => 'Override',
-      ),
-      'relationship' => 'none',
-    ),
-    'body' => array(
-      'label' => 'Body',
-      'alter' => array(
-        'alter_text' => 0,
-        'text' => '',
-        'make_link' => 0,
-        'path' => '',
-        'link_class' => '',
-        'alt' => '',
-        'prefix' => '',
-        'suffix' => '',
-        'target' => '',
-        'help' => '',
-        'trim' => 0,
-        'max_length' => '',
-        'word_boundary' => 1,
-        'ellipsis' => 1,
-        'html' => 0,
-        'strip_tags' => 0,
-      ),
-      'empty' => '',
-      'hide_empty' => 0,
-      'empty_zero' => 0,
-      'exclude' => 0,
-      'id' => 'body',
-      'table' => 'node_revisions',
-      'field' => 'body',
       'override' => array(
         'button' => 'Override',
       ),
@@ -151,24 +119,6 @@ function views_glossary_images_views_default_views() {
       'validate_argument_transform' => 0,
       'validate_user_restrict_roles' => 0,
       'validate_argument_php' => '',
-    ),
-  ));
-  $handler->override_option('filters', array(
-    'type' => array(
-      'operator' => 'in',
-      'value' => array(
-        'feed_item' => 'feed_item',
-      ),
-      'group' => '0',
-      'exposed' => FALSE,
-      'expose' => array(
-        'operator' => FALSE,
-        'label' => '',
-      ),
-      'id' => 'type',
-      'table' => 'node',
-      'field' => 'type',
-      'relationship' => 'none',
     ),
   ));
   $handler->override_option('access', array(
@@ -375,7 +325,6 @@ function views_glossary_images_views_default_views() {
     'default' => 'default',
     'page' => 'page',
   ));
-
   // --- End paste.
   $views[$view->name] = $view;
   return $views;
